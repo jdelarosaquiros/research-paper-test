@@ -62,4 +62,42 @@
 \section{Additional results}
 \label{app:results}
 
+Table~\ref{tab:mmlu_results} reports PRR scores (up to 50\% rejection, normalized) for all
+methods on the Mistral-7B-Base model evaluated on MMLU, corresponding to Table~11 of
+\citet{cocoa2024}.
+
+\begin{table}[h]
+  \centering
+  \caption{PRR\textsubscript{0.5} scores on MMLU (Mistral-7B-Base). Generation metric:
+    Accuracy. Higher is better. \emph{Light} variants use a supervised auxiliary model
+    instead of repeated sampling for the consistency component.}
+  \label{tab:mmlu_results}
+  \begin{tabular}{lr}
+    \toprule
+    Method & PRR\textsubscript{0.5} \\
+    \midrule
+    MCSE                & 0.3354 \\
+    MCNSE               & 0.3542 \\
+    Semantic Entropy    & 0.3853 \\
+    DegMat              & 0.4092 \\
+    EigValLaplacian     & 0.3977 \\
+    SAR                 & 0.4092 \\
+    P(True)             & 0.0676 \\
+    \midrule
+    Consistency (Light) & 0.3039 \\
+    Consistency         & 0.3418 \\
+    \midrule
+    SP                  & 0.4716 \\
+    CoCoA\textsubscript{SP}               & 0.4661 \\
+    CoCoA\textsubscript{SP} (Light)       & 0.4706 \\
+    PPL                 & 0.4716 \\
+    CoCoA\textsubscript{PPL}              & 0.4661 \\
+    CoCoA\textsubscript{PPL} (Light)      & 0.4706 \\
+    MTE                 & 0.4540 \\
+    CoCoA\textsubscript{MTE}              & 0.4408 \\
+    CoCoA\textsubscript{MTE} (Light)      & 0.4407 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \end{document}

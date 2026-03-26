@@ -20,5 +20,5 @@ watch:
 	latexmk -pdf -pvc -interaction=nonstopmode $(MAIN).tex
 
 clean:
-	latexmk -C
+	latexmk -c
 	rm -f *.bbl *.run.xml *.synctex.gz
