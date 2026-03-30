@@ -62,42 +62,41 @@
 \section{Additional results}
 \label{app:results}
 
-Table~\ref{tab:mmlu_results} reports PRR scores (up to 50\% rejection, normalized) for all
-methods on the Mistral-7B-Base model evaluated on MMLU, corresponding to Table~11 of
-\citet{cocoa2024}.
+Table~\ref{tab:table11_mistral} reproduces the Mistral-7B-Base columns of Table~11 of
+\citet{cocoa2024}, reporting PRR$_{0.5}$ (normalized) under greedy decoding across six
+datasets. Generation metrics follow the paper: AlignScore\textsubscript{Input$\to$Output} for
+XSUM, COMET for WMT19\,De$\to$En, AlignScore\textsubscript{Output$\to$Target} for CoQA, and
+Accuracy for TriviaQA, MMLU, and GSM8k. WMT14\,Fr$\to$En is omitted (no results available).
 
-\begin{table}[h]
+\begin{table}[htbp]
   \centering
-  \caption{PRR\textsubscript{0.5} scores on MMLU (Mistral-7B-Base). Generation metric:
-    Accuracy. Higher is better. \emph{Light} variants use a supervised auxiliary model
-    instead of repeated sampling for the consistency component.}
-  \label{tab:mmlu_results}
-  \begin{tabular}{lr}
+  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding, reproduced from
+    Table~11 of \citet{cocoa2024}. Higher is better.}
+  \label{tab:table11_mistral}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lrrrrrr}
     \toprule
-    Method & PRR\textsubscript{0.5} \\
+    Method & XSUM & WMT19\,De$\to$En & CoQA & TriviaQA & MMLU & GSM8k \\
     \midrule
-    MCSE                & 0.3354 \\
-    MCNSE               & 0.3542 \\
-    Semantic Entropy    & 0.3853 \\
-    DegMat              & 0.4092 \\
-    EigValLaplacian     & 0.3977 \\
-    SAR                 & 0.4092 \\
-    P(True)             & 0.0676 \\
+    MCSE             &  0.024 & 0.349 &  0.272 & 0.518 & 0.335 & 0.474 \\
+    MCNSE            & -0.014 & 0.479 &  0.290 & 0.561 & 0.354 & 0.458 \\
+    Semantic Entropy &  0.026 & 0.386 &  0.295 & 0.567 & 0.385 & 0.474 \\
+    DegMat           &  0.152 & 0.397 &  0.375 & 0.620 & 0.409 & 0.327 \\
+    EigValLaplacian  &  0.151 & 0.338 &  0.345 & 0.582 & 0.398 & 0.270 \\
+    SAR              &  0.070 & 0.505 &  0.348 & 0.627 & 0.409 & 0.512 \\
+    P(True)          &  0.175 & 0.037 & -0.023 & -0.062 & 0.068 & 0.002 \\
     \midrule
-    Consistency (Light) & 0.3039 \\
-    Consistency         & 0.3418 \\
+    Consistency      &  0.033 & 0.465 &  0.364 & 0.645 & 0.342 & 0.474 \\
     \midrule
-    SP                  & 0.4716 \\
-    CoCoA\textsubscript{SP}               & 0.4661 \\
-    CoCoA\textsubscript{SP} (Light)       & 0.4706 \\
-    PPL                 & 0.4716 \\
-    CoCoA\textsubscript{PPL}              & 0.4661 \\
-    CoCoA\textsubscript{PPL} (Light)      & 0.4706 \\
-    MTE                 & 0.4540 \\
-    CoCoA\textsubscript{MTE}              & 0.4408 \\
-    CoCoA\textsubscript{MTE} (Light)      & 0.4407 \\
+    SP               &  0.278 & 0.434 &  0.334 & 0.655 & 0.472 & 0.470 \\
+    CoCoA$_\mathrm{SP}$  &  0.331 & 0.585 &  0.397 & 0.682 & 0.466 & 0.532 \\
+    PPL              &  0.227 & 0.485 &  0.303 & 0.659 & 0.472 & 0.312 \\
+    CoCoA$_\mathrm{PPL}$ &  0.303 & 0.551 &  0.372 & 0.687 & 0.466 & 0.491 \\
+    MTE              &  0.207 & 0.485 &  0.277 & 0.638 & 0.454 & 0.351 \\
+    CoCoA$_\mathrm{MTE}$ &  0.297 & 0.545 &  0.356 & 0.680 & 0.441 & 0.509 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}%
+  }
 \end{table}
 
 \end{document}
