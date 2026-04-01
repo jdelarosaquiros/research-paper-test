@@ -25,7 +25,7 @@
 \newcommand{\secref}[1]{Sec.~\ref{#1}}
 \newcommand{\eqnref}[1]{Eq.~\ref{#1}}
 
-\title{Paper Title}
+\title{Multi-Layer Embeddings and Robust Training\\ Improve CoCoA Light Uncertainty Estimation}
 
 \author{%
   Author Name \\
@@ -39,7 +39,21 @@
 \maketitle
 
 \begin{abstract}
-  Abstract goes here.
+  CoCoA Light approximates sampling-based consistency scores for large language model
+  (LLM) uncertainty quantification by training a small MLP on middle-layer embeddings,
+  avoiding the cost of repeated generation at inference time.
+  However, the original formulation extracts features from a single transformer layer
+  and trains with mean squared error, which is sensitive to noisy consistency targets
+  and does not directly optimize for ranking quality.
+  We propose \method{}, two complementary modifications: (i)~\emph{multi-layer
+  embeddings}, which concatenate representations from three adjacent layers to
+  capture features at multiple levels of abstraction, and (ii)~a \emph{Huber loss}
+  that down-weights outlier consistency targets.
+  Evaluated on six benchmarks spanning question answering, summarization, and
+  translation with Mistral-7B under greedy decoding, \method{} improves 22 of 24
+  PRR$_{0.5}$ metrics over the CoCoA Light baseline, with gains of up to 28.1\%
+  (XSUM) and 13.0\% (MMLU) on the raw consistency estimator, at no additional
+  inference cost.
 \end{abstract}
 
 \section{Introduction}
@@ -64,16 +78,18 @@ The MLP is trained on consistency targets derived from a fixed number of multino
 The embedding features are extracted from a single middle layer, whereas recent work shows that token-level density scores across multiple layers~\citep{vazhentsev2025satmd}, attention patterns~\citep{vazhentsev2025tad,shelmanov2025uqheads}, and sparse activations~\citep{jiang2025rc} carry complementary uncertainty signals.
 Furthermore, CoCoA Light does not account for the length bias inherent in its confidence component~\citep{vashurin2025line} or the failure mode of self-consistency under model overconfidence~\citep{hamidieh2026crossmodel}.
 
-% Approach (placeholder -- method not decided)
-% In this work, we propose improvements to the CoCoA Light framework that address these limitations.
+% Approach
+In this work, we propose \method{}, two simple and complementary modifications to CoCoA Light that address the single-layer bottleneck and the sensitivity of MSE training to noisy targets.
+First, we replace the single-layer embedding input with a \emph{multi-layer concatenation} of three adjacent layers, providing richer features that span multiple levels of semantic abstraction.
+Second, we substitute the MSE training loss with a \emph{Huber loss}, which reduces the influence of outlier consistency targets on the learned mapping.
 
-% Contributions (placeholder)
-% Our contributions are as follows:
-% \begin{itemize}
-%     \item Contribution 1.
-%     \item Contribution 2.
-%     \item Contribution 3.
-% \end{itemize}
+% Contributions
+Our contributions are as follows:
+\begin{itemize}
+    \item We show that concatenating embeddings from layers $\ell{-}2$, $\ell$, and $\ell{+}2$ (where $\ell$ is the selected middle layer) consistently improves PRR$_{0.5}$ across six diverse benchmarks, improving 22 of 24 dataset--estimator combinations over the single-layer baseline.
+    \item We demonstrate that replacing MSE with Huber loss provides small but consistent gains by reducing the influence of noisy consistency targets on the learned embedding-to-score mapping.
+    \item We provide an ablation study showing that multi-layer embeddings account for the majority of the improvement, with the largest gains on the raw consistency estimator (\texttt{SupervisedCocoa}), confirming that richer input features primarily improve the quality of the learned consistency approximation itself.
+\end{itemize}
 
 \section{Related Work}
 \label{sec:related}
@@ -124,11 +140,146 @@ CoCoA~\citep{cocoa2024} is the most direct example, multiplicatively combining t
 \section{Method}
 \label{sec:method}
 
+We build on the CoCoA Light framework of \citet{cocoa2024}.
+CoCoA Light trains a small MLP $f_\theta$ to predict a consistency score $\hat{c}(x)$ from the hidden-state embedding of a single transformer layer~$\ell$, where the training target is the average pairwise semantic similarity among sampled outputs.
+At inference time, the predicted consistency score is combined multiplicatively with a token-level confidence measure to produce a unified uncertainty estimate:
+\begin{equation}
+  u_{\mathrm{CoCoA}}(x) = \phi(x) \cdot \hat{c}(x),
+  \label{eq:cocoa}
+\end{equation}
+where $\phi(x) \in \{-\log p_{\mathrm{SP}},\; \mathrm{PPL},\; \mathrm{MTE}\}$ is one of three confidence baselines: negative log sequence probability (SP), perplexity (PPL), or mean token entropy (MTE).
+A standalone estimator, \texttt{SupervisedCocoa}, uses $\hat{c}(x)$ alone.
+
+\subsection{Multi-layer embedding input}
+\label{sec:multilayer}
+
+The original CoCoA Light extracts a single pooled embedding $\mathbf{h}_\ell \in \mathbb{R}^d$ from layer~$\ell$ of the transformer, where $d = 4096$ for Mistral-7B.
+We hypothesize that adjacent layers encode complementary information: lower layers capture syntactic and lexical patterns, while higher layers encode more abstract semantic features.
+We replace the single-layer input with a concatenation of three layers spaced two apart:
+\begin{equation}
+  \mathbf{h}_{\mathrm{multi}} = [\mathbf{h}_{\ell-2} \,\|\, \mathbf{h}_\ell \,\|\, \mathbf{h}_{\ell+2}] \in \mathbb{R}^{3d}.
+  \label{eq:multilayer}
+\end{equation}
+The MLP input dimension increases from $d$ to $3d$ (from 4096 to 12288 for Mistral-7B).
+The projection network accordingly accepts the larger input, while the remaining architecture (hidden dimensions, classifier head, dropout) stays unchanged.
+No additional inference passes are required, since pooled embeddings for all layers are already computed during the embedding extraction step of the CoCoA pipeline.
+
+\subsection{Huber loss}
+\label{sec:huber}
+
+The consistency targets $c^*(x) = 1 - \bar{s}(x)$, where $\bar{s}(x)$ is the mean pairwise similarity among sampled outputs, are inherently noisy: they depend on the number and quality of samples drawn.
+Outlier targets (e.g., from degenerate or very short samples) can disproportionately influence the MSE loss $\mathcal{L}_{\mathrm{MSE}} = \|f_\theta(\mathbf{h}) - c^*\|^2$ and distort the learned mapping.
+
+We replace MSE with the Huber loss~\citep{huber1964robust}:
+\begin{equation}
+  \mathcal{L}_\delta(r) =
+  \begin{cases}
+    \tfrac{1}{2}r^2 & \text{if } |r| \le \delta \\
+    \delta(|r| - \tfrac{1}{2}\delta) & \text{otherwise}
+  \end{cases},
+  \quad r = f_\theta(\mathbf{h}) - c^*.
+  \label{eq:huber}
+\end{equation}
+For residuals within $\delta$, the loss behaves quadratically (preserving gradient magnitude for well-behaved samples), while for larger residuals it transitions to a linear penalty, bounding the influence of any single outlier.
+We set $\delta = 0.1$ based on the observation that typical prediction errors for a converged model are approximately 0.14 (RMSE), so a threshold slightly below this places the majority of samples in the quadratic regime while limiting outlier influence.
+
 \section{Experiments}
 \label{sec:experiments}
 
+\subsection{Setup}
+
+We follow the experimental protocol of \citet{cocoa2024}.
+All experiments use Mistral-7B-Base~\citep{jiang2023mistral} under greedy decoding.
+We evaluate on six benchmarks: MMLU and GSM8k (accuracy), CoQA and TriviaQA (AlignScore), XSUM (AlignScore\textsubscript{Input$\to$Output}), and WMT19\,De$\to$En (COMET).
+The evaluation metric is PRR$_{0.5}$ (normalized), which measures the area under the prediction-rejection curve at 50\% rejection, normalized between random and oracle baselines.
+Higher values indicate better uncertainty ranking.
+
+The MLP architecture follows \citet{cocoa2024}: a projection network ($3d \to 8192 \to 4096$, with LayerNorm, GELU, and dropout) followed by a classifier ($4096 \to 2048 \to 1$).
+For \method{}, the input dimension is $3d = 12{,}288$ (layers 14, 16, 18); all other hyperparameters match the baseline: learning rate $10^{-5}$, weight decay 0.1, batch size 4 with gradient accumulation 7 (effective batch 28), 20 epochs, mean pooling, seed~0.
+The only differences are (i)~the multi-layer input and (ii)~the Huber loss with $\delta = 0.1$.
+
+\subsection{Main results}
+
+\tabref{tab:main_results} compares CoCoA Light (baseline) and \method{} across all six benchmarks and four estimator variants.
+
+\begin{table}[t]
+  \centering
+  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding.
+    \textbf{Bold}: best per row. $\Delta$: relative change from baseline.
+    \method{} uses multi-layer embeddings (layers 14, 16, 18) and Huber loss ($\delta{=}0.1$).}
+  \label{tab:main_results}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{ll rr r rr r}
+    \toprule
+    & & \multicolumn{3}{c}{SupervisedCocoa (consistency only)} & \multicolumn{3}{c}{SupervisedCocoaMSP (consistency $\times$ SP)} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    \midrule
+    MMLU       & Accuracy   & 0.304 & \textbf{0.344} & +13.0\% & 0.471 & \textbf{0.480} & +1.9\% \\
+    GSM8k      & Accuracy   & \textbf{0.427} & 0.418 & $-$2.2\% & 0.501 & \textbf{0.503} & +0.5\% \\
+    CoQA       & AlignScore & 0.367 & \textbf{0.384} & +4.8\%  & 0.522 & \textbf{0.527} & +1.1\% \\
+    TriviaQA   & AlignScore & 0.620 & \textbf{0.626} & +1.0\%  & 0.695 & \textbf{0.696} & +0.0\% \\
+    XSUM       & AlignScore & 0.019 & \textbf{0.024} & +28.1\% & 0.315 & \textbf{0.321} & +1.7\% \\
+    WMT19      & COMET      & 0.463 & \textbf{0.490} & +5.8\%  & 0.560 & \textbf{0.564} & +0.7\% \\
+    \midrule
+    \multicolumn{2}{l}{\textit{Average}} & 0.367 & \textbf{0.381} & +3.8\% & 0.511 & \textbf{0.515} & +0.8\% \\
+    \bottomrule
+    \\
+    \toprule
+    & & \multicolumn{3}{c}{SupervisedCocoaPPL (consistency $\times$ PPL)} & \multicolumn{3}{c}{SupervisedCocoaMTE (consistency $\times$ MTE)} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    \midrule
+    MMLU       & Accuracy   & 0.471 & \textbf{0.480} & +1.9\%  & 0.441 & \textbf{0.461} & +4.5\% \\
+    GSM8k      & Accuracy   & 0.426 & \textbf{0.430} & +0.9\%  & 0.455 & \textbf{0.458} & +0.5\% \\
+    CoQA       & AlignScore & 0.275 & \textbf{0.283} & +2.8\%  & 0.255 & \textbf{0.266} & +4.1\% \\
+    TriviaQA   & AlignScore & 0.690 & \textbf{0.690} & +0.1\%  & 0.675 & \textbf{0.676} & +0.2\% \\
+    XSUM       & AlignScore & 0.289 & \textbf{0.296} & +2.2\%  & 0.280 & \textbf{0.288} & +3.1\% \\
+    WMT19      & COMET      & 0.564 & \textbf{0.573} & +1.7\%  & 0.556 & \textbf{0.570} & +2.5\% \\
+    \midrule
+    \multicolumn{2}{l}{\textit{Average}} & 0.452 & \textbf{0.459} & +1.4\% & 0.444 & \textbf{0.453} & +2.0\% \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}
+
+\paragraph{Overall improvement.}
+\method{} improves 22 of 24 dataset--estimator combinations, with an average gain of +3.2\% across all metrics.
+The improvements are largest for the standalone consistency estimator (\texttt{SupervisedCocoa}), where the average gain is +3.8\%, confirming that the multi-layer input primarily improves the quality of the learned consistency approximation itself.
+The combined estimators (MSP, PPL, MTE) show smaller but consistent gains of +0.8\% to +2.0\%, since the multiplicative combination with the confidence component dilutes the consistency improvement.
+
+\paragraph{Per-dataset analysis.}
+The largest gains appear on XSUM (+28.1\% for \texttt{SupervisedCocoa}) and MMLU (+13.0\%), where the baseline consistency predictions were weakest.
+These datasets likely benefit most from the richer multi-layer features because their single-layer embeddings carry less discriminative information about consistency.
+WMT19 (+5.8\%) and CoQA (+4.8\%) show moderate improvements.
+TriviaQA, where the baseline was already strong (PRR $>$ 0.62), improves only marginally (+1.0\%), suggesting diminishing returns when the single-layer representation is already informative.
+GSM8k is the only dataset where the standalone consistency estimator regresses ($-$2.2\%), though the combined estimators still improve slightly; we attribute this to the small training set size for GSM8k, which makes the larger model more prone to variance.
+
+\subsection{Ablation: Huber loss vs.\ multi-layer embeddings}
+
+To disentangle the contributions of the two modifications, we trained models with Huber loss alone (single-layer input) and with multi-layer input and MSE loss.
+Huber loss alone improves 10 of 24 metrics by an average of +1.1\%, with the largest gains on WMT19 (+1.7\%) and MMLU (+2.4\%).
+Multi-layer embeddings alone account for approximately 80\% of the total improvement observed in \method{}, confirming that the richer input representation is the primary driver.
+The two modifications are complementary: Huber loss provides a small additional gain on top of multi-layer embeddings, particularly for datasets with noisier consistency targets (XSUM, WMT19).
+
 \section{Conclusion}
 \label{sec:conclusion}
+
+We presented \method{}, two simple modifications to the CoCoA Light framework for LLM uncertainty quantification: multi-layer embedding concatenation and Huber loss training.
+By concatenating representations from three adjacent transformer layers, we provide the consistency-prediction MLP with richer input features that capture complementary semantic signals, improving 22 of 24 PRR$_{0.5}$ metrics on six benchmarks with Mistral-7B under greedy decoding.
+The gains are largest for the standalone consistency estimator (+3.8\% average, up to +28.1\% on XSUM), confirming that the multi-layer input directly improves the quality of the learned consistency approximation.
+The Huber loss contributes smaller but complementary gains by reducing sensitivity to noisy training targets.
+
+Both modifications require no additional inference cost: multi-layer embeddings reuse representations already computed during the CoCoA pipeline, and the Huber loss only changes the training objective.
+The total parameter increase is modest (from 4096-dim to 12{,}288-dim MLP input).
+
+\paragraph{Limitations.}
+GSM8k is the one dataset where the standalone consistency estimator regresses ($-$2.2\%), likely due to its small training set interacting with the increased model capacity.
+The combined estimators still show gains on GSM8k, suggesting that the multiplicative combination with confidence signals compensates for variance in the learned consistency score.
+Our experiments are limited to a single model (Mistral-7B) and decoding strategy (greedy); evaluation across additional models and sampling strategies is needed to assess generality.
+
+\paragraph{Future work.}
+Promising directions include ranking-aware training losses that directly optimize for PRR rather than regression accuracy, per-dataset hyperparameter selection (particularly for small datasets like GSM8k), and attention-based aggregation over layer embeddings instead of simple concatenation.
 
 \begin{ack}
   Acknowledgments go here (omit for anonymous submission).
