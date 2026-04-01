@@ -47,3 +47,27 @@ make clean     # remove build artifacts
 ## CI
 
 GitHub Actions runs `make check` and `make test` on push/PR to `main`. Release to PyPI on version tags (`v*`).
+
+## Key Conventions
+
+- **Python 3.13+** required. Package manager: uv
+- **Linting**: ruff (line-length=100), type-check: ty
+- **Testing**: pytest in `tests/`, coverage measured
+- **Pre-commit**: enforces format, types, imports before commit
+- **Package name**: Replace `mypackage` with actual name in code and CLAUDE.md rules
+- **Type annotations**: Required on public APIs (ruff rule ANN)
+
+## Development Workflow
+
+1. Edit code in `src/mypackage/` or `tests/`
+2. Run `make check` before committing (formats, lints, type-checks)
+3. Run `make test` to verify tests pass with coverage
+4. Use `/commit` for enriched commits with WHY-focused bodies
+5. Use `/plan-feature` to spec complex features; `/execute` to implement from spec
+
+## Paths and Tools
+
+- Path-scoped rules load auto when touching `src/`, `tests/`, `paper/`, `slides-js/`
+- Use `/prime` to load full codebase overview
+- Spawn sub-agents for research with `/plan-feature` — keeps main context clean
+- On long sessions, use `/handoff` to write progress and switch fresh

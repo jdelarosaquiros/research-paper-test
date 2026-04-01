@@ -18,6 +18,13 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 
+% Macros
+\newcommand{\method}{CoCoA~Light\textsuperscript{+}}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\tabref}[1]{Tab.~\ref{#1}}
+\newcommand{\secref}[1]{Sec.~\ref{#1}}
+\newcommand{\eqnref}[1]{Eq.~\ref{#1}}
+
 \title{Paper Title}
 
 \author{%
@@ -38,8 +45,81 @@
 \section{Introduction}
 \label{sec:intro}
 
-\section{Related work}
+% Hook
+Reliable uncertainty quantification (UQ) is a prerequisite for deploying large language models (LLMs) in high-stakes applications such as medical question answering, legal summarization, and autonomous decision-making.
+An LLM that can accurately signal when its outputs are likely incorrect enables selective abstention, human-in-the-loop verification, and calibrated downstream decisions~\citep{kadavath2022language,xia2025survey}.
+
+% Problem
+Two dominant families of UQ methods have emerged.
+\textit{Confidence-based} methods estimate uncertainty from token-level probabilities of a single generated sequence~\citep{malinin2021uncertainty,fadeeva2024factcheck,duan2024shifting}, while \textit{consistency-based} methods measure semantic agreement across multiple sampled outputs~\citep{kuhn2023semantic,wang2023selfconsistency,lin2024generating,manakul2023selfcheck}.
+Each family captures a different facet of uncertainty: confidence methods reflect the model's distributional beliefs at the token level, whereas consistency methods capture the diversity of plausible answers in semantic space.
+However, neither family alone provides a complete picture.
+Confidence scores exhibit systematic length bias~\citep{vashurin2025line,santilli2025lengthbias}, and consistency methods fail when the model confidently repeats the same incorrect answer~\citep{hamidieh2026crossmodel}.
+
+% Gap
+\citet{cocoa2024} proposed CoCoA, a minimum Bayes risk (MBR) framework that multiplicatively combines confidence and consistency into a single uncertainty score.
+CoCoA consistently outperforms methods from either family alone, and its lightweight variant, CoCoA Light, approximates the consistency component with a small MLP trained on middle-layer embeddings, eliminating the need for repeated sampling at inference time.
+Despite these advances, CoCoA Light faces several limitations.
+The MLP is trained on consistency targets derived from a fixed number of multinomial samples, which provide a noisy and potentially biased estimate of true semantic agreement~\citep{fadeeva2026beams,aichberger2025sdlg}.
+The embedding features are extracted from a single middle layer, whereas recent work shows that token-level density scores across multiple layers~\citep{vazhentsev2025satmd}, attention patterns~\citep{vazhentsev2025tad,shelmanov2025uqheads}, and sparse activations~\citep{jiang2025rc} carry complementary uncertainty signals.
+Furthermore, CoCoA Light does not account for the length bias inherent in its confidence component~\citep{vashurin2025line} or the failure mode of self-consistency under model overconfidence~\citep{hamidieh2026crossmodel}.
+
+% Approach (placeholder -- method not decided)
+% In this work, we propose improvements to the CoCoA Light framework that address these limitations.
+
+% Contributions (placeholder)
+% Our contributions are as follows:
+% \begin{itemize}
+%     \item Contribution 1.
+%     \item Contribution 2.
+%     \item Contribution 3.
+% \end{itemize}
+
+\section{Related Work}
 \label{sec:related}
+
+\paragraph{Confidence-based uncertainty estimation.}
+Confidence-based methods derive uncertainty from the token-level probability distribution of a single generated sequence.
+Sequence probability~\citep{malinin2021uncertainty}, predictive entropy, and mean token entropy are widely used baselines.
+\citet{duan2024shifting} introduced SAR, which reweights token contributions by their relevance to the answer.
+\citet{li2025uqac} proposed attention-chain-based backtracking to identify semantically critical tokens and compute marginal answer probabilities, improving calibration on reasoning tasks.
+\citet{schweighofer2025rethinking} showed that the negative log-likelihood of the greedy output is a theoretically motivated uncertainty measure under the zero-one scoring rule, matching multi-sample methods without any sampling.
+A persistent challenge for all token-probability methods is length bias: \citet{vashurin2025line} demonstrated that even nominally length-normalized measures exhibit statistically significant linear trends with output length and proposed a post-hoc linear debiasing procedure.
+\citet{santilli2025lengthbias} further showed that mutual biases between UQ methods and evaluation metrics can distort AUROC rankings, recommending LM-as-a-judge correctness functions.
+
+\paragraph{Consistency-based uncertainty estimation.}
+Consistency methods generate multiple outputs and measure their semantic agreement.
+Semantic entropy~\citep{kuhn2023semantic} clusters outputs into equivalence classes via natural language inference (NLI) and computes entropy over cluster probabilities.
+Graph-based variants use pairwise similarity matrices to compute degree, eccentricity, or spectral features~\citep{lin2024generating}.
+\citet{nguyen2025snne} proposed Semantic Nearest Neighbor Entropy, which accounts for both intra- and inter-cluster similarity, addressing the degradation of semantic entropy on longer outputs.
+A key bottleneck is sampling efficiency: generating 5--20 diverse outputs per query is expensive.
+\citet{aichberger2025sdlg} introduced importance sampling with a semantically diverse proposal distribution that covers more clusters with fewer samples, and \citet{park2025diversity} injected continuous similarity penalties into decoding for similar effect.
+\citet{fadeeva2026beams} replaced multinomial sampling with beam search and importance-weighted estimators, proving lower variance guarantees and achieving the best consistency-based results on short-form QA.
+\citet{hamidieh2026crossmodel} diagnosed a fundamental failure mode: when an LLM is confidently wrong, self-consistency yields low uncertainty.
+They addressed this by adding cross-model epistemic disagreement, which flags confident failures that intra-model consistency misses.
+
+\paragraph{Internal-representation-based methods.}
+A growing line of work extracts uncertainty signals directly from LLM hidden states, avoiding the cost of multi-sample generation.
+\citet{chen2024inside} introduced EigenScore, which computes eigenvalues of the covariance matrix of middle-layer sentence embeddings across generations, establishing that middle layers carry the strongest hallucination-detection signal.
+\citet{vazhentsev2025satmd} adapted Mahalanobis distance to token-level embeddings across multiple layers, training a linear regression on PCA-reduced features to achieve results competitive with sampling-based methods at a fraction of the cost.
+\citet{vazhentsev2025tad} proposed TAD, a supervised method that propagates uncertainty recurrently across generation steps using attention maps, achieving mean rank 1 across 11 datasets and 3 LLMs.
+\citet{shelmanov2025uqheads} trained transformer-based UQ heads on attention maps and token log-probabilities for claim-level hallucination detection, finding that attention features outperform hidden-state features alone.
+\citet{bakman2026featuregaps} decomposed epistemic uncertainty into three interpretable feature gaps computed from internal states, outperforming prior supervised methods on contextual QA with negligible overhead.
+\citet{gao2025flue} exploited the redundancy of hidden states across adjacent transformer layers to obtain single-pass Monte Carlo uncertainty estimates, matching semantic entropy with zero additional inference cost.
+\citet{chen2026querylevel} showed that pre-generation ``Internal Confidence'' from middle-layer representations achieves competitive AUROC while being 30--600$\times$ faster than post-generation methods.
+\citet{jiang2025rc} demonstrated that internal activation consistency within answer groups improves self-consistency, with SAE-sparsified activations outperforming NLI-based similarity.
+CoCoA Light~\citep{cocoa2024} fits within this family, using a middle-layer embedding MLP to approximate consistency scores.
+
+\paragraph{Hybrid and post-hoc correction methods.}
+Several methods combine confidence and consistency signals or apply post-hoc corrections.
+CoCoA~\citep{cocoa2024} is the most direct example, multiplicatively combining token-probability confidence with MBR-based consistency.
+\citet{bakman2025wild} evaluated 19 UE methods across practical challenges and found that ensembling diverse scores improves performance by up to 8 PRR points, validating the combination strategy.
+\citet{li2025cue} proposed CUE, a lightweight corrector that post-hoc adjusts any UE score using a trained classifier, but found that existing methods are ``homogeneous''---combining their raw scores yields no improvement without a learned corrector.
+\citet{cox2025mapping} introduced semantic-invariant perturbation sampling, which decomposes uncertainty into epistemic (inter-paraphrase) and aleatoric (intra-paraphrase) components via embedding variance.
+\citet{vipulanandan2026qtn} improved semantic entropy by modeling aleatoric uncertainty in token probabilities with quantum tensor networks.
+\citet{zhang2026tokur} proposed token-level uncertainty decomposition via low-rank weight perturbation, providing aleatoric and epistemic scores at each token.
+\citet{da2025topouq} extended consistency measurement from flat semantic agreement to structural reasoning topology comparison.
+\citet{soudani2025rag} showed that existing UE methods, including those CoCoA builds upon, violate basic axioms in retrieval-augmented generation settings, identifying an open challenge for hybrid methods.
 
 \section{Method}
 \label{sec:method}
