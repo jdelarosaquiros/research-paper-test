@@ -28,7 +28,7 @@ The only differences are (i)~the multi-layer input and (ii)~the Huber loss with 
     \toprule
     & & \multicolumn{3}{c}{SupervisedCocoa (consistency only)} & \multicolumn{3}{c}{SupervisedCocoaMSP (consistency $\times$ SP)} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    Dataset & Gen.\ Metric & CoCoA Light & \method{} & $\Delta$ & CoCoA Light & \method{} & $\Delta$ \\
     \midrule
     MMLU       & Accuracy   & 0.304 & \textbf{0.344} & +13.0\% & 0.471 & \textbf{0.480} & +1.9\% \\
     GSM8k      & Accuracy   & \textbf{0.427} & 0.418 & $-$2.2\% & 0.501 & \textbf{0.503} & +0.5\% \\
@@ -43,7 +43,7 @@ The only differences are (i)~the multi-layer input and (ii)~the Huber loss with 
     \toprule
     & & \multicolumn{3}{c}{SupervisedCocoaPPL (consistency $\times$ PPL)} & \multicolumn{3}{c}{SupervisedCocoaMTE (consistency $\times$ MTE)} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    Dataset & Gen.\ Metric & CoCoA Light & \method{} & $\Delta$ & CoCoA Light & \method{} & $\Delta$ \\
     \midrule
     MMLU       & Accuracy   & 0.471 & \textbf{0.480} & +1.9\%  & 0.441 & \textbf{0.461} & +4.5\% \\
     GSM8k      & Accuracy   & 0.426 & \textbf{0.430} & +0.9\%  & 0.455 & \textbf{0.458} & +0.5\% \\
