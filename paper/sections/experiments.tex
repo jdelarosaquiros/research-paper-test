@@ -1,0 +1,78 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Setup}
+
+We follow the experimental protocol of \citet{cocoa2024}.
+All experiments use Mistral-7B-Base~\citep{jiang2023mistral} under greedy decoding.
+We evaluate on six benchmarks: MMLU and GSM8k (accuracy), CoQA and TriviaQA (AlignScore), XSUM (AlignScore\textsubscript{Input$\to$Output}), and WMT19\,De$\to$En (COMET).
+The evaluation metric is PRR$_{0.5}$ (normalized), which measures the area under the prediction-rejection curve at 50\% rejection, normalized between random and oracle baselines.
+Higher values indicate better uncertainty ranking.
+
+The MLP architecture follows \citet{cocoa2024}: a projection network ($3d \to 8192 \to 4096$, with LayerNorm, GELU, and dropout) followed by a classifier ($4096 \to 2048 \to 1$).
+For \method{}, the input dimension is $3d = 12{,}288$ (layers 14, 16, 18); all other hyperparameters match the baseline: learning rate $10^{-5}$, weight decay 0.1, batch size 4 with gradient accumulation 7 (effective batch 28), 20 epochs, mean pooling, seed~0.
+The only differences are (i)~the multi-layer input and (ii)~the Huber loss with $\delta = 0.1$.
+
+\subsection{Main results}
+
+\tabref{tab:main_results} compares CoCoA Light (baseline) and \method{} across all six benchmarks and four estimator variants.
+
+\begin{table}[t]
+  \centering
+  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding.
+    \textbf{Bold}: best per row. $\Delta$: relative change from baseline.
+    \method{} uses multi-layer embeddings (layers 14, 16, 18) and Huber loss ($\delta{=}0.1$).}
+  \label{tab:main_results}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{ll rr r rr r}
+    \toprule
+    & & \multicolumn{3}{c}{SupervisedCocoa (consistency only)} & \multicolumn{3}{c}{SupervisedCocoaMSP (consistency $\times$ SP)} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    \midrule
+    MMLU       & Accuracy   & 0.304 & \textbf{0.344} & +13.0\% & 0.471 & \textbf{0.480} & +1.9\% \\
+    GSM8k      & Accuracy   & \textbf{0.427} & 0.418 & $-$2.2\% & 0.501 & \textbf{0.503} & +0.5\% \\
+    CoQA       & AlignScore & 0.367 & \textbf{0.384} & +4.8\%  & 0.522 & \textbf{0.527} & +1.1\% \\
+    TriviaQA   & AlignScore & 0.620 & \textbf{0.626} & +1.0\%  & 0.695 & \textbf{0.696} & +0.0\% \\
+    XSUM       & AlignScore & 0.019 & \textbf{0.024} & +28.1\% & 0.315 & \textbf{0.321} & +1.7\% \\
+    WMT19      & COMET      & 0.463 & \textbf{0.490} & +5.8\%  & 0.560 & \textbf{0.564} & +0.7\% \\
+    \midrule
+    \multicolumn{2}{l}{\textit{Average}} & 0.367 & \textbf{0.381} & +3.8\% & 0.511 & \textbf{0.515} & +0.8\% \\
+    \bottomrule
+    \\
+    \toprule
+    & & \multicolumn{3}{c}{SupervisedCocoaPPL (consistency $\times$ PPL)} & \multicolumn{3}{c}{SupervisedCocoaMTE (consistency $\times$ MTE)} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Dataset & Gen.\ Metric & Baseline & \method{} & $\Delta$ & Baseline & \method{} & $\Delta$ \\
+    \midrule
+    MMLU       & Accuracy   & 0.471 & \textbf{0.480} & +1.9\%  & 0.441 & \textbf{0.461} & +4.5\% \\
+    GSM8k      & Accuracy   & 0.426 & \textbf{0.430} & +0.9\%  & 0.455 & \textbf{0.458} & +0.5\% \\
+    CoQA       & AlignScore & 0.275 & \textbf{0.283} & +2.8\%  & 0.255 & \textbf{0.266} & +4.1\% \\
+    TriviaQA   & AlignScore & 0.690 & \textbf{0.690} & +0.1\%  & 0.675 & \textbf{0.676} & +0.2\% \\
+    XSUM       & AlignScore & 0.289 & \textbf{0.296} & +2.2\%  & 0.280 & \textbf{0.288} & +3.1\% \\
+    WMT19      & COMET      & 0.564 & \textbf{0.573} & +1.7\%  & 0.556 & \textbf{0.570} & +2.5\% \\
+    \midrule
+    \multicolumn{2}{l}{\textit{Average}} & 0.452 & \textbf{0.459} & +1.4\% & 0.444 & \textbf{0.453} & +2.0\% \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}
+
+\paragraph{Overall improvement.}
+\method{} improves 22 of 24 dataset--estimator combinations, with an average gain of +3.2\% across all metrics.
+The improvements are largest for the standalone consistency estimator (\texttt{SupervisedCocoa}), where the average gain is +3.8\%, confirming that the multi-layer input primarily improves the quality of the learned consistency approximation itself.
+The combined estimators (MSP, PPL, MTE) show smaller but consistent gains of +0.8\% to +2.0\%, since the multiplicative combination with the confidence component dilutes the consistency improvement.
+
+\paragraph{Per-dataset analysis.}
+The largest gains appear on XSUM (+28.1\% for \texttt{SupervisedCocoa}) and MMLU (+13.0\%), where the baseline consistency predictions were weakest.
+These datasets likely benefit most from the richer multi-layer features because their single-layer embeddings carry less discriminative information about consistency.
+WMT19 (+5.8\%) and CoQA (+4.8\%) show moderate improvements.
+TriviaQA, where the baseline was already strong (PRR $>$ 0.62), improves only marginally (+1.0\%), suggesting diminishing returns when the single-layer representation is already informative.
+GSM8k is the only dataset where the standalone consistency estimator regresses ($-$2.2\%), though the combined estimators still improve slightly; we attribute this to the small training set size for GSM8k, which makes the larger model more prone to variance.
+
+\subsection{Ablation: Huber loss vs.\ multi-layer embeddings}
+
+To disentangle the contributions of the two modifications, we trained models with Huber loss alone (single-layer input) and with multi-layer input and MSE loss.
+Huber loss alone improves 10 of 24 metrics by an average of +1.1\%, with the largest gains on WMT19 (+1.7\%) and MMLU (+2.4\%).
+Multi-layer embeddings alone account for approximately 80\% of the total improvement observed in \method{}, confirming that the richer input representation is the primary driver.
+The two modifications are complementary: Huber loss provides a small additional gain on top of multi-layer embeddings, particularly for datasets with noisier consistency targets (XSUM, WMT19).

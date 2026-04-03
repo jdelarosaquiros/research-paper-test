@@ -1,0 +1,15 @@
+CoCoA Light approximates sampling-based consistency scores for large language model
+(LLM) uncertainty quantification by training a small MLP on middle-layer embeddings,
+avoiding the cost of repeated generation at inference time.
+However, the original formulation extracts features from a single transformer layer
+and trains with mean squared error, which is sensitive to noisy consistency targets
+and does not directly optimize for ranking quality.
+We propose \method{}, two complementary modifications: (i)~\emph{multi-layer
+embeddings}, which concatenate representations from three adjacent layers to
+capture features at multiple levels of abstraction, and (ii)~a \emph{Huber loss}
+that down-weights outlier consistency targets.
+Evaluated on six benchmarks spanning question answering, summarization, and
+translation with Mistral-7B under greedy decoding, \method{} improves 22 of 24
+PRR$_{0.5}$ metrics over the CoCoA Light baseline, with gains of up to 28.1\%
+(XSUM) and 13.0\% (MMLU) on the raw consistency estimator, at no additional
+inference cost.

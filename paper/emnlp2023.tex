@@ -1,0 +1,117 @@
+% This must be in the first 5 lines to tell arXiv to use pdfLaTeX, which is strongly recommended.
+\pdfoutput=1
+% In particular, the hyperref package requires pdfLaTeX in order to break URLs across lines.
+
+\documentclass[11pt]{article}
+
+% Remove the "review" option to generate the final version.
+\usepackage[review]{EMNLP2023}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary and may be commented out.
+% However, it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+% Additional packages needed for this paper
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+% Macros
+\newcommand{\method}{CoCoA~Light\textsuperscript{+}}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\tabref}[1]{Tab.~\ref{#1}}
+\newcommand{\secref}[1]{Sec.~\ref{#1}}
+\newcommand{\eqnref}[1]{Eq.~\ref{#1}}
+
+\title{Multi-Layer Embeddings and Robust Training\\ Improve CoCoA Light Uncertainty Estimation}
+
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/method}
+\input{sections/experiments}
+\input{sections/conclusion}
+\input{sections/limitations}
+
+% Entries for the entire Anthology, followed by custom entries
+\bibliography{anthology,custom}
+\bibliographystyle{acl_natbib}
+
+\appendix
+
+\section{Additional Results}
+\label{app:results}
+
+Table~\ref{tab:table11_mistral} reproduces the Mistral-7B-Base columns of Table~11 of
+\citet{cocoa2024}, reporting PRR$_{0.5}$ (normalized) under greedy decoding across six
+datasets. Generation metrics follow the paper: AlignScore\textsubscript{Input$\to$Output} for
+XSUM, COMET for WMT19\,De$\to$En, AlignScore\textsubscript{Output$\to$Target} for CoQA, and
+Accuracy for TriviaQA, MMLU, and GSM8k. WMT14\,Fr$\to$En is omitted (no results available).
+
+\begin{table}[htbp]
+  \centering
+  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding, reproduced from
+    Table~11 of \citet{cocoa2024}. Higher is better.}
+  \label{tab:table11_mistral}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    Method & XSUM & WMT19\,De$\to$En & CoQA & TriviaQA & MMLU & GSM8k \\
+    \midrule
+    MCSE             &  0.024 & 0.349 &  0.272 & 0.518 & 0.335 & 0.474 \\
+    MCNSE            & -0.014 & 0.479 &  0.290 & 0.561 & 0.354 & 0.458 \\
+    Semantic Entropy &  0.026 & 0.386 &  0.295 & 0.567 & 0.385 & 0.474 \\
+    DegMat           &  0.152 & 0.397 &  0.375 & 0.620 & 0.409 & 0.327 \\
+    EigValLaplacian  &  0.151 & 0.338 &  0.345 & 0.582 & 0.398 & 0.270 \\
+    SAR              &  0.070 & 0.505 &  0.348 & 0.627 & 0.409 & 0.512 \\
+    P(True)          &  0.175 & 0.037 & -0.023 & -0.062 & 0.068 & 0.002 \\
+    \midrule
+    Consistency      &  0.033 & 0.465 &  0.364 & 0.645 & 0.342 & 0.474 \\
+    \midrule
+    SP               &  0.278 & 0.434 &  0.334 & 0.655 & 0.472 & 0.470 \\
+    CoCoA$_\mathrm{SP}$  &  0.331 & 0.585 &  0.397 & 0.682 & 0.466 & 0.532 \\
+    PPL              &  0.227 & 0.485 &  0.303 & 0.659 & 0.472 & 0.312 \\
+    CoCoA$_\mathrm{PPL}$ &  0.303 & 0.551 &  0.372 & 0.687 & 0.466 & 0.491 \\
+    MTE              &  0.207 & 0.485 &  0.277 & 0.638 & 0.454 & 0.351 \\
+    CoCoA$_\mathrm{MTE}$ &  0.297 & 0.545 &  0.356 & 0.680 & 0.441 & 0.509 \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}
+
+\end{document}

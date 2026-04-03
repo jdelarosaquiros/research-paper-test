@@ -1,0 +1,34 @@
+\section{Introduction}
+\label{sec:intro}
+
+% Hook
+Reliable uncertainty quantification (UQ) is a prerequisite for deploying large language models (LLMs) in high-stakes applications such as medical question answering, legal summarization, and autonomous decision-making.
+An LLM that can accurately signal when its outputs are likely incorrect enables selective abstention, human-in-the-loop verification, and calibrated downstream decisions~\citep{kadavath2022language,xia2025survey}.
+
+% Problem
+Two dominant families of UQ methods have emerged.
+\textit{Confidence-based} methods estimate uncertainty from token-level probabilities of a single generated sequence~\citep{malinin2021uncertainty,fadeeva2024factcheck,duan2024shifting}, while \textit{consistency-based} methods measure semantic agreement across multiple sampled outputs~\citep{kuhn2023semantic,wang2023selfconsistency,lin2024generating,manakul2023selfcheck}.
+Each family captures a different facet of uncertainty: confidence methods reflect the model's distributional beliefs at the token level, whereas consistency methods capture the diversity of plausible answers in semantic space.
+However, neither family alone provides a complete picture.
+Confidence scores exhibit systematic length bias~\citep{vashurin2025line,santilli2025lengthbias}, and consistency methods fail when the model confidently repeats the same incorrect answer~\citep{hamidieh2026crossmodel}.
+
+% Gap
+\citet{cocoa2024} proposed CoCoA, a minimum Bayes risk (MBR) framework that multiplicatively combines confidence and consistency into a single uncertainty score.
+CoCoA consistently outperforms methods from either family alone, and its lightweight variant, CoCoA Light, approximates the consistency component with a small MLP trained on middle-layer embeddings, eliminating the need for repeated sampling at inference time.
+Despite these advances, CoCoA Light faces several limitations.
+The MLP is trained on consistency targets derived from a fixed number of multinomial samples, which provide a noisy and potentially biased estimate of true semantic agreement~\citep{fadeeva2026beams,aichberger2025sdlg}.
+The embedding features are extracted from a single middle layer, whereas recent work shows that token-level density scores across multiple layers~\citep{vazhentsev2025satmd}, attention patterns~\citep{vazhentsev2025tad,shelmanov2025uqheads}, and sparse activations~\citep{jiang2025rc} carry complementary uncertainty signals.
+Furthermore, CoCoA Light does not account for the length bias inherent in its confidence component~\citep{vashurin2025line} or the failure mode of self-consistency under model overconfidence~\citep{hamidieh2026crossmodel}.
+
+% Approach
+In this work, we propose \method{}, two simple and complementary modifications to CoCoA Light that address the single-layer bottleneck and the sensitivity of MSE training to noisy targets.
+First, we replace the single-layer embedding input with a \emph{multi-layer concatenation} of three adjacent layers, providing richer features that span multiple levels of semantic abstraction.
+Second, we substitute the MSE training loss with a \emph{Huber loss}, which reduces the influence of outlier consistency targets on the learned mapping.
+
+% Contributions
+Our contributions are as follows:
+\begin{itemize}
+    \item We show that concatenating embeddings from layers $\ell{-}2$, $\ell$, and $\ell{+}2$ (where $\ell$ is the selected middle layer) consistently improves PRR$_{0.5}$ across six diverse benchmarks, improving 22 of 24 dataset--estimator combinations over the single-layer baseline.
+    \item We demonstrate that replacing MSE with Huber loss provides small but consistent gains by reducing the influence of noisy consistency targets on the learned embedding-to-score mapping.
+    \item We provide an ablation study showing that multi-layer embeddings account for the majority of the improvement, with the largest gains on the raw consistency estimator (\texttt{SupervisedCocoa}), confirming that richer input features primarily improve the quality of the learned consistency approximation itself.
+\end{itemize}

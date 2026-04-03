@@ -1,4 +1,4 @@
-MAIN = main
+MAIN = emnlp2023
 TEXFILES = $(wildcard *.tex)
 BIBFILES = $(wildcard *.bib)
 
@@ -13,7 +13,7 @@ check:
 
 build: $(MAIN).pdf
 
-$(MAIN).pdf: $(TEXFILES) $(BIBFILES) neurips_2025.sty
+$(MAIN).pdf: $(TEXFILES) $(BIBFILES) emnlp2023.sty
 	latexmk -pdf -interaction=nonstopmode -halt-on-error $(MAIN).tex
 
 watch:

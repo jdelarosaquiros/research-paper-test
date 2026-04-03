@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented \method{}, two simple modifications to the CoCoA Light framework for LLM uncertainty quantification: multi-layer embedding concatenation and Huber loss training.
+By concatenating representations from three adjacent transformer layers, we provide the consistency-prediction MLP with richer input features that capture complementary semantic signals, improving 22 of 24 PRR$_{0.5}$ metrics on six benchmarks with Mistral-7B under greedy decoding.
+The gains are largest for the standalone consistency estimator (+3.8\% average, up to +28.1\% on XSUM), confirming that the multi-layer input directly improves the quality of the learned consistency approximation.
+The Huber loss contributes smaller but complementary gains by reducing sensitivity to noisy training targets.
+
+Both modifications require no additional inference cost: multi-layer embeddings reuse representations already computed during the CoCoA pipeline, and the Huber loss only changes the training objective.
+The total parameter increase is modest (from 4096-dim to 12{,}288-dim MLP input).
+
+\paragraph{Future work.}
+Promising directions include ranking-aware training losses that directly optimize for PRR rather than regression accuracy, per-dataset hyperparameter selection (particularly for small datasets like GSM8k), and attention-based aggregation over layer embeddings instead of simple concatenation.

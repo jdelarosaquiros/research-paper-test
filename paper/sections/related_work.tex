@@ -1,0 +1,45 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Confidence-based uncertainty estimation.}
+Confidence-based methods derive uncertainty from the token-level probability distribution of a single generated sequence.
+Sequence probability~\citep{malinin2021uncertainty}, predictive entropy, and mean token entropy are widely used baselines.
+\citet{duan2024shifting} introduced SAR, which reweights token contributions by their relevance to the answer.
+\citet{li2025uqac} proposed attention-chain-based backtracking to identify semantically critical tokens and compute marginal answer probabilities, improving calibration on reasoning tasks.
+\citet{schweighofer2025rethinking} showed that the negative log-likelihood of the greedy output is a theoretically motivated uncertainty measure under the zero-one scoring rule, matching multi-sample methods without any sampling.
+A persistent challenge for all token-probability methods is length bias: \citet{vashurin2025line} demonstrated that even nominally length-normalized measures exhibit statistically significant linear trends with output length and proposed a post-hoc linear debiasing procedure.
+\citet{santilli2025lengthbias} further showed that mutual biases between UQ methods and evaluation metrics can distort AUROC rankings, recommending LM-as-a-judge correctness functions.
+
+\paragraph{Consistency-based uncertainty estimation.}
+Consistency methods generate multiple outputs and measure their semantic agreement.
+Semantic entropy~\citep{kuhn2023semantic} clusters outputs into equivalence classes via natural language inference (NLI) and computes entropy over cluster probabilities.
+Graph-based variants use pairwise similarity matrices to compute degree, eccentricity, or spectral features~\citep{lin2024generating}.
+\citet{nguyen2025snne} proposed Semantic Nearest Neighbor Entropy, which accounts for both intra- and inter-cluster similarity, addressing the degradation of semantic entropy on longer outputs.
+A key bottleneck is sampling efficiency: generating 5--20 diverse outputs per query is expensive.
+\citet{aichberger2025sdlg} introduced importance sampling with a semantically diverse proposal distribution that covers more clusters with fewer samples, and \citet{park2025diversity} injected continuous similarity penalties into decoding for similar effect.
+\citet{fadeeva2026beams} replaced multinomial sampling with beam search and importance-weighted estimators, proving lower variance guarantees and achieving the best consistency-based results on short-form QA.
+\citet{hamidieh2026crossmodel} diagnosed a fundamental failure mode: when an LLM is confidently wrong, self-consistency yields low uncertainty.
+They addressed this by adding cross-model epistemic disagreement, which flags confident failures that intra-model consistency misses.
+
+\paragraph{Internal-representation-based methods.}
+A growing line of work extracts uncertainty signals directly from LLM hidden states, avoiding the cost of multi-sample generation.
+\citet{chen2024inside} introduced EigenScore, which computes eigenvalues of the covariance matrix of middle-layer sentence embeddings across generations, establishing that middle layers carry the strongest hallucination-detection signal.
+\citet{vazhentsev2025satmd} adapted Mahalanobis distance to token-level embeddings across multiple layers, training a linear regression on PCA-reduced features to achieve results competitive with sampling-based methods at a fraction of the cost.
+\citet{vazhentsev2025tad} proposed TAD, a supervised method that propagates uncertainty recurrently across generation steps using attention maps, achieving mean rank 1 across 11 datasets and 3 LLMs.
+\citet{shelmanov2025uqheads} trained transformer-based UQ heads on attention maps and token log-probabilities for claim-level hallucination detection, finding that attention features outperform hidden-state features alone.
+\citet{bakman2026featuregaps} decomposed epistemic uncertainty into three interpretable feature gaps computed from internal states, outperforming prior supervised methods on contextual QA with negligible overhead.
+\citet{gao2025flue} exploited the redundancy of hidden states across adjacent transformer layers to obtain single-pass Monte Carlo uncertainty estimates, matching semantic entropy with zero additional inference cost.
+\citet{chen2026querylevel} showed that pre-generation ``Internal Confidence'' from middle-layer representations achieves competitive AUROC while being 30--600$\times$ faster than post-generation methods.
+\citet{jiang2025rc} demonstrated that internal activation consistency within answer groups improves self-consistency, with SAE-sparsified activations outperforming NLI-based similarity.
+CoCoA Light~\citep{cocoa2024} fits within this family, using a middle-layer embedding MLP to approximate consistency scores.
+
+\paragraph{Hybrid and post-hoc correction methods.}
+Several methods combine confidence and consistency signals or apply post-hoc corrections.
+CoCoA~\citep{cocoa2024} is the most direct example, multiplicatively combining token-probability confidence with MBR-based consistency.
+\citet{bakman2025wild} evaluated 19 UE methods across practical challenges and found that ensembling diverse scores improves performance by up to 8 PRR points, validating the combination strategy.
+\citet{li2025cue} proposed CUE, a lightweight corrector that post-hoc adjusts any UE score using a trained classifier, but found that existing methods are ``homogeneous''---combining their raw scores yields no improvement without a learned corrector.
+\citet{cox2025mapping} introduced semantic-invariant perturbation sampling, which decomposes uncertainty into epistemic (inter-paraphrase) and aleatoric (intra-paraphrase) components via embedding variance.
+\citet{vipulanandan2026qtn} improved semantic entropy by modeling aleatoric uncertainty in token probabilities with quantum tensor networks.
+\citet{zhang2026tokur} proposed token-level uncertainty decomposition via low-rank weight perturbation, providing aleatoric and epistemic scores at each token.
+\citet{da2025topouq} extended consistency measurement from flat semantic agreement to structural reasoning topology comparison.
+\citet{soudani2025rag} showed that existing UE methods, including those CoCoA builds upon, violate basic axioms in retrieval-augmented generation settings, identifying an open challenge for hybrid methods.
