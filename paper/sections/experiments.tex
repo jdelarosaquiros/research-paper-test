@@ -1,78 +1,113 @@
 \section{Experiments}
 \label{sec:experiments}
 
-\subsection{Setup}
+In this section, we present the experimental setup, the results, and the ablations.
 
-We follow the experimental protocol of \citet{cocoa2024}.
-All experiments use Mistral-7B-Base~\citep{jiang2023mistral} under greedy decoding.
-We evaluate on six benchmarks: MMLU and GSM8k (accuracy), CoQA and TriviaQA (AlignScore), XSUM (AlignScore\textsubscript{Input$\to$Output}), and WMT19\,De$\to$En (COMET).
-The evaluation metric is PRR$_{0.5}$ (normalized), which measures the area under the prediction-rejection curve at 50\% rejection, normalized between random and oracle baselines.
-Higher values indicate better uncertainty ranking.
+%-------------------------------------------------------------------------------
+\subsection{Experimental Setup}
+\label{sec:experimental_setup}
 
-The MLP architecture follows \citet{cocoa2024}: a projection network ($3d \to 8192 \to 4096$, with LayerNorm, GELU, and dropout) followed by a classifier ($4096 \to 2048 \to 1$).
-For \method{}, the input dimension is $3d = 12{,}288$ (layers 14, 16, 18); all other hyperparameters match the baseline: learning rate $10^{-5}$, weight decay 0.1, batch size 4 with gradient accumulation 7 (effective batch 28), 20 epochs, mean pooling, seed~0.
-The only differences are (i)~the multi-layer input and (ii)~the Huber loss with $\delta = 0.1$.
+To evaluate the effectiveness of our proposed framework, we extended the LM-Polygraph library~\cite{vashurin2025lmpolygraph,fadeeva2023lmpolygraph}. Since it already includes tools for calculating other uncertainty scores, it provided a convenient and efficient environment for setting up and running experiments. The primary objective of our experiments is to evaluate whether our method offers improved performance in key tasks such as question answering (QA), text summarization (SUM), and machine translation (MT), compared to existing baselines.
 
-\subsection{Main results}
+\paragraph{Datasets.}
+For QA, we selected diverse datasets to capture a variety of challenges: TriviaQA~\cite{joshi2017triviaqa}, an open-domain factual QA dataset; CoQA~\cite{reddy2019coqa}, a conversational QA benchmark requiring multi-turn contextual understanding; MMLU~\cite{hendrycks2021mmlu}, a multitask dataset spanning 57 topics to test broad knowledge; and GSM8k~\cite{cobbe2021gsm8k}, which focuses on grade-school math problems requiring logical reasoning. For translation, we evaluated our method on WMT14 French-English~\cite{bojar2014wmt14} and WMT19 German-English~\cite{barrault2019wmt19}. Finally, for summarization, we used XSUM~\cite{narayan2018xsum}, a dataset of complex documents paired with concise abstractive summaries. For all datasets, we follow~\cite{vashurin2025lmpolygraph} in subset selection, prompt formatting, and few-shot example sourcing.
 
-\tabref{tab:main_results} compares CoCoA Light (baseline) and \method{} across all six benchmarks and four estimator variants.
+\paragraph{Models.}
+We evaluated our method on the base versions of three open-weight language models: LLaMA~3.1 8B~\cite{touvron2023llama}, Mistral~7B~\cite{jiang2023mistral}, and Falcon~3 7B~\cite{falcon2024}. The open-weight nature of these models enables direct access to token probabilities, which is crucial for implementing our UQ method. All experiments were conducted using the base (non-instruction-tuned) variants. We additionally report results on the larger Gemma~3 12B-Base model~\cite{gemma2025}, with detailed analysis provided in \secref{app:larger_model}.
 
-\begin{table}[t]
-  \centering
-  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding.
-    \textbf{Bold}: best per row. $\Delta$: relative change from baseline.
-    \method{} uses multi-layer embeddings (layers 14, 16, 18) and Huber loss ($\delta{=}0.1$).}
-  \label{tab:main_results}
-  \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{ll rr r rr r}
-    \toprule
-    & & \multicolumn{3}{c}{SupervisedCocoa (consistency only)} & \multicolumn{3}{c}{SupervisedCocoaMSP (consistency $\times$ SP)} \\
-    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    Dataset & Gen.\ Metric & CoCoA Light & \method{} & $\Delta$ & CoCoA Light & \method{} & $\Delta$ \\
-    \midrule
-    MMLU       & Accuracy   & 0.304 & \textbf{0.344} & +13.0\% & 0.471 & \textbf{0.480} & +1.9\% \\
-    GSM8k      & Accuracy   & \textbf{0.427} & 0.418 & $-$2.2\% & 0.501 & \textbf{0.503} & +0.5\% \\
-    CoQA       & AlignScore & 0.367 & \textbf{0.384} & +4.8\%  & 0.522 & \textbf{0.527} & +1.1\% \\
-    TriviaQA   & AlignScore & 0.620 & \textbf{0.626} & +1.0\%  & 0.695 & \textbf{0.696} & +0.0\% \\
-    XSUM       & AlignScore & 0.019 & \textbf{0.024} & +28.1\% & 0.315 & \textbf{0.321} & +1.7\% \\
-    WMT19      & COMET      & 0.463 & \textbf{0.490} & +5.8\%  & 0.560 & \textbf{0.564} & +0.7\% \\
-    \midrule
-    \multicolumn{2}{l}{\textit{Average}} & 0.367 & \textbf{0.381} & +3.8\% & 0.511 & \textbf{0.515} & +0.8\% \\
-    \bottomrule
-    \\
-    \toprule
-    & & \multicolumn{3}{c}{SupervisedCocoaPPL (consistency $\times$ PPL)} & \multicolumn{3}{c}{SupervisedCocoaMTE (consistency $\times$ MTE)} \\
-    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    Dataset & Gen.\ Metric & CoCoA Light & \method{} & $\Delta$ & CoCoA Light & \method{} & $\Delta$ \\
-    \midrule
-    MMLU       & Accuracy   & 0.471 & \textbf{0.480} & +1.9\%  & 0.441 & \textbf{0.461} & +4.5\% \\
-    GSM8k      & Accuracy   & 0.426 & \textbf{0.430} & +0.9\%  & 0.455 & \textbf{0.458} & +0.5\% \\
-    CoQA       & AlignScore & 0.275 & \textbf{0.283} & +2.8\%  & 0.255 & \textbf{0.266} & +4.1\% \\
-    TriviaQA   & AlignScore & 0.690 & \textbf{0.690} & +0.1\%  & 0.675 & \textbf{0.676} & +0.2\% \\
-    XSUM       & AlignScore & 0.289 & \textbf{0.296} & +2.2\%  & 0.280 & \textbf{0.288} & +3.1\% \\
-    WMT19      & COMET      & 0.564 & \textbf{0.573} & +1.7\%  & 0.556 & \textbf{0.570} & +2.5\% \\
-    \midrule
-    \multicolumn{2}{l}{\textit{Average}} & 0.452 & \textbf{0.459} & +1.4\% & 0.444 & \textbf{0.453} & +2.0\% \\
-    \bottomrule
-  \end{tabular}%
-  }
-\end{table}
+\paragraph{Similarity Function.}
+To measure the similarity between two generations, we use the RoBERTa-large cross-encoder model, fine-tuned on the Semantic Textual Similarity benchmark dataset~\cite{liu2019roberta,reimers2019sentence,cer2017semeval}. This model is widely regarded as one of the most reliable and commonly used approaches for evaluating sentence similarity. The cross-encoder processes two sequences jointly and directly outputs a similarity score ranging from 0 to 1, providing a nuanced measure. \secref{app:ablation_similarity} contains comparative experiments with cross-encoder and other choices of the similarity function, substantiating this choice.
 
-\paragraph{Overall improvement.}
-\method{} improves 22 of 24 dataset--estimator combinations, with an average gain of +3.2\% across all metrics.
-The improvements are largest for the standalone consistency estimator (\texttt{SupervisedCocoa}), where the average gain is +3.8\%, confirming that the multi-layer input primarily improves the quality of the learned consistency approximation itself.
-The combined estimators (MSP, PPL, MTE) show smaller but consistent gains of +0.8\% to +2.0\%, since the multiplicative combination with the confidence component dilutes the consistency improvement.
+\paragraph{Baselines.}
+We compare the performance of the proposed method against a diverse set of baselines and state-of-the-art UQ scores, including confidence-based, consistency-based, and hybrid approaches. For information-based approaches, we evaluate Sequence Probability (SP), Perplexity (PPL), Mean Token Entropy (MTE), Monte Carlo Sequence Entropy (MCSE), and Monte Carlo Normalized Sequence Entropy (MCNSE). In the consistency-based category, we consider the Degree Matrix (DegMat) and the Sum of Eigenvalues of the Graph Laplacian (EigValLaplacian). Finally, we include hybrid methods Semantic Entropy and SAR, as well as verbalized confidence method P(true)~\cite{kadavath2022language}. All formulations for these baselines can be found in \secref{app:uq_methods}. Finally, we evaluate the performance of $\hat{U}_{\mathrm{cons}}$ (Consistency) and $\hat{U}^{L}_{\mathrm{cons}}$ (Consistency Light) as an uncertainty measure.
 
-\paragraph{Per-dataset analysis.}
-The largest gains appear on XSUM (+28.1\% for \texttt{SupervisedCocoa}) and MMLU (+13.0\%), where the baseline consistency predictions were weakest.
-These datasets likely benefit most from the richer multi-layer features because their single-layer embeddings carry less discriminative information about consistency.
-WMT19 (+5.8\%) and CoQA (+4.8\%) show moderate improvements.
-TriviaQA, where the baseline was already strong (PRR $>$ 0.62), improves only marginally (+1.0\%), suggesting diminishing returns when the single-layer representation is already informative.
-GSM8k is the only dataset where the standalone consistency estimator regresses ($-$2.2\%), though the combined estimators still improve slightly; we attribute this to the small training set size for GSM8k, which makes the larger model more prone to variance.
+\paragraph{Evaluation Measure.}
+As our evaluation measure, we chose the Prediction Rejection Ratio (PRR), which measures the effectiveness of the uncertainty scores for identifying high-quality predictions~\cite{malinin2021uncertainty}. PRR operates by progressively rejecting predictions with uncertainty scores above a threshold $a$ and observing how the average quality of the remaining predictions changes. It is calculated as the ratio of two areas: the area between the Prediction Rejection (PR) curves for the evaluated uncertainty score and a random baseline, and the area between the oracle (the ideal uncertainty score that perfectly ranks instances by quality) and the random baseline. Formally, PRR is defined as follows:
+\begin{equation}
+  \mathrm{PRR} = \frac{\mathrm{AUC}_{\mathrm{unc}} - \mathrm{AUC}_{\mathrm{rnd}}}{\mathrm{AUC}_{\mathrm{oracle}} - \mathrm{AUC}_{\mathrm{rnd}}}.
+  \label{eq:prr}
+\end{equation}
+Higher PRR values indicate better alignment of uncertainty scores with prediction quality, approaching the performance of an oracle. To ensure practical applicability, we compute PRR only up to a rejection threshold of 50\%, preventing cases where excessive rejection artificially inflates the quality measures. For the QA datasets, we further report AUROC (see \secref{app:auroc}).
 
-\subsection{Ablation: Huber loss vs.\ multi-layer embeddings}
+\paragraph{Quality Measures.}
+PRR requires an appropriate quality measure for each specific task to effectively evaluate the model output. For question-answering tasks, we use Accuracy to directly evaluate whether the generated answers match the ground truth in short-form QA tasks (e.g., MMLU), and we use the AlignScore between the correct answer and generated sequence for assessing the performance for long-form QA tasks~\cite{zha2023alignscore}. For summarization tasks, we use AlignScore to measure the alignment between the output summary and the input document. For translation tasks, we use COMET, as it captures both semantic adequacy and fluency~\cite{rei2020comet}.
 
-To disentangle the contributions of the two modifications, we trained models with Huber loss alone (single-layer input) and with multi-layer input and MSE loss.
-Huber loss alone improves 10 of 24 metrics by an average of +1.1\%, with the largest gains on WMT19 (+1.7\%) and MMLU (+2.4\%).
-Multi-layer embeddings alone account for approximately 80\% of the total improvement observed in \method{}, confirming that the richer input representation is the primary driver.
-The two modifications are complementary: Huber loss provides a small additional gain on top of multi-layer embeddings, particularly for datasets with noisier consistency targets (XSUM, WMT19).
+To further improve the comprehensiveness of the reported results, we considered alternative choices of quality measures, and report the corresponding PRR scores in \secref{app:alt_metrics}.
+
+\paragraph{Generation Setup.}
+We discuss the generation parameters, the decoding strategy, and the sample selection procedure in depth in \secref{app:decoding}. In short, we report the evaluation results in two distinct setups: greedy decoding and stochastic sampling with focus on the most probable sequence among the generated outputs (best-sample). These two setups offer the highest-quality outputs and are the most reasonable generation approaches in practice.
+
+\paragraph{CoCoA Light Details.}
+We use a multilayer perceptron network as an auxiliary model. The features used are embeddings from the middle layers of the base LLM, which are the most informative according to recent work~\cite{chen2024inside}. In particular, for Llama~3.1 8B and Mistral~7B models, we take embeddings from the 16th layer, and for Falcon~3 7B from the 14th layer. More details on the training are available in \secref{app:cocoa_light_training}.
+
+\paragraph{\method{} Details.}
+For \method{}, we use multi-layer embeddings from layers 14, 16, and 18 of Mistral-7B-Base (input dimension $3d = 12{,}288$), combined with Huber loss ($\delta = 0.1$). All other hyperparameters match the CoCoA Light baseline: learning rate $10^{-5}$, weight decay 0.1, batch size 4 with gradient accumulation 7 (effective batch 28), 20 epochs, mean pooling, seed~0.
+
+%-------------------------------------------------------------------------------
+\subsection{Results}
+\label{sec:results}
+
+\tabref{tab:cocoa_table1} shows the PRR scores under the greedy generation setup (see \secref{app:best_sample_mbr} for Best Sample and MBR Sample). We report aggregated PRR for each type of task---question answering, neural machine translation (NMT), and summarization (SUM)---by averaging the results across all relevant datasets (e.g., TriviaQA, MMLU, CoQA, GSM8k for QA). This aggregated score provides a concise measure of the performance for each model for each task. Detailed results for each dataset separately can be found in \secref{app:detailed_results}.
+
+We can see that CoCoA methods are the best across all tasks and models. They outperform existing consistency-based and hybrid state-of-the-art approaches, like Semantic Entropy and SAR. In addition, the proposed CoCoA approach consistently surpasses the baseline UQ measures: for example, $\text{CoCoA}_{\mathrm{PPL}}$ outperforms standard Perplexity, illustrating the advantage of combining token-level confidence with semantic consistency. This pattern holds for other information-based metrics as well, demonstrating that using the consistency between multiple sampled outputs reliably enhances uncertainty quantification.
+
+\begin{table*}[t]
+\centering
+\caption{Results for Evaluated Sequence -- Greedy Sample: Mean PRR across datasets for each task. The best-performing method is shown in bold, and the second-best is underscored. The arrows indicate improvement in CoCoA over the base version. \method{} rows show results for multi-layer embeddings + Huber loss (Mistral only; other models not tested). \textbf{TODO: Update table results with new benchmark}}
+\label{tab:cocoa_table1}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+ & \multicolumn{3}{c}{Llama8b-Base} & \multicolumn{3}{c}{Mistral7b-Base} & \multicolumn{3}{c}{Falcon7b-Base} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+Metric & QA & NMT & SUM & QA & NMT & SUM & QA & NMT & SUM \\
+\midrule
+MCSE & 0.310 & 0.323 & 0.033 & 0.389 & 0.304 & 0.007 & 0.414 & 0.317 & 0.159 \\
+MCNSE & 0.309 & 0.393 & 0.022 & 0.384 & 0.410 & 0.009 & 0.405 & 0.422 & 0.108 \\
+Semantic Entropy & 0.356 & 0.343 & 0.033 & 0.423 & 0.327 & 0.008 & 0.439 & 0.348 & 0.164 \\
+DegMat & 0.406 & 0.302 & 0.081 & 0.423 & 0.305 & 0.137 & 0.483 & 0.353 & 0.201 \\
+EigValLaplacian & 0.375 & 0.238 & 0.079 & 0.391 & 0.267 & 0.132 & 0.459 & 0.312 & 0.201 \\
+SAR & 0.414 & 0.455 & 0.077 & 0.462 & 0.435 & 0.094 & 0.481 & 0.458 & 0.144 \\
+P(True) & $-$0.064 & 0.042 & 0.058 & $-$0.029 & 0.075 & 0.179 & 0.118 & 0.155 & $-$0.159 \\
+Consistency & 0.437 & 0.421 & 0.024 & 0.471 & 0.392 & 0.051 & 0.494 & 0.416 & 0.226 \\
+Consistency Light & 0.390 & 0.458 & $-$0.022 & 0.444 & 0.387 & $-$0.006 & 0.427 & 0.476 & 0.232 \\
+\method{} & --- & --- & --- & 0.443 & 0.490 & 0.024 & --- & --- & --- \\
+\midrule
+SP & 0.409 & 0.399 & 0.328 & 0.475 & 0.383 & 0.287 & 0.475 & 0.356 & 0.201 \\
+CoCoA$_{\mathrm{SP}}$ & 0.451\,$\uparrow$ & 0.519\,$\uparrow$ & 0.378\,$\uparrow$ & 0.509\,$\uparrow$ & 0.497\,$\uparrow$ & 0.330\,$\uparrow$ & 0.511\,$\uparrow$ & 0.505\,$\uparrow$ & 0.257\,$\uparrow$ \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.449\,$\uparrow$ & 0.502\,$\uparrow$ & 0.358\,$\uparrow$ & 0.503\,$\uparrow$ & 0.480\,$\uparrow$ & 0.309\,$\uparrow$ & 0.492\,$\uparrow$ & 0.514\,$\uparrow$ & 0.242\,$\uparrow$ \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & \textbf{0.552} & 0.564 & 0.321 & --- & --- & --- \\
+\midrule
+PPL & 0.381 & 0.386 & 0.369 & 0.424 & 0.427 & 0.204 & 0.456 & 0.450 & 0.155 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.454\,$\uparrow$ & 0.481\,$\uparrow$ & 0.387\,$\uparrow$ & 0.494\,$\uparrow$ & 0.472\,$\uparrow$ & 0.286\,$\uparrow$ & 0.523\,$\uparrow$ & 0.508\,$\uparrow$ & 0.229\,$\uparrow$ \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.445\,$\uparrow$ & 0.487\,$\uparrow$ & 0.382\,$\uparrow$ & 0.479\,$\uparrow$ & 0.480\,$\uparrow$ & 0.260\,$\uparrow$ & 0.512\,$\uparrow$ & 0.528\,$\uparrow$ & 0.234\,$\uparrow$ \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & 0.471 & \textbf{0.573} & 0.296 & --- & --- & --- \\
+\midrule
+MTE & 0.353 & 0.382 & 0.357 & 0.417 & 0.438 & 0.182 & 0.456 & 0.473 & 0.152 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.447\,$\uparrow$ & 0.478\,$\uparrow$ & 0.380\,$\uparrow$ & 0.492\,$\uparrow$ & 0.469\,$\uparrow$ & 0.288\,$\uparrow$ & 0.527\,$\uparrow$ & 0.508\,$\uparrow$ & 0.228\,$\uparrow$ \\
+CoCoA$_{\mathrm{MTE}}$ Light & 0.428\,$\uparrow$ & 0.494\,$\uparrow$ & 0.372\,$\uparrow$ & 0.475\,$\uparrow$ & 0.482\,$\uparrow$ & 0.254\,$\uparrow$ & 0.507\,$\uparrow$ & 0.533\,$\uparrow$ & 0.234\,$\uparrow$ \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & 0.465 & 0.570 & 0.288 & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+%-------------------------------------------------------------------------------
+\subsection{Ablations}
+\label{sec:ablations}
+
+\paragraph{Similarity Function.}
+We investigate the impact of different similarity measures (see \secref{app:ablation_similarity}). On average, the cross-encoder provides strong performance. However, for summarization tasks, AlignScore yields better results, while in long-form QA, similarity based on Natural Language Inference (NLI) sometimes outperforms the cross-encoder. We hypothesize that for generation with shorter outputs (1--2 sentences), any capable NLI or cross-encoder model is sufficient. For longer generations, approaches that estimate similarity over chunks and then aggregate scores (e.g., AlignScore) may be more effective. Nevertheless, across all tasks, the cross-encoder achieves the best overall performance and, in scenarios where tuning is not feasible, serves as a strong default choice.
+
+\paragraph{Alternative Formulations.}
+The next section of our ablation study focuses on alternative forms of combining model confidence $u(y^{*} \mid x)$ and consistency $\hat{U}_{\mathrm{cons}}(y^{*} \mid x)$; see \secref{app:ablation_combination}. First, we consider an additive form of combining them:
+\begin{equation}
+  \hat{U}_{\text{AdditiveCoCoA}}(y^{*} \mid x)
+    = u(y^{*} \mid x) + \hat{U}_{\mathrm{cons}}(y^{*} \mid x).
+  \label{eq:additive_cocoa}
+\end{equation}
+The results show that this additive formulation does not perform as well as the multiplicative one. The additive form tends to underemphasize the interaction between the two components, which is critical for capturing the nuanced relationships between confidence and consistency.
+
+We also consider an alternative formulation of the consistency term $\hat{U}_{\mathrm{cons}}(y^{*} \mid x)$, as the average of the full pairwise dissimilarity. In this formulation, $\hat{U}_{\mathrm{cons}}(y^{*} \mid x)$ represents the average inconsistency across all samples rather than focusing solely on the dissimilarity of the evaluated sequence with the other samples. Our experiments demonstrate that this formulation is not very strong. By distributing the consistency computation across all samples, it loses focus on the specific sequence being evaluated.
+
+Lastly, in \secref{app:ablation_combination}, we also consider alternative formulations of the information-based metric that do not rely on logarithmic transformations. While we primarily use logarithms due to their numerical stability, we explore an alternative approach by converting these values back to probabilities and analyzing their impact on uncertainty quantification. Our findings indicate that both formulations exhibit consistent performance and yield similar results. This suggests that while logarithmic transformations enhance numerical stability, the choice between log-based and probability-based formulations does not affect much the overall performance.

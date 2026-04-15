@@ -21,7 +21,7 @@ A key bottleneck is sampling efficiency: generating 5--20 diverse outputs per qu
 \citet{hamidieh2026crossmodel} diagnosed a fundamental failure mode: when an LLM is confidently wrong, self-consistency yields low uncertainty.
 They addressed this by adding cross-model epistemic disagreement, which flags confident failures that intra-model consistency misses.
 
-\paragraph{Internal-representation-based methods.}
+\paragraph{Mechanistic-based methods.}
 A growing line of work extracts uncertainty signals directly from LLM hidden states, avoiding the cost of multi-sample generation.
 \citet{chen2024inside} introduced EigenScore, which computes eigenvalues of the covariance matrix of middle-layer sentence embeddings across generations, establishing that middle layers carry the strongest hallucination-detection signal.
 \citet{vazhentsev2025satmd} adapted Mahalanobis distance to token-level embeddings across multiple layers, training a linear regression on PCA-reduced features to achieve results competitive with sampling-based methods at a fraction of the cost.

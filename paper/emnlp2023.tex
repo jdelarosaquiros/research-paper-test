@@ -34,6 +34,8 @@
 \usepackage{nicefrac}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{adjustbox}
 
 % Macros
 \newcommand{\method}{Our Method}
@@ -74,44 +76,1258 @@
 
 \appendix
 
-\section{Additional Results}
-\label{app:results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDICES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Table~\ref{tab:table11_mistral} reproduces the Mistral-7B-Base columns of Table~11 of
-\citet{cocoa2024}, reporting PRR$_{0.5}$ (normalized) under greedy decoding across six
-datasets. Generation metrics follow the paper: AlignScore\textsubscript{Input$\to$Output} for
-XSUM, COMET for WMT19\,De$\to$En, AlignScore\textsubscript{Output$\to$Target} for CoQA, and
-Accuracy for TriviaQA, MMLU, and GSM8k. WMT14\,Fr$\to$En is omitted (no results available).
+\section{Decoding Strategy and Sample Selection}
+\label{app:decoding}
 
-\begin{table}[htbp]
-  \centering
-  \caption{PRR$_{0.5}$ (normalized) for Mistral-7B-Base, greedy decoding, reproduced from
-    Table~11 of \citet{cocoa2024}. Higher is better.}
-  \label{tab:table11_mistral}
-  \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{lrrrrrr}
-    \toprule
-    Method & XSUM & WMT19\,De$\to$En & CoQA & TriviaQA & MMLU & GSM8k \\
-    \midrule
-    MCSE             &  0.024 & 0.349 &  0.272 & 0.518 & 0.335 & 0.474 \\
-    MCNSE            & -0.014 & 0.479 &  0.290 & 0.561 & 0.354 & 0.458 \\
-    Semantic Entropy &  0.026 & 0.386 &  0.295 & 0.567 & 0.385 & 0.474 \\
-    DegMat           &  0.152 & 0.397 &  0.375 & 0.620 & 0.409 & 0.327 \\
-    EigValLaplacian  &  0.151 & 0.338 &  0.345 & 0.582 & 0.398 & 0.270 \\
-    SAR              &  0.070 & 0.505 &  0.348 & 0.627 & 0.409 & 0.512 \\
-    P(True)          &  0.175 & 0.037 & -0.023 & -0.062 & 0.068 & 0.002 \\
-    \midrule
-    Consistency      &  0.033 & 0.465 &  0.364 & 0.645 & 0.342 & 0.474 \\
-    \midrule
-    SP               &  0.278 & 0.434 &  0.334 & 0.655 & 0.472 & 0.470 \\
-    CoCoA$_\mathrm{SP}$  &  0.331 & 0.585 &  0.397 & 0.682 & 0.466 & 0.532 \\
-    PPL              &  0.227 & 0.485 &  0.303 & 0.659 & 0.472 & 0.312 \\
-    CoCoA$_\mathrm{PPL}$ &  0.303 & 0.551 &  0.372 & 0.687 & 0.466 & 0.491 \\
-    MTE              &  0.207 & 0.485 &  0.277 & 0.638 & 0.454 & 0.351 \\
-    CoCoA$_\mathrm{MTE}$ &  0.297 & 0.545 &  0.356 & 0.680 & 0.441 & 0.509 \\
-    \bottomrule
-  \end{tabular}%
-  }
-\end{table}
+Modern LLMs are capable of producing output using a wide range of decoding strategies, and it is not readily apparent which one to use as a foundation for UQ experiments. On top of that, when sampling multiple outputs stochastically, one has to decide which sample to select for comparison with the target sequence and UQ purposes. To facilitate the choice of decoding and sample selection strategies for our experiments, we conducted an evaluation of model performance with different approaches to both.
+
+\tabref{tab:cocoa_table2} shows average values of corresponding quality metrics for all combinations of models and datasets. We considered 4 approaches for the selection of output that subsequently is used to calculate the quality of generation:
+
+\begin{itemize}
+  \item \textbf{Greedy decoding} produces single output by selecting top-1 candidate token at each generation step, thus no further selection of sample is needed.
+  \item \textbf{Random sample} corresponds to the case where random output is selected among the number of samples produced by repeatedly prompting the model with the same question.
+  \item \textbf{Most Probable sample} selects the output with highest model-assigned probability among several sampled outputs.
+  \item \textbf{MBR sample} selects the output with highest average consistency with respect to other sampled outputs.
+\end{itemize}
+
+We note that selecting a random sample from the model outputs incurs a significant drop in the quality of results on several datasets, most prominently on GSM8k. Based on these observations, we evaluate the efficacy of UQ in three setups: greedy decoding, stochastic sampling with a focus on the most probable sample and MBR decoding.
+
+This table reports base quality metrics (not method-specific), so \method{} rows are not applicable.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Base quality metrics for models for different evaluated sequence choice.}
+\label{tab:cocoa_table2}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{ll cccc}
+\toprule
+ & Sample / Metric & Greedy & Random Sample & Most Probable Sample & MBR Sample \\
+\midrule
+\multirow{7}{*}{Falcon7b-Base}
+ & CoQA / Align Score & 0.793 & 0.706 & 0.783 & 0.793 \\
+ & GSM8k / Accuracy & 0.776 & 0.313 & 0.205 & 0.419 \\
+ & MMLU / Accuracy & 0.715 & 0.638 & 0.715 & 0.699 \\
+ & TriviaQA / Align Score & 0.557 & 0.473 & 0.568 & 0.559 \\
+ & WMT14FrEn / Comet & 0.867 & 0.833 & 0.857 & 0.855 \\
+ & WMT19DeEn / Comet & 0.846 & 0.807 & 0.826 & 0.828 \\
+ & XSUM / Align Score & 0.842 & 0.734 & 0.782 & 0.801 \\
+\midrule
+\multirow{7}{*}{Llama8b-Base}
+ & CoQA / Align Score & 0.756 & 0.671 & 0.743 & 0.766 \\
+ & GSM8k / Accuracy & 0.548 & 0.234 & 0.261 & 0.346 \\
+ & MMLU / Accuracy & 0.570 & 0.368 & 0.577 & 0.469 \\
+ & TriviaQA / Align Score & 0.686 & 0.625 & 0.687 & 0.699 \\
+ & WMT14FrEn / Comet & 0.863 & 0.819 & 0.852 & 0.844 \\
+ & WMT19DeEn / Comet & 0.870 & 0.816 & 0.854 & 0.845 \\
+ & XSUM / Align Score & 0.848 & 0.608 & 0.825 & 0.703 \\
+\midrule
+\multirow{7}{*}{Mistral7b-Base}
+ & CoQA / Align Score & 0.793 & 0.695 & 0.777 & 0.790 \\
+ & GSM8k / Accuracy & 0.382 & 0.169 & 0.190 & 0.259 \\
+ & MMLU / Accuracy & 0.632 & 0.552 & 0.632 & 0.612 \\
+ & TriviaQA / Align Score & 0.743 & 0.655 & 0.750 & 0.739 \\
+ & WMT14FrEn / Comet & 0.863 & 0.812 & 0.830 & 0.841 \\
+ & WMT19DeEn / Comet & 0.864 & 0.805 & 0.836 & 0.837 \\
+ & XSUM / Align Score & 0.803 & 0.578 & 0.775 & 0.665 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{Results Summary for Most Probable Sample and MBR Sample Strategies}
+\label{app:best_sample_mbr}
+
+\tabref{tab:cocoa_table3} and \tabref{tab:cocoa_table4} report the PRR scores under the Most Probable Sample and MBR Sample generation setups, as discussed in \secref{sec:results}. We observe that CoCoA-family methods, and their Supervised versions, consistently improve base uncertainty estimators.
+
+\method{} was only tested under greedy decoding, so results are not available for these tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Results for Evaluated Sequence -- Most Probable Sample: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
+\label{tab:cocoa_table3}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+ & \multicolumn{3}{c}{Llama8b-Base} & \multicolumn{3}{c}{Mistral7b-Base} & \multicolumn{3}{c}{Falcon7b-Base} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+Metric & QA & NMT & SUM & QA & NMT & SUM & QA & NMT & SUM \\
+\midrule
+MCSE & 0.356 & 0.380 & 0.192 & 0.453 & 0.406 & 0.162 & 0.460 & 0.409 & 0.128 \\
+MCNSE & 0.380 & 0.429 & 0.186 & 0.466 & 0.489 & 0.196 & 0.530 & 0.424 & 0.153 \\
+Semantic Entropy & 0.396 & 0.411 & 0.194 & 0.482 & 0.438 & 0.164 & 0.479 & 0.440 & 0.134 \\
+DegMat & 0.422 & 0.342 & 0.191 & 0.465 & 0.425 & 0.205 & 0.543 & 0.386 & 0.177 \\
+EigValLaplacian & 0.388 & 0.274 & 0.190 & 0.426 & 0.366 & 0.197 & 0.498 & 0.336 & 0.174 \\
+SAR & 0.478 & 0.506 & 0.159 & 0.542 & 0.576 & 0.175 & 0.590 & 0.488 & 0.193 \\
+P(True) & $-$0.071 & 0.066 & 0.058 & 0.051 & 0.371 & 0.207 & 0.281 & 0.245 & 0.022 \\
+Consistency & 0.535 & 0.536 & 0.030 & 0.572 & 0.689 & 0.071 & 0.626 & 0.571 & 0.282 \\
+\midrule
+SP & 0.395 & 0.376 & 0.464 & 0.444 & 0.252 & 0.330 & 0.343 & 0.381 & 0.099 \\
+CoCoA$_{\mathrm{SP}}$ & 0.484\,$\uparrow$ & 0.607\,$\uparrow$ & 0.484\,$\uparrow$ & 0.526\,$\uparrow$ & 0.721\,$\uparrow$ & 0.366\,$\uparrow$ & 0.529\,$\uparrow$ & 0.631\,$\uparrow$ & 0.210\,$\uparrow$ \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+PPL & 0.532 & 0.563 & 0.458 & 0.587 & 0.686 & 0.365 & 0.627 & 0.589 & 0.275 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.571\,$\uparrow$ & 0.617\,$\uparrow$ & 0.450 & 0.613\,$\uparrow$ & 0.745\,$\uparrow$ & 0.372\,$\uparrow$ & 0.647\,$\uparrow$ & 0.648\,$\uparrow$ & 0.310\,$\uparrow$ \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+MTE & 0.476 & 0.469 & 0.449 & 0.559 & 0.637 & 0.350 & 0.602 & 0.492 & 0.186 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.547\,$\uparrow$ & 0.579\,$\uparrow$ & 0.451\,$\uparrow$ & 0.600\,$\uparrow$ & 0.720\,$\uparrow$ & 0.373\,$\uparrow$ & 0.641\,$\uparrow$ & 0.614\,$\uparrow$ & 0.289\,$\uparrow$ \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Results for Evaluated Sequence -- MBR Decoding: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
+\label{tab:cocoa_table4}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+ & \multicolumn{3}{c}{Llama8b-Base} & \multicolumn{3}{c}{Mistral7b-Base} & \multicolumn{3}{c}{Falcon7b-Base} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+Metric & QA & NMT & SUM & QA & NMT & SUM & QA & NMT & SUM \\
+\midrule
+MCSE & 0.402 & 0.297 & 0.158 & 0.474 & 0.330 & 0.237 & 0.437 & 0.346 & 0.076 \\
+MCNSE & 0.392 & 0.389 & 0.124 & 0.441 & 0.435 & 0.192 & 0.446 & 0.440 & 0.078 \\
+Semantic Entropy & 0.443 & 0.316 & 0.159 & 0.507 & 0.352 & 0.236 & 0.458 & 0.373 & 0.077 \\
+DegMat & 0.478 & 0.290 & 0.047 & 0.471 & 0.322 & 0.124 & 0.499 & 0.371 & $-$0.018 \\
+EigValLaplacian & 0.434 & 0.224 & 0.037 & 0.437 & 0.279 & 0.115 & 0.460 & 0.326 & $-$0.022 \\
+SAR & 0.509 & 0.456 & 0.187 & 0.532 & 0.448 & 0.266 & 0.531 & 0.478 & 0.083 \\
+P(True) & $-$0.049 & 0.094 & $-$0.014 & $-$0.044 & 0.113 & 0.079 & 0.160 & 0.178 & $-$0.124 \\
+Consistency & 0.504 & 0.365 & 0.235 & 0.518 & 0.367 & 0.284 & 0.538 & 0.410 & 0.099 \\
+\midrule
+SP & 0.415 & 0.404 & 0.266 & 0.447 & 0.433 & 0.312 & 0.405 & 0.376 & 0.170 \\
+CoCoA$_{\mathrm{SP}}$ & 0.527\,$\uparrow$ & 0.496\,$\uparrow$ & 0.293\,$\uparrow$ & 0.553\,$\uparrow$ & 0.515\,$\uparrow$ & 0.348\,$\uparrow$ & 0.500\,$\uparrow$ & 0.526\,$\uparrow$ & 0.154 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+PPL & 0.408 & 0.421 & 0.164 & 0.432 & 0.452 & 0.273 & 0.445 & 0.438 & 0.100 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.532\,$\uparrow$ & 0.504\,$\uparrow$ & 0.215\,$\uparrow$ & 0.554\,$\uparrow$ & 0.514\,$\uparrow$ & 0.328\,$\uparrow$ & 0.552\,$\uparrow$ & 0.537\,$\uparrow$ & 0.109\,$\uparrow$ \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+MTE & 0.467 & 0.461 & 0.148 & 0.515 & 0.496 & 0.219 & 0.490 & 0.521 & 0.069 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.542\,$\uparrow$ & 0.479\,$\uparrow$ & 0.201\,$\uparrow$ & 0.574\,$\uparrow$ & 0.486 & 0.290\,$\uparrow$ & 0.562\,$\uparrow$ & 0.527\,$\uparrow$ & 0.081\,$\uparrow$ \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{Ablation Studies}
+\label{app:ablation}
+
+\subsection{Choice of Similarity Function}
+\label{app:ablation_similarity}
+
+For sample consistency estimation, one could come up with a variety of similarity functions $s(y, y')$. We perform a comparison of the effectiveness of CoCoA-family methods using several such functions. We consider the following functions: \textbf{AlignScore}~\cite{zha2023alignscore} with the AlignScore-large model, \textbf{RougeL}~\cite{lin2004rouge}, \textbf{NLI}~\cite{he2021deberta} based on the \texttt{microsoft/deberta-large-mnli} model, and \textbf{CrossEncoder}~\cite{liu2019roberta} based on the \texttt{cross-encoder/stsb-roberta-large} model.
+
+\tabref{tab:cocoa_table5}, \tabref{tab:cocoa_table6} and \tabref{tab:cocoa_table7} report these results. There exists a considerable variation of relative effectiveness of proposed methods with various similarity function choices, depending on a task at hand. We opt to report all results in other sections with CrossEncoder-based similarity as it by itself provides a significant improvement over baselines, and for consistency and ease of comparison reasons.
+
+\method{} uses CrossEncoder similarity and was only tested under greedy decoding on Mistral, so results are not available for these similarity ablation tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of the similarity function. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table5}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{ll ccccccc}
+\toprule
+ & & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){3-9}
+ & Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{9}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{SP}}$}
+ & AlignScore & 0.334 & 0.293 & 0.445 & 0.354 & 0.655 & 0.466 & 0.550 \\
+ & RougeL & 0.289 & 0.358 & 0.546 & 0.369 & 0.649 & 0.466 & 0.536 \\
+ & NLI & 0.308 & 0.313 & 0.477 & 0.403 & 0.677 & 0.470 & 0.568 \\
+ & CrossEncoder & 0.327 & 0.397 & 0.595 & 0.381 & 0.671 & 0.466 & 0.505 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.307 & 0.308 & 0.489 & 0.373 & 0.666 & 0.466 & 0.536 \\
+ & RougeL & 0.226 & 0.369 & 0.531 & 0.352 & 0.653 & 0.466 & 0.466 \\
+ & NLI & 0.233 & 0.316 & 0.501 & 0.376 & 0.682 & 0.470 & 0.480 \\
+ & CrossEncoder & 0.281 & 0.371 & 0.565 & 0.365 & 0.674 & 0.466 & 0.465 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.302 & 0.299 & 0.477 & 0.366 & 0.664 & 0.450 & 0.555 \\
+ & RougeL & 0.212 & 0.377 & 0.528 & 0.345 & 0.652 & 0.449 & 0.497 \\
+ & NLI & 0.219 & 0.313 & 0.488 & 0.362 & 0.681 & 0.453 & 0.490 \\
+ & CrossEncoder & 0.282 & 0.368 & 0.560 & 0.351 & 0.673 & 0.448 & 0.486 \\
+\midrule
+\multicolumn{9}{c}{\textit{Llama8b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{SP}}$}
+ & AlignScore & 0.367 & 0.331 & 0.452 & 0.308 & 0.596 & 0.484 & 0.401 \\
+ & RougeL & 0.336 & 0.393 & 0.545 & 0.321 & 0.563 & 0.474 & 0.375 \\
+ & NLI & 0.344 & 0.352 & 0.467 & 0.364 & 0.606 & 0.478 & 0.419 \\
+ & CrossEncoder & 0.375 & 0.454 & 0.583 & 0.350 & 0.598 & 0.480 & 0.367 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.422 & 0.346 & 0.450 & 0.337 & 0.596 & 0.453 & 0.446 \\
+ & RougeL & 0.370 & 0.408 & 0.486 & 0.319 & 0.552 & 0.441 & 0.418 \\
+ & NLI & 0.374 & 0.354 & 0.438 & 0.348 & 0.600 & 0.446 & 0.409 \\
+ & CrossEncoder & 0.380 & 0.444 & 0.514 & 0.339 & 0.593 & 0.447 & 0.429 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.419 & 0.340 & 0.438 & 0.339 & 0.605 & 0.411 & 0.459 \\
+ & RougeL & 0.362 & 0.417 & 0.481 & 0.319 & 0.560 & 0.390 & 0.440 \\
+ & NLI & 0.366 & 0.342 & 0.428 & 0.340 & 0.612 & 0.396 & 0.420 \\
+ & CrossEncoder & 0.374 & 0.441 & 0.511 & 0.337 & 0.601 & 0.394 & 0.444 \\
+\midrule
+\multicolumn{9}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{SP}}$}
+ & AlignScore & 0.278 & 0.306 & 0.475 & 0.361 & 0.677 & 0.528 & 0.470 \\
+ & RougeL & 0.205 & 0.394 & 0.499 & 0.378 & 0.678 & 0.527 & 0.417 \\
+ & NLI & 0.236 & 0.361 & 0.511 & 0.407 & 0.684 & 0.532 & 0.532 \\
+ & CrossEncoder & 0.253 & 0.436 & 0.577 & 0.396 & 0.685 & 0.529 & 0.428 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.252 & 0.340 & 0.523 & 0.410 & 0.678 & 0.528 & 0.521 \\
+ & RougeL & 0.170 & 0.409 & 0.537 & 0.389 & 0.668 & 0.527 & 0.439 \\
+ & NLI & 0.193 & 0.364 & 0.531 & 0.408 & 0.680 & 0.532 & 0.499 \\
+ & CrossEncoder & 0.226 & 0.437 & 0.579 & 0.405 & 0.677 & 0.529 & 0.474 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.253 & 0.337 & 0.519 & 0.403 & 0.683 & 0.515 & 0.554 \\
+ & RougeL & 0.170 & 0.426 & 0.540 & 0.382 & 0.673 & 0.514 & 0.472 \\
+ & NLI & 0.190 & 0.364 & 0.525 & 0.398 & 0.687 & 0.521 & 0.514 \\
+ & CrossEncoder & 0.223 & 0.438 & 0.575 & 0.395 & 0.685 & 0.517 & 0.505 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by selecting the most probable sample.}
+\label{tab:cocoa_table6}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{ll ccccccc}
+\toprule
+ & & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){3-9}
+ & Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{9}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.393 & 0.448 & 0.491 & 0.399 & 0.626 & 0.467 & 0.476 \\
+ & RougeL & 0.344 & 0.602 & 0.597 & 0.420 & 0.622 & 0.466 & 0.538 \\
+ & NLI & 0.340 & 0.615 & 0.604 & 0.445 & 0.651 & 0.470 & 0.456 \\
+ & CrossEncoder & 0.366 & 0.712 & 0.730 & 0.430 & 0.644 & 0.466 & 0.562 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.474 & 0.619 & 0.657 & 0.408 & 0.638 & 0.467 & 0.910 \\
+ & RougeL & 0.362 & 0.710 & 0.717 & 0.391 & 0.627 & 0.466 & 0.950 \\
+ & NLI & 0.370 & 0.677 & 0.684 & 0.414 & 0.657 & 0.470 & 0.941 \\
+ & CrossEncoder & 0.372 & 0.735 & 0.755 & 0.402 & 0.648 & 0.466 & 0.937 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.492 & 0.547 & 0.590 & 0.383 & 0.633 & 0.449 & 0.914 \\
+ & RougeL & 0.355 & 0.695 & 0.684 & 0.366 & 0.624 & 0.448 & 0.959 \\
+ & NLI & 0.364 & 0.656 & 0.658 & 0.387 & 0.656 & 0.453 & 0.918 \\
+ & CrossEncoder & 0.373 & 0.708 & 0.732 & 0.373 & 0.645 & 0.447 & 0.935 \\
+\midrule
+\multicolumn{9}{c}{\textit{Llama8b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.520 & 0.332 & 0.491 & 0.354 & 0.587 & 0.457 & 0.401 \\
+ & RougeL & 0.471 & 0.470 & 0.588 & 0.362 & 0.551 & 0.446 & 0.499 \\
+ & NLI & 0.466 & 0.442 & 0.577 & 0.386 & 0.597 & 0.446 & 0.470 \\
+ & CrossEncoder & 0.484 & 0.529 & 0.685 & 0.384 & 0.587 & 0.452 & 0.513 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.546 & 0.406 & 0.561 & 0.376 & 0.577 & 0.429 & 0.875 \\
+ & RougeL & 0.452 & 0.518 & 0.639 & 0.352 & 0.532 & 0.417 & 0.931 \\
+ & NLI & 0.458 & 0.466 & 0.597 & 0.365 & 0.583 & 0.418 & 0.912 \\
+ & CrossEncoder & 0.450 & 0.544 & 0.689 & 0.364 & 0.573 & 0.422 & 0.925 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.561 & 0.325 & 0.497 & 0.365 & 0.589 & 0.380 & 0.821 \\
+ & RougeL & 0.448 & 0.496 & 0.598 & 0.336 & 0.539 & 0.361 & 0.921 \\
+ & NLI & 0.449 & 0.446 & 0.565 & 0.344 & 0.598 & 0.359 & 0.881 \\
+ & CrossEncoder & 0.451 & 0.520 & 0.638 & 0.346 & 0.582 & 0.363 & 0.900 \\
+\midrule
+\multicolumn{9}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.181 & 0.378 & 0.473 & 0.410 & 0.654 & 0.528 & 0.239 \\
+ & RougeL & 0.122 & 0.531 & 0.581 & 0.420 & 0.655 & 0.528 & 0.426 \\
+ & NLI & 0.120 & 0.496 & 0.607 & 0.437 & 0.658 & 0.533 & 0.458 \\
+ & CrossEncoder & 0.210 & 0.564 & 0.698 & 0.428 & 0.659 & 0.530 & 0.498 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.384 & 0.454 & 0.586 & 0.440 & 0.648 & 0.528 & 0.994 \\
+ & RougeL & 0.280 & 0.565 & 0.668 & 0.410 & 0.637 & 0.528 & 1.000 \\
+ & NLI & 0.283 & 0.515 & 0.671 & 0.424 & 0.647 & 0.533 & 0.998 \\
+ & CrossEncoder & 0.310 & 0.579 & 0.717 & 0.415 & 0.644 & 0.530 & 1.000 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.292 & 0.386 & 0.498 & 0.435 & 0.648 & 0.515 & 0.972 \\
+ & RougeL & 0.222 & 0.545 & 0.607 & 0.400 & 0.633 & 0.515 & 0.998 \\
+ & NLI & 0.201 & 0.498 & 0.636 & 0.415 & 0.645 & 0.521 & 0.987 \\
+ & CrossEncoder & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table7}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{ll ccccccc}
+\toprule
+ & & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){3-9}
+ & Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{9}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.287 & 0.326 & 0.460 & 0.312 & 0.575 & 0.515 & 0.747 \\
+ & RougeL & 0.259 & 0.420 & 0.562 & 0.304 & 0.502 & 0.515 & 0.750 \\
+ & NLI & 0.278 & 0.375 & 0.506 & 0.350 & 0.589 & 0.512 & 0.766 \\
+ & CrossEncoder & 0.295 & 0.441 & 0.589 & 0.336 & 0.597 & 0.514 & 0.766 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.283 & 0.333 & 0.482 & 0.330 & 0.596 & 0.515 & 0.738 \\
+ & RougeL & 0.219 & 0.427 & 0.561 & 0.300 & 0.517 & 0.515 & 0.744 \\
+ & NLI & 0.219 & 0.390 & 0.508 & 0.334 & 0.602 & 0.512 & 0.723 \\
+ & CrossEncoder & 0.258 & 0.451 & 0.577 & 0.322 & 0.612 & 0.514 & 0.768 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.269 & 0.314 & 0.447 & 0.357 & 0.663 & 0.497 & 0.746 \\
+ & RougeL & 0.181 & 0.446 & 0.571 & 0.327 & 0.622 & 0.497 & 0.786 \\
+ & NLI & 0.182 & 0.370 & 0.482 & 0.348 & 0.686 & 0.499 & 0.704 \\
+ & CrossEncoder & 0.236 & 0.419 & 0.553 & 0.337 & 0.680 & 0.494 & 0.783 \\
+\midrule
+\multicolumn{9}{c}{\textit{Llama8b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.221 & 0.309 & 0.462 & 0.261 & 0.467 & 0.622 & 0.717 \\
+ & RougeL & 0.195 & 0.401 & 0.542 & 0.250 & 0.361 & 0.631 & 0.721 \\
+ & NLI & 0.222 & 0.311 & 0.463 & 0.311 & 0.480 & 0.580 & 0.769 \\
+ & CrossEncoder & 0.225 & 0.403 & 0.590 & 0.304 & 0.487 & 0.586 & 0.731 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.225 & 0.325 & 0.484 & 0.304 & 0.476 & 0.603 & 0.747 \\
+ & RougeL & 0.169 & 0.416 & 0.537 & 0.274 & 0.370 & 0.612 & 0.758 \\
+ & NLI & 0.180 & 0.334 & 0.460 & 0.319 & 0.488 & 0.558 & 0.761 \\
+ & CrossEncoder & 0.198 & 0.428 & 0.580 & 0.320 & 0.496 & 0.562 & 0.751 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.209 & 0.293 & 0.460 & 0.320 & 0.563 & 0.556 & 0.749 \\
+ & RougeL & 0.148 & 0.436 & 0.559 & 0.314 & 0.497 & 0.587 & 0.785 \\
+ & NLI & 0.156 & 0.298 & 0.445 & 0.340 & 0.592 & 0.460 & 0.740 \\
+ & CrossEncoder & 0.189 & 0.398 & 0.561 & 0.345 & 0.587 & 0.472 & 0.765 \\
+\midrule
+\multicolumn{9}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+\multirow{4}{*}{CoCoA$_{\mathrm{MSP}}$}
+ & AlignScore & 0.279 & 0.307 & 0.473 & 0.312 & 0.594 & 0.574 & 0.460 \\
+ & RougeL & 0.202 & 0.424 & 0.487 & 0.307 & 0.566 & 0.574 & 0.447 \\
+ & NLI & 0.231 & 0.362 & 0.508 & 0.355 & 0.618 & 0.577 & 0.531 \\
+ & CrossEncoder & 0.248 & 0.461 & 0.590 & 0.336 & 0.617 & 0.575 & 0.472 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{PPL}}$}
+ & AlignScore & 0.278 & 0.320 & 0.534 & 0.350 & 0.607 & 0.574 & 0.617 \\
+ & RougeL & 0.190 & 0.428 & 0.556 & 0.333 & 0.571 & 0.574 & 0.632 \\
+ & NLI & 0.216 & 0.376 & 0.549 & 0.368 & 0.623 & 0.578 & 0.661 \\
+ & CrossEncoder & 0.242 & 0.462 & 0.613 & 0.345 & 0.624 & 0.575 & 0.662 \\
+\cmidrule(lr){1-9}
+\multirow{4}{*}{CoCoA$_{\mathrm{MTE}}$}
+ & AlignScore & 0.277 & 0.302 & 0.522 & 0.382 & 0.657 & 0.556 & 0.598 \\
+ & RougeL & 0.175 & 0.472 & 0.573 & 0.364 & 0.642 & 0.556 & 0.617 \\
+ & NLI & 0.196 & 0.359 & 0.530 & 0.400 & 0.671 & 0.562 & 0.639 \\
+ & CrossEncoder & 0.237 & 0.454 & 0.600 & 0.373 & 0.666 & 0.557 & 0.650 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\subsection{Different Ways of Combining Confidence and Consistency}
+\label{app:ablation_combination}
+
+We justify the particular form of combining confidence with consistency by considering alternative ways to combine sample-focused confidence with consistency estimation. Results are presented in \tabref{tab:cocoa_table8}, \tabref{tab:cocoa_table9} and \tabref{tab:cocoa_table10}. In particular, we investigate the performance of the additive approach (AdditiveCoCoA), FullSampleCoCoA replacing sample-focused dissimilarity with the average of the full pairwise dissimilarity matrix, and ProbCoCoA computing $u(y^{*} \mid x)$ using probability-based scores instead of log-likelihood.
+
+It is evident that on average the multiplicative form with both confidence and consistency terms focused on a single sample is the better performing variant.
+
+\method{} does not test alternative formulations, so results are not available for these tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained via greedy decoding.}
+\label{tab:cocoa_table8}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.290 & 0.319 & 0.459 & 0.351 & 0.654 & 0.471 & 0.472 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.319 & 0.385 & 0.590 & 0.357 & 0.668 & 0.467 & 0.505 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.059 & 0.302 & 0.520 & 0.390 & 0.671 & 0.461 & 0.435 \\
+CoCoA$_{\mathrm{SP}}$ & 0.330 & 0.396 & 0.598 & 0.383 & 0.670 & 0.466 & 0.517 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.262 & 0.392 & 0.564 & 0.369 & 0.671 & 0.464 & 0.494 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.277 & 0.373 & 0.551 & 0.334 & 0.672 & 0.467 & 0.435 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.297 & 0.369 & 0.566 & 0.373 & 0.674 & 0.464 & 0.475 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.286 & 0.375 & 0.568 & 0.369 & 0.674 & 0.466 & 0.467 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & $-$0.279 & $-$0.058 & $-$0.072 & 0.098 & 0.312 & 0.079 & 0.187 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.274 & 0.368 & 0.543 & 0.309 & 0.668 & 0.442 & 0.456 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.288 & 0.374 & 0.564 & 0.355 & 0.673 & 0.447 & 0.491 \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.330 & 0.345 & 0.462 & 0.301 & 0.566 & 0.502 & 0.326 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.358 & 0.434 & 0.564 & 0.333 & 0.589 & 0.488 & 0.354 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.031 & 0.405 & 0.471 & 0.371 & 0.612 & 0.461 & 0.368 \\
+CoCoA$_{\mathrm{SP}}$ & 0.378 & 0.456 & 0.582 & 0.349 & 0.597 & 0.485 & 0.372 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.368 & 0.431 & 0.504 & 0.336 & 0.595 & 0.455 & 0.437 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.389 & 0.420 & 0.487 & 0.314 & 0.580 & 0.450 & 0.399 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.381 & 0.445 & 0.513 & 0.345 & 0.599 & 0.446 & 0.438 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.387 & 0.448 & 0.514 & 0.338 & 0.593 & 0.452 & 0.433 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & $-$0.331 & $-$0.042 & $-$0.122 & 0.089 & 0.321 & $-$0.122 & 0.117 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.383 & 0.410 & 0.481 & 0.308 & 0.588 & 0.363 & 0.414 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.380 & 0.446 & 0.511 & 0.337 & 0.601 & 0.402 & 0.447 \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.203 & 0.318 & 0.409 & 0.350 & 0.674 & 0.533 & 0.379 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.225 & 0.423 & 0.571 & 0.388 & 0.678 & 0.533 & 0.404 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.226 & 0.367 & 0.515 & 0.416 & 0.680 & 0.526 & 0.426 \\
+CoCoA$_{\mathrm{SP}}$ & 0.257 & 0.433 & 0.578 & 0.396 & 0.684 & 0.529 & 0.436 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.222 & 0.433 & 0.580 & 0.413 & 0.677 & 0.525 & 0.489 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.204 & 0.425 & 0.565 & 0.393 & 0.669 & 0.533 & 0.437 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.235 & 0.433 & 0.576 & 0.410 & 0.680 & 0.528 & 0.482 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.229 & 0.436 & 0.580 & 0.406 & 0.677 & 0.529 & 0.478 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.001 & $-$0.103 & $-$0.106 & 0.114 & 0.041 & 0.138 & 0.221 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.201 & 0.425 & 0.557 & 0.377 & 0.675 & 0.519 & 0.470 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.228 & 0.439 & 0.577 & 0.395 & 0.685 & 0.517 & 0.510 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by selecting the most probable sample.}
+\label{tab:cocoa_table9}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.333 & 0.239 & 0.310 & 0.406 & 0.631 & 0.472 & 0.311 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.354 & 0.543 & 0.565 & 0.412 & 0.643 & 0.468 & 0.428 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.076 & 0.684 & 0.721 & 0.428 & 0.643 & 0.464 & 0.846 \\
+CoCoA$_{\mathrm{SP}}$ & 0.366 & 0.712 & 0.730 & 0.430 & 0.644 & 0.466 & 0.562 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.368 & 0.737 & 0.751 & 0.406 & 0.644 & 0.465 & 0.939 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.383 & 0.714 & 0.723 & 0.379 & 0.649 & 0.468 & 0.933 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.369 & 0.738 & 0.756 & 0.401 & 0.649 & 0.467 & 0.935 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.372 & 0.735 & 0.755 & 0.402 & 0.648 & 0.466 & 0.937 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.368 & 0.723 & 0.702 & 0.332 & 0.643 & 0.452 & 0.942 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.380 & 0.661 & 0.653 & 0.331 & 0.643 & 0.442 & 0.929 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.373 & 0.708 & 0.732 & 0.373 & 0.645 & 0.447 & 0.935 \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.466 & 0.349 & 0.425 & 0.333 & 0.555 & 0.473 & 0.285 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.476 & 0.462 & 0.619 & 0.363 & 0.574 & 0.464 & 0.379 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.035 & 0.491 & 0.617 & 0.398 & 0.598 & 0.433 & 0.795 \\
+CoCoA$_{\mathrm{SP}}$ & 0.484 & 0.529 & 0.685 & 0.384 & 0.587 & 0.452 & 0.513 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.454 & 0.536 & 0.673 & 0.358 & 0.575 & 0.425 & 0.923 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.459 & 0.525 & 0.649 & 0.343 & 0.556 & 0.430 & 0.914 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.438 & 0.547 & 0.689 & 0.364 & 0.574 & 0.419 & 0.923 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.450 & 0.544 & 0.689 & 0.364 & 0.573 & 0.422 & 0.925 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.457 & 0.496 & 0.579 & 0.304 & 0.561 & 0.361 & 0.901 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.455 & 0.464 & 0.577 & 0.313 & 0.563 & 0.341 & 0.878 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.451 & 0.520 & 0.638 & 0.346 & 0.582 & 0.363 & 0.900 \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.100 & 0.397 & 0.394 & 0.393 & 0.649 & 0.534 & $-$0.156 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.144 & 0.531 & 0.607 & 0.416 & 0.654 & 0.533 & 0.189 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.282 & 0.522 & 0.670 & 0.434 & 0.658 & 0.529 & 0.978 \\
+CoCoA$_{\mathrm{SP}}$ & 0.210 & 0.564 & 0.698 & 0.428 & 0.659 & 0.530 & 0.498 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.297 & 0.582 & 0.706 & 0.417 & 0.643 & 0.526 & 1.000 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.297 & 0.560 & 0.670 & 0.405 & 0.641 & 0.533 & 1.000 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.311 & 0.587 & 0.718 & 0.414 & 0.648 & 0.531 & 1.000 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.310 & 0.579 & 0.717 & 0.415 & 0.644 & 0.530 & 1.000 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.253 & 0.554 & 0.634 & 0.383 & 0.630 & 0.523 & 0.997 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.237 & 0.502 & 0.554 & 0.383 & 0.636 & 0.519 & 0.989 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table10}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.259 & 0.382 & 0.488 & 0.231 & 0.388 & 0.512 & 0.711 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.287 & 0.447 & 0.591 & 0.318 & 0.570 & 0.516 & 0.748 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.258 & 0.374 & 0.473 & 0.149 & 0.099 & $-$0.265 & 0.710 \\
+CoCoA$_{\mathrm{SP}}$ & 0.295 & 0.441 & 0.589 & 0.336 & 0.597 & 0.514 & 0.766 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.234 & 0.430 & 0.560 & 0.255 & 0.517 & 0.507 & 0.721 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.251 & 0.458 & 0.571 & 0.305 & 0.587 & 0.516 & 0.745 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.094 & $-$0.123 & $-$0.143 & $-$0.202 & $-$0.404 & $-$0.423 & 0.027 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.258 & 0.451 & 0.577 & 0.322 & 0.612 & 0.514 & 0.768 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.201 & 0.468 & 0.585 & 0.296 & 0.669 & 0.501 & 0.760 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.232 & 0.426 & 0.544 & 0.318 & 0.673 & 0.496 & 0.772 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.236 & 0.419 & 0.553 & 0.337 & 0.680 & 0.494 & 0.783 \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.197 & 0.345 & 0.465 & 0.177 & 0.287 & 0.571 & 0.676 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.214 & 0.409 & 0.589 & 0.289 & 0.449 & 0.589 & 0.724 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.196 & 0.337 & 0.449 & 0.102 & 0.053 & 0.434 & 0.673 \\
+CoCoA$_{\mathrm{SP}}$ & 0.225 & 0.403 & 0.590 & 0.304 & 0.487 & 0.586 & 0.731 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.182 & 0.406 & 0.500 & 0.229 & 0.401 & 0.540 & 0.715 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.186 & 0.433 & 0.563 & 0.304 & 0.461 & 0.565 & 0.746 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.101 & $-$0.097 & $-$0.152 & $-$0.175 & $-$0.367 & 0.099 & 0.053 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.198 & 0.428 & 0.580 & 0.320 & 0.496 & 0.562 & 0.751 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.160 & 0.437 & 0.554 & 0.302 & 0.560 & 0.477 & 0.748 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.174 & 0.400 & 0.543 & 0.334 & 0.568 & 0.475 & 0.762 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.189 & 0.398 & 0.561 & 0.345 & 0.587 & 0.472 & 0.765 \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+AdditiveCoCoA$_{\mathrm{SP}}$ & 0.188 & 0.356 & 0.401 & 0.228 & 0.488 & 0.578 & 0.368 \\
+FullSampleCoCoA$_{\mathrm{SP}}$ & 0.237 & 0.468 & 0.586 & 0.325 & 0.593 & 0.576 & 0.453 \\
+ProbCoCoA$_{\mathrm{SP}}$ & 0.184 & 0.339 & 0.378 & 0.144 & 0.350 & $-$0.345 & 0.364 \\
+CoCoA$_{\mathrm{SP}}$ & 0.248 & 0.461 & 0.590 & 0.336 & 0.617 & 0.575 & 0.472 \\
+AdditiveCoCoA$_{\mathrm{PPL}}$ & 0.206 & 0.404 & 0.565 & 0.271 & 0.537 & 0.572 & 0.625 \\
+FullSampleCoCoA$_{\mathrm{PPL}}$ & 0.231 & 0.464 & 0.606 & 0.337 & 0.598 & 0.577 & 0.650 \\
+ProbCoCoA$_{\mathrm{PPL}}$ & 0.014 & $-$0.167 & $-$0.265 & $-$0.187 & $-$0.237 & $-$0.416 & $-$0.206 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.242 & 0.462 & 0.613 & 0.345 & 0.624 & 0.575 & 0.662 \\
+AdditiveCoCoA$_{\mathrm{MTE}}$ & 0.191 & 0.488 & 0.612 & 0.353 & 0.644 & 0.564 & 0.617 \\
+FullSampleCoCoA$_{\mathrm{MTE}}$ & 0.219 & 0.452 & 0.591 & 0.368 & 0.654 & 0.556 & 0.629 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.237 & 0.454 & 0.600 & 0.373 & 0.666 & 0.557 & 0.650 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{Detailed Description of Uncertainty Quantification Methods}
+\label{app:uq_methods}
+
+See the main paper for descriptions of the uncertainty quantification methods used in this study, including information-based methods (SP, PPL, MTE, MCSE, MCNSE), consistency-based methods (DegMat, EigValLaplacian, Semantic Entropy, SAR), and verbalized uncertainty (P(True)).
+
+
+\section{Detailed Per-Dataset Results}
+\label{app:detailed_results}
+
+\tabref{tab:cocoa_table11}, \tabref{tab:cocoa_table12} and \tabref{tab:cocoa_table13} present expanded per-dataset PRR scores for each model under the greedy, most probable sample, and MBR decoding setups. These complement the aggregated results shown in \tabref{tab:cocoa_table1}.
+
+\tabref{tab:cocoa_table11} includes \method{} results for Mistral-7B-Base under greedy decoding. Llama and Falcon columns show hyphens as \method{} was not tested on those models. \tabref{tab:cocoa_table12} and \tabref{tab:cocoa_table13} use most probable and MBR decoding respectively, which were not tested with \method{}.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table11}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.007 & 0.257 & 0.350 & 0.247 & 0.496 & 0.337 & 0.475 \\
+MCNSE & 0.009 & 0.342 & 0.478 & 0.238 & 0.540 & 0.356 & 0.401 \\
+Semantic Entropy & 0.008 & 0.271 & 0.382 & 0.271 & 0.562 & 0.387 & 0.472 \\
+DegMat & 0.137 & 0.229 & 0.382 & 0.336 & 0.646 & 0.410 & 0.299 \\
+EigValLaplacian & 0.132 & 0.207 & 0.328 & 0.301 & 0.624 & 0.398 & 0.241 \\
+SAR & 0.094 & 0.353 & 0.517 & 0.313 & 0.644 & 0.419 & 0.471 \\
+P(True) & 0.179 & 0.118 & 0.033 & $-$0.061 & $-$0.128 & 0.068 & 0.005 \\
+Consistency Light & $-$0.006 & 0.317 & 0.457 & 0.306 & 0.597 & 0.432 & 0.441 \\
+Consistency & 0.051 & 0.285 & 0.500 & 0.379 & 0.647 & 0.423 & 0.435 \\
+\method{} & 0.024 & --- & 0.490 & 0.384 & 0.626 & 0.344 & 0.418 \\
+SP & 0.287 & 0.315 & 0.451 & 0.326 & 0.628 & 0.474 & 0.471 \\
+CoCoA$_{\mathrm{SP}}$ & 0.330 & 0.396 & 0.598 & 0.383 & 0.670 & 0.466 & 0.517 \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.309 & 0.380 & 0.580 & 0.351 & 0.674 & 0.480 & 0.506 \\
+\method{}$_{\mathrm{SP}}$ & 0.321 & --- & 0.564 & \textbf{0.527} & \textbf{0.696} & \textbf{0.480} & 0.503 \\
+PPL & 0.204 & 0.365 & 0.489 & 0.281 & 0.632 & 0.474 & 0.311 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.286 & 0.375 & 0.568 & 0.369 & 0.674 & 0.466 & 0.467 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.260 & 0.404 & 0.557 & 0.326 & 0.684 & 0.480 & 0.428 \\
+\method{}$_{\mathrm{PPL}}$ & 0.296 & --- & 0.573 & 0.283 & 0.690 & \textbf{0.480} & 0.430 \\
+MTE & 0.182 & 0.392 & 0.484 & 0.243 & 0.619 & 0.456 & 0.350 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.288 & 0.374 & 0.564 & 0.355 & 0.673 & 0.447 & 0.491 \\
+CoCoA$_{\mathrm{MTE}}$ Light & 0.254 & 0.415 & 0.550 & 0.303 & 0.672 & 0.465 & 0.458 \\
+\method{}$_{\mathrm{MTE}}$ & 0.288 & --- & 0.570 & 0.266 & 0.676 & 0.461 & 0.458 \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.033 & 0.293 & 0.354 & 0.237 & 0.482 & 0.171 & 0.351 \\
+MCNSE & 0.022 & 0.370 & 0.415 & 0.219 & 0.501 & 0.170 & 0.344 \\
+Semantic Entropy & 0.033 & 0.297 & 0.389 & 0.272 & 0.549 & 0.229 & 0.375 \\
+DegMat & 0.081 & 0.250 & 0.355 & 0.353 & 0.622 & 0.342 & 0.309 \\
+EigValLaplacian & 0.079 & 0.198 & 0.278 & 0.332 & 0.604 & 0.292 & 0.273 \\
+SAR & 0.077 & 0.427 & 0.483 & 0.311 & 0.595 & 0.352 & 0.398 \\
+P(True) & 0.058 & 0.047 & 0.037 & $-$0.037 & $-$0.066 & $-$0.180 & 0.026 \\
+Consistency Light & $-$0.022 & 0.475 & 0.441 & 0.353 & 0.552 & 0.279 & 0.378 \\
+Consistency & 0.024 & 0.389 & 0.453 & 0.375 & 0.614 & 0.391 & 0.368 \\
+\method{} & --- & --- & --- & --- & --- & --- & --- \\
+SP & 0.328 & 0.342 & 0.456 & 0.277 & 0.526 & 0.508 & 0.324 \\
+CoCoA$_{\mathrm{SP}}$ & 0.378 & 0.456 & 0.582 & 0.349 & 0.597 & 0.485 & 0.372 \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.358 & 0.448 & 0.556 & 0.340 & 0.598 & 0.504 & 0.353 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.369 & 0.351 & 0.422 & 0.253 & 0.507 & 0.461 & 0.303 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.387 & 0.448 & 0.514 & 0.338 & 0.593 & 0.452 & 0.433 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.382 & 0.483 & 0.491 & 0.319 & 0.597 & 0.467 & 0.398 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.357 & 0.357 & 0.408 & 0.239 & 0.497 & 0.349 & 0.326 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.380 & 0.446 & 0.511 & 0.337 & 0.601 & 0.401 & 0.447 \\
+CoCoA$_{\mathrm{MTE}}$ Light & 0.372 & 0.501 & 0.487 & 0.316 & 0.599 & 0.387 & 0.412 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.159 & 0.297 & 0.337 & 0.258 & 0.549 & 0.420 & 0.427 \\
+MCNSE & 0.108 & 0.371 & 0.474 & 0.293 & 0.586 & 0.442 & 0.299 \\
+Semantic Entropy & 0.164 & 0.307 & 0.389 & 0.294 & 0.581 & 0.463 & 0.418 \\
+DegMat & 0.201 & 0.274 & 0.431 & 0.407 & 0.651 & 0.480 & 0.395 \\
+EigValLaplacian & 0.201 & 0.229 & 0.394 & 0.381 & 0.645 & 0.454 & 0.358 \\
+SAR & 0.144 & 0.398 & 0.517 & 0.381 & 0.649 & 0.508 & 0.387 \\
+P(True) & $-$0.159 & 0.175 & 0.135 & 0.036 & 0.275 & 0.027 & 0.133 \\
+Consistency Light & 0.232 & 0.483 & 0.468 & 0.327 & 0.657 & 0.362 & 0.363 \\
+Consistency & 0.226 & 0.337 & 0.496 & 0.408 & 0.656 & 0.485 & 0.426 \\
+\method{} & --- & --- & --- & --- & --- & --- & --- \\
+SP & 0.201 & 0.312 & 0.400 & 0.321 & 0.662 & 0.539 & 0.377 \\
+CoCoA$_{\mathrm{SP}}$ & 0.257 & 0.433 & 0.578 & 0.396 & 0.684 & 0.529 & 0.436 \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.242 & 0.463 & 0.566 & 0.349 & 0.691 & 0.522 & 0.405 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.155 & 0.375 & 0.525 & 0.316 & 0.644 & 0.539 & 0.326 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.229 & 0.436 & 0.580 & 0.406 & 0.677 & 0.529 & 0.478 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.234 & 0.497 & 0.558 & 0.364 & 0.694 & 0.522 & 0.468 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.152 & 0.409 & 0.537 & 0.291 & 0.633 & 0.533 & 0.367 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.228 & 0.439 & 0.577 & 0.395 & 0.685 & 0.517 & 0.510 \\
+CoCoA$_{\mathrm{MTE}}$ Light & 0.234 & 0.518 & 0.549 & 0.345 & 0.693 & 0.491 & 0.500 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results. Main model response obtained by selecting most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table12}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.162 & 0.406 & 0.407 & 0.289 & 0.492 & 0.339 & 0.693 \\
+MCNSE & 0.196 & 0.471 & 0.507 & 0.277 & 0.529 & 0.358 & 0.700 \\
+Semantic Entropy & 0.164 & 0.434 & 0.442 & 0.312 & 0.554 & 0.389 & 0.675 \\
+DegMat & 0.205 & 0.439 & 0.410 & 0.376 & 0.618 & 0.410 & 0.454 \\
+EigValLaplacian & 0.197 & 0.388 & 0.344 & 0.342 & 0.600 & 0.399 & 0.361 \\
+SAR & 0.175 & 0.563 & 0.590 & 0.347 & 0.620 & 0.421 & 0.780 \\
+P(True) & 0.207 & 0.472 & 0.269 & $-$0.058 & $-$0.084 & 0.068 & 0.278 \\
+Consistency & 0.071 & 0.670 & 0.708 & 0.405 & 0.614 & 0.423 & 0.846 \\
+SP & 0.330 & 0.212 & 0.291 & 0.388 & 0.607 & 0.476 & 0.307 \\
+CoCoA$_{\mathrm{SP}}$ & 0.366 & 0.712 & 0.730 & 0.430 & 0.644 & 0.466 & 0.562 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.365 & 0.695 & 0.676 & 0.327 & 0.615 & 0.476 & 0.931 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.372 & 0.735 & 0.755 & 0.402 & 0.648 & 0.466 & 0.937 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.350 & 0.668 & 0.606 & 0.254 & 0.594 & 0.457 & 0.932 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.373 & 0.708 & 0.732 & 0.373 & 0.645 & 0.447 & 0.935 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.192 & 0.366 & 0.395 & 0.258 & 0.465 & 0.158 & 0.545 \\
+MCNSE & 0.186 & 0.377 & 0.480 & 0.239 & 0.484 & 0.165 & 0.631 \\
+Semantic Entropy & 0.194 & 0.371 & 0.451 & 0.286 & 0.528 & 0.213 & 0.557 \\
+DegMat & 0.191 & 0.274 & 0.409 & 0.366 & 0.606 & 0.320 & 0.396 \\
+EigValLaplacian & 0.190 & 0.216 & 0.333 & 0.339 & 0.587 & 0.274 & 0.351 \\
+SAR & 0.159 & 0.441 & 0.571 & 0.327 & 0.578 & 0.340 & 0.667 \\
+P(True) & 0.058 & 0.075 & 0.056 & $-$0.011 & $-$0.071 & $-$0.120 & $-$0.084 \\
+Consistency & 0.030 & 0.473 & 0.598 & 0.394 & 0.600 & 0.353 & 0.793 \\
+SP & 0.464 & 0.339 & 0.413 & 0.304 & 0.514 & 0.483 & 0.280 \\
+CoCoA$_{\mathrm{SP}}$ & 0.484 & 0.529 & 0.685 & 0.384 & 0.587 & 0.452 & 0.513 \\
+PPL & 0.458 & 0.504 & 0.622 & 0.293 & 0.483 & 0.441 & 0.911 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.450 & 0.544 & 0.689 & 0.364 & 0.573 & 0.422 & 0.924 \\
+MTE & 0.449 & 0.437 & 0.501 & 0.238 & 0.458 & 0.326 & 0.883 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.451 & 0.520 & 0.638 & 0.345 & 0.582 & 0.363 & 0.899 \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.128 & 0.399 & 0.419 & 0.285 & 0.535 & 0.421 & 0.598 \\
+MCNSE & 0.153 & 0.395 & 0.452 & 0.318 & 0.588 & 0.443 & 0.771 \\
+Semantic Entropy & 0.134 & 0.420 & 0.460 & 0.319 & 0.566 & 0.463 & 0.567 \\
+DegMat & 0.177 & 0.350 & 0.422 & 0.422 & 0.637 & 0.480 & 0.633 \\
+EigValLaplacian & 0.174 & 0.289 & 0.382 & 0.393 & 0.622 & 0.454 & 0.522 \\
+SAR & 0.193 & 0.455 & 0.521 & 0.385 & 0.642 & 0.509 & 0.826 \\
+P(True) & 0.022 & 0.245 & 0.245 & 0.038 & 0.244 & 0.028 & 0.815 \\
+Consistency & 0.282 & 0.491 & 0.651 & 0.416 & 0.627 & 0.484 & 0.979 \\
+SP & 0.099 & 0.385 & 0.378 & 0.369 & 0.638 & 0.540 & $-$0.175 \\
+CoCoA$_{\mathrm{SP}}$ & 0.210 & 0.564 & 0.698 & 0.428 & 0.659 & 0.530 & 0.498 \\
+PPL & 0.275 & 0.541 & 0.637 & 0.353 & 0.614 & 0.540 & 1.000 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.310 & 0.579 & 0.717 & 0.415 & 0.644 & 0.530 & 1.000 \\
+MTE & 0.186 & 0.475 & 0.510 & 0.317 & 0.573 & 0.534 & 0.984 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table13}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+\multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.123 & 0.297 & 0.363 & 0.245 & 0.515 & 0.385 & 0.751 \\
+MCNSE & 0.105 & 0.385 & 0.485 & 0.256 & 0.552 & 0.406 & 0.548 \\
+Semantic Entropy & 0.127 & 0.310 & 0.395 & 0.272 & 0.580 & 0.439 & 0.735 \\
+DegMat & 0.244 & 0.280 & 0.365 & 0.358 & 0.673 & 0.461 & 0.392 \\
+EigValLaplacian & 0.243 & 0.238 & 0.319 & 0.334 & 0.654 & 0.443 & 0.318 \\
+SAR & 0.204 & 0.392 & 0.503 & 0.334 & 0.658 & 0.478 & 0.656 \\
+P(True) & 0.079 & 0.142 & 0.084 & $-$0.056 & $-$0.084 & 0.047 & $-$0.084 \\
+Consistency & 0.211 & 0.297 & 0.437 & 0.355 & 0.659 & 0.458 & 0.603 \\
+SP & 0.259 & 0.381 & 0.486 & 0.216 & 0.346 & 0.514 & 0.711 \\
+CoCoA$_{\mathrm{SP}}$ & 0.295 & 0.441 & 0.589 & 0.336 & 0.597 & 0.514 & 0.766 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.205 & 0.391 & 0.513 & 0.186 & 0.358 & 0.514 & 0.672 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.258 & 0.451 & 0.577 & 0.322 & 0.612 & 0.514 & 0.768 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.156 & 0.443 & 0.550 & 0.234 & 0.598 & 0.508 & 0.717 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.236 & 0.419 & 0.553 & 0.337 & 0.680 & 0.494 & 0.783 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{8}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.089 & 0.240 & 0.354 & 0.220 & 0.444 & 0.297 & 0.647 \\
+MCNSE & 0.055 & 0.334 & 0.443 & 0.247 & 0.470 & 0.306 & 0.545 \\
+Semantic Entropy & 0.089 & 0.250 & 0.382 & 0.245 & 0.514 & 0.361 & 0.650 \\
+DegMat & 0.217 & 0.218 & 0.361 & 0.368 & 0.611 & 0.391 & 0.539 \\
+EigValLaplacian & 0.217 & 0.167 & 0.280 & 0.347 & 0.592 & 0.305 & 0.492 \\
+SAR & 0.125 & 0.393 & 0.520 & 0.345 & 0.578 & 0.472 & 0.642 \\
+P(True) & $-$0.014 & 0.098 & 0.091 & $-$0.014 & $-$0.054 & $-$0.210 & 0.083 \\
+Consistency & 0.146 & 0.290 & 0.440 & 0.387 & 0.603 & 0.428 & 0.599 \\
+SP & 0.197 & 0.344 & 0.463 & 0.161 & 0.247 & 0.577 & 0.675 \\
+CoCoA$_{\mathrm{SP}}$ & 0.225 & 0.403 & 0.590 & 0.304 & 0.487 & 0.586 & 0.731 \\
+PPL & 0.168 & 0.382 & 0.460 & 0.161 & 0.253 & 0.549 & 0.668 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.198 & 0.428 & 0.580 & 0.320 & 0.496 & 0.562 & 0.751 \\
+MTE & 0.130 & 0.412 & 0.509 & 0.245 & 0.466 & 0.459 & 0.699 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.189 & 0.398 & 0.561 & 0.345 & 0.587 & 0.472 & 0.765 \\
+\midrule
+\multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.188 & 0.331 & 0.362 & 0.274 & 0.560 & 0.455 & 0.460 \\
+MCNSE & 0.126 & 0.387 & 0.494 & 0.306 & 0.605 & 0.479 & 0.396 \\
+Semantic Entropy & 0.192 & 0.332 & 0.414 & 0.304 & 0.594 & 0.497 & 0.438 \\
+DegMat & 0.246 & 0.271 & 0.470 & 0.392 & 0.672 & 0.516 & 0.415 \\
+EigValLaplacian & 0.238 & 0.220 & 0.432 & 0.365 & 0.660 & 0.476 & 0.339 \\
+SAR & 0.184 & 0.412 & 0.543 & 0.370 & 0.664 & 0.553 & 0.536 \\
+P(True) & $-$0.124 & 0.194 & 0.161 & 0.016 & 0.279 & 0.061 & 0.284 \\
+Consistency & 0.235 & 0.323 & 0.498 & 0.376 & 0.665 & 0.523 & 0.588 \\
+SP & 0.187 & 0.355 & 0.398 & 0.213 & 0.458 & 0.583 & 0.367 \\
+CoCoA$_{\mathrm{SP}}$ & 0.248 & 0.461 & 0.590 & 0.336 & 0.617 & 0.575 & 0.472 \\
+PPL & 0.177 & 0.371 & 0.504 & 0.201 & 0.439 & 0.583 & 0.556 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.242 & 0.462 & 0.613 & 0.345 & 0.624 & 0.575 & 0.662 \\
+MTE & 0.159 & 0.462 & 0.580 & 0.290 & 0.588 & 0.565 & 0.517 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.237 & 0.454 & 0.600 & 0.373 & 0.666 & 0.557 & 0.650 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{Alternative Performance Metrics for PRR}
+\label{app:alt_metrics}
+
+The choice of PRR as a UQ quality metric of choice is dictated by its ability to handle both continuous performance metrics, like COMET and AlignScore, without the need for selecting arbitrary thresholds. However, PRR scores are calculated for a particular choice of underlying performance metric. For a truly comprehensive evaluation, we perform the same evaluation as in our main experimental run, but with alternative choice of performance metrics. \tabref{tab:cocoa_table14} and \tabref{tab:cocoa_table15} report PRRs for these metrics on all models for NMT and QA tasks. MetricX was used for NMT and GPT-as-a-judge (\texttt{gpt-4o-2024-08-06}) was used to score QA datasets.
+
+\method{} was not tested with MetricX or GPT-4o quality metrics, so results are not available for these tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table14}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l cc cccc}
+\toprule
+ & \multicolumn{2}{c}{NMT (MetricX)} & \multicolumn{4}{c}{QA (GPT-4o)} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-7}
+Method & WMT14FrEn & WMT19DeEn & CoQA/Gpt & TriviaQA/Gpt & MMLU/Gpt & GSM8k/Gpt \\
+\midrule
+\multicolumn{7}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.127 & 0.212 & 0.226 & 0.478 & 0.338 & 0.453 \\
+MCNSE & 0.267 & 0.417 & 0.246 & 0.535 & 0.357 & 0.388 \\
+Semantic Entropy & 0.158 & 0.261 & 0.254 & 0.554 & 0.387 & 0.454 \\
+CEDegMat & 0.270 & 0.402 & 0.336 & 0.659 & 0.402 & 0.356 \\
+SAR & 0.302 & 0.451 & 0.333 & 0.660 & 0.419 & 0.456 \\
+Semantic Density & 0.291 & 0.366 & 0.056 & 0.688 & 0.335 & 0.195 \\
+SP & 0.173 & 0.287 & 0.287 & 0.640 & 0.473 & 0.485 \\
+CoCoA$_{\mathrm{SP}}$ & 0.314 & 0.462 & 0.367 & 0.681 & 0.465 & 0.537 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- \\
+PPL & 0.316 & 0.448 & 0.220 & 0.645 & 0.473 & 0.345 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.361 & 0.512 & 0.331 & 0.687 & 0.465 & 0.499 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- \\
+MTE & 0.350 & 0.455 & 0.190 & 0.631 & 0.456 & 0.387 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.366 & 0.512 & 0.323 & 0.684 & 0.447 & 0.524 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{7}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.145 & 0.181 & 0.200 & 0.486 & 0.158 & 0.332 \\
+MCNSE & 0.319 & 0.361 & 0.183 & 0.530 & 0.170 & 0.324 \\
+Semantic Entropy & 0.157 & 0.235 & 0.239 & 0.552 & 0.203 & 0.361 \\
+CEDegMat & 0.287 & 0.367 & 0.350 & 0.621 & 0.299 & 0.300 \\
+SAR & 0.354 & 0.420 & 0.302 & 0.610 & 0.319 & 0.382 \\
+Semantic Density & 0.252 & 0.328 & 0.069 & 0.650 & 0.335 & 0.299 \\
+SP & 0.176 & 0.274 & 0.228 & 0.564 & 0.469 & 0.313 \\
+CoCoA$_{\mathrm{SP}}$ & 0.329 & 0.451 & 0.332 & 0.625 & 0.449 & 0.365 \\
+PPL & 0.327 & 0.388 & 0.217 & 0.549 & 0.462 & 0.309 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.395 & 0.469 & 0.329 & 0.623 & 0.443 & 0.445 \\
+MTE & 0.353 & 0.388 & 0.214 & 0.543 & 0.358 & 0.329 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.394 & 0.472 & 0.333 & 0.634 & 0.393 & 0.455 \\
+\midrule
+\multicolumn{7}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.168 & 0.218 & 0.228 & 0.587 & 0.420 & 0.443 \\
+MCNSE & 0.304 & 0.399 & 0.265 & 0.640 & 0.442 & 0.323 \\
+Semantic Entropy & 0.201 & 0.276 & 0.262 & 0.623 & 0.463 & 0.448 \\
+CEDegMat & 0.287 & 0.428 & 0.380 & 0.712 & 0.476 & 0.347 \\
+SAR & 0.339 & 0.457 & 0.367 & 0.715 & 0.508 & 0.410 \\
+Semantic Density & 0.323 & 0.422 & 0.076 & 0.746 & 0.396 & 0.349 \\
+SP & 0.176 & 0.275 & 0.279 & 0.737 & 0.539 & 0.391 \\
+CoCoA$_{\mathrm{SP}}$ & 0.335 & 0.483 & 0.364 & 0.763 & 0.529 & 0.459 \\
+PPL & 0.322 & 0.454 & 0.245 & 0.722 & 0.539 & 0.341 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.394 & 0.531 & 0.345 & 0.754 & 0.529 & 0.513 \\
+MTE & 0.370 & 0.455 & 0.228 & 0.707 & 0.533 & 0.385 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.403 & 0.529 & 0.341 & 0.762 & 0.516 & 0.551 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table15}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l cc cccc}
+\toprule
+ & \multicolumn{2}{c}{NMT (MetricX)} & \multicolumn{4}{c}{QA (GPT-4o)} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-7}
+Method & WMT14FrEn & WMT19DeEn & CoQA/Gpt & TriviaQA/Gpt & MMLU/Gpt & GSM8k/Gpt \\
+\midrule
+\multicolumn{7}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.305 & 0.324 & 0.244 & 0.464 & 0.339 & 0.392 \\
+MCNSE & 0.360 & 0.466 & 0.252 & 0.516 & 0.358 & 0.188 \\
+Semantic Entropy & 0.336 & 0.366 & 0.272 & 0.536 & 0.389 & 0.420 \\
+CEDegMat & 0.468 & 0.485 & 0.339 & 0.623 & 0.404 & 0.239 \\
+SAR & 0.455 & 0.527 & 0.336 & 0.628 & 0.421 & 0.298 \\
+Semantic Density & 0.565 & 0.554 & 0.043 & 0.646 & 0.306 & 0.421 \\
+SP & 0.169 & 0.252 & 0.311 & 0.608 & 0.474 & 0.460 \\
+CoCoA$_{\mathrm{SP}}$ & 0.607 & 0.623 & 0.376 & 0.647 & 0.466 & 0.550 \\
+PPL & 0.510 & 0.552 & 0.265 & 0.619 & 0.474 & 0.096 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.620 & 0.667 & 0.346 & 0.655 & 0.466 & 0.091 \\
+MTE & 0.487 & 0.499 & 0.211 & 0.604 & 0.457 & 0.167 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.581 & 0.638 & 0.324 & 0.653 & 0.447 & 0.151 \\
+\midrule
+\multicolumn{7}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.284 & 0.271 & 0.191 & 0.451 & 0.155 & 0.302 \\
+MCNSE & 0.354 & 0.419 & 0.197 & 0.493 & 0.171 & 0.251 \\
+Semantic Entropy & 0.299 & 0.333 & 0.230 & 0.515 & 0.201 & 0.341 \\
+CEDegMat & 0.343 & 0.451 & 0.369 & 0.598 & 0.301 & 0.241 \\
+SAR & 0.412 & 0.497 & 0.315 & 0.584 & 0.323 & 0.311 \\
+Semantic Density & 0.403 & 0.452 & 0.065 & 0.638 & 0.286 & 0.396 \\
+SP & 0.247 & 0.289 & 0.225 & 0.523 & 0.467 & 0.332 \\
+CoCoA$_{\mathrm{SP}}$ & 0.473 & 0.568 & 0.346 & 0.597 & 0.440 & 0.418 \\
+PPL & 0.437 & 0.517 & 0.238 & 0.498 & 0.459 & 0.185 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.510 & 0.614 & 0.335 & 0.588 & 0.433 & 0.199 \\
+MTE & 0.387 & 0.439 & 0.201 & 0.485 & 0.345 & 0.226 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.495 & 0.589 & 0.330 & 0.604 & 0.372 & 0.237 \\
+\midrule
+\multicolumn{7}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.269 & 0.341 & 0.261 & 0.553 & 0.421 & 0.159 \\
+MCNSE & 0.325 & 0.403 & 0.312 & 0.620 & 0.443 & 0.064 \\
+Semantic Entropy & 0.308 & 0.397 & 0.296 & 0.588 & 0.463 & 0.172 \\
+CEDegMat & 0.381 & 0.478 & 0.398 & 0.686 & 0.477 & 0.083 \\
+SAR & 0.389 & 0.483 & 0.398 & 0.685 & 0.509 & 0.152 \\
+Semantic Density & 0.434 & 0.518 & 0.047 & 0.661 & 0.377 & 0.299 \\
+SP & 0.269 & 0.311 & 0.340 & 0.683 & 0.540 & 0.104 \\
+CoCoA$_{\mathrm{SP}}$ & 0.465 & 0.621 & 0.407 & 0.705 & 0.530 & 0.300 \\
+PPL & 0.430 & 0.553 & 0.308 & 0.663 & 0.540 & 0.156 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.526 & 0.655 & 0.376 & 0.691 & 0.530 & 0.128 \\
+MTE & 0.418 & 0.452 & 0.275 & 0.615 & 0.535 & 0.054 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.512 & 0.620 & 0.370 & 0.692 & 0.517 & 0.050 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{AUROC}
+\label{app:auroc}
+
+We strongly believe that PRR is a superior metric to AUROC when comparing relative performance of UQ methods. However, we acknowledge that AUROC is widely used in modern UQ literature, so we opt to include AUROC results on QA datasets. The results are presented in \tabref{tab:cocoa_table16} and \tabref{tab:cocoa_table17}. All results here were obtained with GPT-as-a-judge correctness scoring.
+
+\method{} was not tested with AUROC, so results are not available for these tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{AUROC for all models on QA tasks. Main model response was obtained by greedy decoding.}
+\label{tab:cocoa_table16}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l cccc}
+\toprule
+Method & CoQA/Gpt & TriviaQA/Gpt & MMLU/Gpt & GSM8k/Gpt \\
+\midrule
+\multicolumn{5}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.642 & 0.784 & 0.737 & 0.716 \\
+MCNSE & 0.653 & 0.806 & 0.744 & 0.684 \\
+Semantic Entropy & 0.653 & 0.817 & 0.756 & 0.716 \\
+CEDegMat & 0.690 & 0.859 & 0.759 & 0.682 \\
+SAR & 0.694 & 0.862 & 0.770 & 0.717 \\
+Semantic Density & 0.531 & 0.871 & 0.713 & 0.576 \\
+SP & 0.674 & 0.849 & 0.794 & 0.684 \\
+CoCoA$_{\mathrm{SP}}$ & 0.708 & 0.867 & 0.790 & 0.729 \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- \\
+PPL & 0.636 & 0.855 & 0.794 & 0.628 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.690 & 0.871 & 0.790 & 0.714 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- \\
+MTE & 0.620 & 0.849 & 0.787 & 0.640 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.687 & 0.870 & 0.783 & 0.727 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- \\
+\midrule
+\multicolumn{5}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.635 & 0.779 & 0.620 & 0.705 \\
+MCNSE & 0.630 & 0.799 & 0.629 & 0.689 \\
+Semantic Entropy & 0.655 & 0.815 & 0.652 & 0.713 \\
+CEDegMat & 0.708 & 0.845 & 0.703 & 0.691 \\
+SAR & 0.694 & 0.842 & 0.715 & 0.724 \\
+Semantic Density & 0.540 & 0.855 & 0.680 & 0.655 \\
+SP & 0.647 & 0.816 & 0.787 & 0.669 \\
+CoCoA$_{\mathrm{SP}}$ & 0.700 & 0.847 & 0.776 & 0.718 \\
+PPL & 0.640 & 0.815 & 0.778 & 0.661 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.699 & 0.848 & 0.770 & 0.745 \\
+MTE & 0.633 & 0.817 & 0.726 & 0.667 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.702 & 0.854 & 0.746 & 0.753 \\
+\midrule
+\multicolumn{5}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.648 & 0.807 & 0.770 & 0.766 \\
+MCNSE & 0.660 & 0.831 & 0.779 & 0.709 \\
+Semantic Entropy & 0.669 & 0.830 & 0.788 & 0.761 \\
+CEDegMat & 0.718 & 0.870 & 0.784 & 0.722 \\
+SAR & 0.713 & 0.870 & 0.805 & 0.757 \\
+Semantic Density & 0.544 & 0.881 & 0.746 & 0.716 \\
+SP & 0.681 & 0.866 & 0.820 & 0.731 \\
+CoCoA$_{\mathrm{SP}}$ & 0.719 & 0.884 & 0.815 & 0.774 \\
+PPL & 0.645 & 0.860 & 0.820 & 0.700 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.705 & 0.882 & 0.815 & 0.800 \\
+MTE & 0.630 & 0.854 & 0.818 & 0.721 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.704 & 0.886 & 0.810 & 0.814 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{AUROC for all models on QA tasks. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table17}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l cccc}
+\toprule
+Method & CoQA/Gpt & TriviaQA/Gpt & MMLU/Gpt & GSM8k/Gpt \\
+\midrule
+\multicolumn{5}{c}{\textit{Mistral7b-Base}} \\
+\midrule
+MCSE & 0.650 & 0.777 & 0.738 & 0.676 \\
+MCNSE & 0.656 & 0.798 & 0.745 & 0.602 \\
+Semantic Entropy & 0.661 & 0.808 & 0.757 & 0.692 \\
+CEDegMat & 0.693 & 0.845 & 0.760 & 0.625 \\
+SAR & 0.695 & 0.849 & 0.771 & 0.643 \\
+Semantic Density & 0.523 & 0.854 & 0.696 & 0.633 \\
+SP & 0.684 & 0.836 & 0.795 & 0.663 \\
+CoCoA$_{\mathrm{SP}}$ & 0.713 & 0.853 & 0.790 & 0.720 \\
+PPL & 0.657 & 0.843 & 0.795 & 0.592 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.697 & 0.858 & 0.790 & 0.615 \\
+MTE & 0.627 & 0.838 & 0.788 & 0.606 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.689 & 0.858 & 0.783 & 0.632 \\
+\midrule
+\multicolumn{5}{c}{\textit{Llama8b-Base}} \\
+\midrule
+MCSE & 0.632 & 0.763 & 0.617 & 0.653 \\
+MCNSE & 0.633 & 0.783 & 0.629 & 0.629 \\
+Semantic Entropy & 0.653 & 0.800 & 0.650 & 0.669 \\
+CEDegMat & 0.716 & 0.836 & 0.703 & 0.633 \\
+SAR & 0.698 & 0.831 & 0.715 & 0.659 \\
+Semantic Density & 0.534 & 0.849 & 0.655 & 0.666 \\
+SP & 0.647 & 0.801 & 0.787 & 0.627 \\
+CoCoA$_{\mathrm{SP}}$ & 0.706 & 0.836 & 0.771 & 0.686 \\
+PPL & 0.648 & 0.796 & 0.776 & 0.635 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.702 & 0.835 & 0.765 & 0.658 \\
+MTE & 0.624 & 0.794 & 0.719 & 0.644 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.701 & 0.842 & 0.736 & 0.673 \\
+\midrule
+\multicolumn{5}{c}{\textit{Falcon7b-Base}} \\
+\midrule
+MCSE & 0.662 & 0.797 & 0.770 & 0.589 \\
+MCNSE & 0.682 & 0.826 & 0.779 & 0.571 \\
+Semantic Entropy & 0.684 & 0.821 & 0.788 & 0.593 \\
+CEDegMat & 0.726 & 0.863 & 0.785 & 0.580 \\
+SAR & 0.727 & 0.862 & 0.806 & 0.611 \\
+Semantic Density & 0.525 & 0.856 & 0.734 & 0.684 \\
+SP & 0.706 & 0.850 & 0.820 & 0.555 \\
+CoCoA$_{\mathrm{SP}}$ & 0.738 & 0.869 & 0.815 & 0.667 \\
+PPL & 0.677 & 0.844 & 0.820 & 0.657 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.719 & 0.866 & 0.815 & 0.657 \\
+MTE & 0.654 & 0.825 & 0.818 & 0.603 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.717 & 0.867 & 0.810 & 0.628 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+\section{Computational Budget}
+\label{app:compute}
+
+Total available computational resources used to produce results amounted to 12 compute nodes each having 4$\times$A100 40GB GPUs. Total computational budget spent to produce results was around 400 GPU-days. Each individual combination of model and dataset amounted roughly to 16 GPU-days on average to obtain all model outputs and hidden states needed for computing the results.
+
+
+\section{CoCoA Light Training Details}
+\label{app:cocoa_light_training}
+
+The model architecture consisted of a simple multilayer perceptron (MLP) with a single hidden layer. \tabref{tab:cocoa_table18} details the size of a train set for each model and dataset.
+
+This table reports training configuration (not method-specific results), so \method{} rows are not applicable.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Training set sizes (number of examples) for Llama8b-Base, Falcon7b-Base, and Mistral7b-Base across several datasets.}
+\label{tab:cocoa_table18}
+\begin{tabular}{l ccc}
+\toprule
+Dataset & LLaMA & Falcon & Mistral \\
+\midrule
+CoQA & 10{,}000 & 10{,}000 & 10{,}000 \\
+GSM8K & 3{,}000 & 3{,}000 & 2{,}500 \\
+MMLU & 1{,}461 & 1{,}461 & 1{,}461 \\
+TriviaQA & 10{,}000 & 10{,}000 & 10{,}000 \\
+WMT14 Fr-En & 6{,}000 & 6{,}000 & 6{,}000 \\
+WMT19 De-En & 6{,}000 & 6{,}000 & 6{,}000 \\
+XSum & 7{,}500 & 5{,}000 & 6{,}500 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+\section{Larger Model Experiments}
+\label{app:larger_model}
+
+We additionally evaluate using the Gemma~3 12B-Base model to assess performance on a larger-scale architecture. As shown in \tabref{tab:cocoa_table19}, CoCoA continues to achieve the best average performance among all methods.
+
+\method{} was tested only on Mistral-7B-Base, so results are not available for the Gemma 12B tables.
+
+\textbf{TODO: Update table results with new benchmark}
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by greedy decoding.}
+\label{tab:cocoa_table19}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+MCSE & $-$0.014 & 0.277 & 0.408 & 0.262 & 0.556 & 0.449 & 0.386 \\
+MCNSE & $-$0.031 & 0.393 & 0.442 & 0.280 & 0.595 & 0.468 & 0.344 \\
+Semantic Entropy & $-$0.011 & 0.273 & 0.430 & 0.287 & 0.621 & 0.531 & 0.407 \\
+DegMat & 0.130 & 0.246 & 0.370 & 0.356 & 0.692 & 0.561 & 0.359 \\
+EigValLaplacian & 0.130 & 0.195 & 0.307 & 0.323 & 0.667 & 0.526 & 0.312 \\
+SAR & 0.087 & 0.429 & 0.494 & 0.335 & 0.688 & 0.582 & 0.418 \\
+P(True) & $-$0.022 & 0.012 & $-$0.020 & $-$0.006 & 0.195 & 0.046 & 0.145 \\
+Consistency Light & $-$0.006 & 0.328 & 0.483 & 0.345 & 0.709 & 0.408 & 0.421 \\
+Consistency & $-$0.163 & 0.452 & 0.496 & 0.311 & 0.657 & 0.293 & 0.387 \\
+MSP & 0.257 & 0.315 & 0.499 & 0.319 & 0.672 & 0.630 & 0.335 \\
+CoCoA$_{\mathrm{MSP}}$ & 0.308 & 0.424 & 0.641 & 0.372 & 0.723 & 0.617 & 0.391 \\
+CoCoA$_{\mathrm{MSP}}$ Light & 0.287 & 0.416 & 0.634 & 0.356 & 0.720 & 0.613 & 0.360 \\
+\method{}$_{\mathrm{MSP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.303 & 0.369 & 0.451 & 0.288 & 0.681 & 0.630 & 0.275 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.339 & 0.427 & 0.539 & 0.362 & 0.728 & 0.617 & 0.439 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.327 & 0.489 & 0.518 & 0.334 & 0.727 & 0.613 & 0.353 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.284 & 0.372 & 0.413 & 0.269 & 0.664 & 0.617 & 0.310 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.326 & 0.422 & 0.527 & 0.344 & 0.728 & 0.592 & 0.468 \\
+CoCoA$_{\mathrm{MTE}}$ Light & 0.308 & 0.501 & 0.498 & 0.313 & 0.719 & 0.565 & 0.386 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by most probable sample decoding.}
+\label{tab:cocoa_table20}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+MCSE & 0.051 & 0.346 & 0.447 & 0.273 & 0.531 & 0.447 & 0.495 \\
+MCNSE & 0.088 & 0.441 & 0.456 & 0.319 & 0.580 & 0.465 & 0.533 \\
+Semantic Entropy & 0.054 & 0.348 & 0.492 & 0.294 & 0.597 & 0.527 & 0.505 \\
+DegMat & 0.165 & 0.294 & 0.372 & 0.366 & 0.659 & 0.558 & 0.457 \\
+EigValLaplacian & 0.164 & 0.228 & 0.306 & 0.327 & 0.634 & 0.522 & 0.415 \\
+SAR & 0.109 & 0.474 & 0.526 & 0.353 & 0.661 & 0.577 & 0.593 \\
+P(True) & $-$0.029 & 0.037 & $-$0.015 & 0.019 & 0.193 & 0.046 & 0.278 \\
+Consistency Light & 0.076 & 0.478 & 0.631 & 0.373 & 0.671 & 0.443 & 0.744 \\
+MSP & 0.188 & 0.353 & 0.466 & 0.361 & 0.646 & 0.624 & 0.223 \\
+CoCoA$_{\mathrm{MSP}}$ & 0.251 & 0.542 & 0.718 & 0.406 & 0.693 & 0.613 & 0.433 \\
+\method{}$_{\mathrm{MSP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.178 & 0.501 & 0.619 & 0.349 & 0.660 & 0.624 & 0.750 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.211 & 0.576 & 0.692 & 0.400 & 0.700 & 0.613 & 0.805 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.168 & 0.431 & 0.487 & 0.295 & 0.643 & 0.612 & 0.703 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.212 & 0.546 & 0.641 & 0.369 & 0.702 & 0.591 & 0.796 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by MBR decoding.}
+\label{tab:cocoa_table21}
+\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\begin{tabular}{l ccccccc}
+\toprule
+ & \multicolumn{7}{c}{Dataset} \\
+\cmidrule(lr){2-8}
+Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
+\midrule
+MCSE & 0.120 & 0.290 & 0.361 & 0.271 & 0.544 & 0.487 & 0.493 \\
+MCNSE & 0.126 & 0.366 & 0.439 & 0.308 & 0.597 & 0.497 & 0.464 \\
+Semantic Entropy & 0.121 & 0.267 & 0.396 & 0.307 & 0.611 & 0.550 & 0.468 \\
+DegMat & 0.195 & 0.222 & 0.318 & 0.399 & 0.684 & 0.571 & 0.373 \\
+EigValLaplacian & 0.197 & 0.170 & 0.254 & 0.367 & 0.653 & 0.522 & 0.319 \\
+SAR & 0.204 & 0.409 & 0.464 & 0.372 & 0.680 & 0.591 & 0.508 \\
+P(True) & 0.030 & 0.043 & 0.018 & 0.014 & 0.204 & 0.079 & 0.313 \\
+Consistency Light & 0.192 & 0.311 & 0.419 & 0.368 & 0.690 & 0.421 & 0.467 \\
+MSP & 0.222 & 0.390 & 0.491 & 0.240 & 0.330 & 0.542 & 0.441 \\
+CoCoA$_{\mathrm{MSP}}$ & 0.282 & 0.452 & 0.598 & 0.347 & 0.624 & 0.574 & 0.498 \\
+\method{}$_{\mathrm{MSP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+PPL & 0.187 & 0.400 & 0.526 & 0.183 & 0.344 & 0.542 & 0.468 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.270 & 0.476 & 0.587 & 0.337 & 0.638 & 0.574 & 0.557 \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+MTE & 0.139 & 0.425 & 0.515 & 0.251 & 0.628 & 0.623 & 0.498 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.230 & 0.451 & 0.528 & 0.361 & 0.712 & 0.610 & 0.575 \\
+\method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
 
 \end{document}
