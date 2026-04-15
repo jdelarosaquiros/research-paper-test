@@ -83,27 +83,8 @@
 \section{Decoding Strategy and Sample Selection}
 \label{app:decoding}
 
-Modern LLMs are capable of producing output using a wide range of decoding strategies, and it is not readily apparent which one to use as a foundation for UQ experiments. On top of that, when sampling multiple outputs stochastically, one has to decide which sample to select for comparison with the target sequence and UQ purposes. To facilitate the choice of decoding and sample selection strategies for our experiments, we conducted an evaluation of model performance with different approaches to both.
-
-\tabref{tab:cocoa_table2} shows average values of corresponding quality metrics for all combinations of models and datasets. We considered 4 approaches for the selection of output that subsequently is used to calculate the quality of generation:
-
-\begin{itemize}
-  \item \textbf{Greedy decoding} produces single output by selecting top-1 candidate token at each generation step, thus no further selection of sample is needed.
-  \item \textbf{Random sample} corresponds to the case where random output is selected among the number of samples produced by repeatedly prompting the model with the same question.
-  \item \textbf{Most Probable sample} selects the output with highest model-assigned probability among several sampled outputs.
-  \item \textbf{MBR sample} selects the output with highest average consistency with respect to other sampled outputs.
-\end{itemize}
-
-We note that selecting a random sample from the model outputs incurs a significant drop in the quality of results on several datasets, most prominently on GSM8k. Based on these observations, we evaluate the efficacy of UQ in three setups: greedy decoding, stochastic sampling with a focus on the most probable sample and MBR decoding.
-
-This table reports base quality metrics (not method-specific), so \method{} rows are not applicable.
-
-\textbf{TODO: Update table results with new benchmark}
-
 \begin{table*}[htbp]
 \centering
-\caption{Base quality metrics for models for different evaluated sequence choice.}
-\label{tab:cocoa_table2}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{ll cccc}
 \toprule
@@ -138,7 +119,26 @@ This table reports base quality metrics (not method-specific), so \method{} rows
 \bottomrule
 \end{tabular}%
 }
+\caption{Base quality metrics for models for different evaluated sequence choice.}
+\label{tab:cocoa_table2}
 \end{table*}
+
+Modern LLMs are capable of producing output using a wide range of decoding strategies, and it is not readily apparent which one to use as a foundation for UQ experiments. On top of that, when sampling multiple outputs stochastically, one has to decide which sample to select for comparison with the target sequence and UQ purposes. To facilitate the choice of decoding and sample selection strategies for our experiments, we conducted an evaluation of model performance with different approaches to both.
+
+\tabref{tab:cocoa_table2} shows average values of corresponding quality metrics for all combinations of models and datasets. We considered 4 approaches for the selection of output that subsequently is used to calculate the quality of generation:
+
+\begin{itemize}
+  \item \textbf{Greedy decoding} produces single output by selecting top-1 candidate token at each generation step, thus no further selection of sample is needed.
+  \item \textbf{Random sample} corresponds to the case where random output is selected among the number of samples produced by repeatedly prompting the model with the same question.
+  \item \textbf{Most Probable sample} selects the output with highest model-assigned probability among several sampled outputs.
+  \item \textbf{MBR sample} selects the output with highest average consistency with respect to other sampled outputs.
+\end{itemize}
+
+We note that selecting a random sample from the model outputs incurs a significant drop in the quality of results on several datasets, most prominently on GSM8k. Based on these observations, we evaluate the efficacy of UQ in three setups: greedy decoding, stochastic sampling with a focus on the most probable sample and MBR decoding.
+
+This table reports base quality metrics (not method-specific), so \method{} rows are not applicable.
+
+\textbf{TODO: Update table results with new benchmark}
 
 
 \section{Results Summary for Most Probable Sample and MBR Sample Strategies}
@@ -152,8 +152,6 @@ This table reports base quality metrics (not method-specific), so \method{} rows
 
 \begin{table*}[htbp]
 \centering
-\caption{Results for Evaluated Sequence -- Most Probable Sample: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
-\label{tab:cocoa_table3}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
@@ -184,13 +182,13 @@ CoCoA$_{\mathrm{MTE}}$ & 0.547\,$\uparrow$ & 0.579\,$\uparrow$ & 0.451\,$\uparro
 \bottomrule
 \end{tabular}%
 }
+\caption{Results for Evaluated Sequence -- Most Probable Sample: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
+\label{tab:cocoa_table3}
 \end{table*}
 
 
 \begin{table*}[htbp]
 \centering
-\caption{Results for Evaluated Sequence -- MBR Decoding: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
-\label{tab:cocoa_table4}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
@@ -221,27 +219,17 @@ CoCoA$_{\mathrm{MTE}}$ & 0.542\,$\uparrow$ & 0.479\,$\uparrow$ & 0.201\,$\uparro
 \bottomrule
 \end{tabular}%
 }
+\caption{Results for Evaluated Sequence -- MBR Decoding: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
+\label{tab:cocoa_table4}
 \end{table*}
-
-
 \section{Ablation Studies}
 \label{app:ablation}
 
 \subsection{Choice of Similarity Function}
 \label{app:ablation_similarity}
 
-For sample consistency estimation, one could come up with a variety of similarity functions $s(y, y')$. We perform a comparison of the effectiveness of CoCoA-family methods using several such functions. We consider the following functions: \textbf{AlignScore}~\cite{zha2023alignscore} with the AlignScore-large model, \textbf{RougeL}~\cite{lin2004rouge}, \textbf{NLI}~\cite{he2021deberta} based on the \texttt{microsoft/deberta-large-mnli} model, and \textbf{CrossEncoder}~\cite{liu2019roberta} based on the \texttt{cross-encoder/stsb-roberta-large} model.
-
-\tabref{tab:cocoa_table5}, \tabref{tab:cocoa_table6} and \tabref{tab:cocoa_table7} report these results. There exists a considerable variation of relative effectiveness of proposed methods with various similarity function choices, depending on a task at hand. We opt to report all results in other sections with CrossEncoder-based similarity as it by itself provides a significant improvement over baselines, and for consistency and ease of comparison reasons.
-
-\method{} uses CrossEncoder similarity and was only tested under greedy decoding on Mistral, so results are not available for these similarity ablation tables.
-
-\textbf{TODO: Update table results with new benchmark}
-
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with different choices of the similarity function. Main model response obtained by greedy decoding.}
-\label{tab:cocoa_table5}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{ll ccccccc}
 \toprule
@@ -311,6 +299,8 @@ For sample consistency estimation, one could come up with a variety of similarit
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of the similarity function. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table5}
 \end{table*}
 
 
@@ -318,8 +308,6 @@ For sample consistency estimation, one could come up with a variety of similarit
 
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by selecting the most probable sample.}
-\label{tab:cocoa_table6}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{ll ccccccc}
 \toprule
@@ -389,6 +377,8 @@ For sample consistency estimation, one could come up with a variety of similarit
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by selecting the most probable sample.}
+\label{tab:cocoa_table6}
 \end{table*}
 
 
@@ -396,8 +386,6 @@ For sample consistency estimation, one could come up with a variety of similarit
 
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by MBR decoding.}
-\label{tab:cocoa_table7}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{ll ccccccc}
 \toprule
@@ -467,7 +455,17 @@ For sample consistency estimation, one could come up with a variety of similarit
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with different choices of similarity function. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table7}
 \end{table*}
+
+For sample consistency estimation, one could come up with a variety of similarity functions $s(y, y')$. We perform a comparison of the effectiveness of CoCoA-family methods using several such functions. We consider the following functions: \textbf{AlignScore}~\cite{zha2023alignscore} with the AlignScore-large model, \textbf{RougeL}~\cite{lin2004rouge}, \textbf{NLI}~\cite{he2021deberta} based on the \texttt{microsoft/deberta-large-mnli} model, and \textbf{CrossEncoder}~\cite{liu2019roberta} based on the \texttt{cross-encoder/stsb-roberta-large} model.
+
+\tabref{tab:cocoa_table5}, \tabref{tab:cocoa_table6} and \tabref{tab:cocoa_table7} report these results. There exists a considerable variation of relative effectiveness of proposed methods with various similarity function choices, depending on a task at hand. We opt to report all results in other sections with CrossEncoder-based similarity as it by itself provides a significant improvement over baselines, and for consistency and ease of comparison reasons.
+
+\method{} uses CrossEncoder similarity and was only tested under greedy decoding on Mistral, so results are not available for these similarity ablation tables.
+
+\textbf{TODO: Update table results with new benchmark}
 
 
 \subsection{Different Ways of Combining Confidence and Consistency}
@@ -475,16 +473,8 @@ For sample consistency estimation, one could come up with a variety of similarit
 
 We justify the particular form of combining confidence with consistency by considering alternative ways to combine sample-focused confidence with consistency estimation. Results are presented in \tabref{tab:cocoa_table8}, \tabref{tab:cocoa_table9} and \tabref{tab:cocoa_table10}. In particular, we investigate the performance of the additive approach (AdditiveCoCoA), FullSampleCoCoA replacing sample-focused dissimilarity with the average of the full pairwise dissimilarity matrix, and ProbCoCoA computing $u(y^{*} \mid x)$ using probability-based scores instead of log-likelihood.
 
-It is evident that on average the multiplicative form with both confidence and consistency terms focused on a single sample is the better performing variant.
-
-\method{} does not test alternative formulations, so results are not available for these tables.
-
-\textbf{TODO: Update table results with new benchmark}
-
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained via greedy decoding.}
-\label{tab:cocoa_table8}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -536,6 +526,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.228 & 0.439 & 0.577 & 0.395 & 0.685 & 0.517 & 0.510 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained via greedy decoding.}
+\label{tab:cocoa_table8}
 \end{table*}
 
 
@@ -543,8 +535,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.228 & 0.439 & 0.577 & 0.395 & 0.685 & 0.517 & 0.510 \
 
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by selecting the most probable sample.}
-\label{tab:cocoa_table9}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -596,6 +586,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by selecting the most probable sample.}
+\label{tab:cocoa_table9}
 \end{table*}
 
 
@@ -603,8 +595,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \
 
 \begin{table*}[htbp]
 \centering
-\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by MBR decoding.}
-\label{tab:cocoa_table10}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -656,7 +646,14 @@ CoCoA$_{\mathrm{MTE}}$ & 0.237 & 0.454 & 0.600 & 0.373 & 0.666 & 0.557 & 0.650 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Comparison of PRRs of CoCoA-family methods with alternative formulations. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table10}
 \end{table*}
+It is evident that on average the multiplicative form with both confidence and consistency terms focused on a single sample is the better performing variant.
+
+\method{} does not test alternative formulations, so results are not available for these tables.
+
+\textbf{TODO: Update table results with new benchmark}
 
 
 \section{Detailed Description of Uncertainty Quantification Methods}
@@ -676,8 +673,6 @@ See the main paper for descriptions of the uncertainty quantification methods us
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results. Main model response obtained by greedy decoding.}
-\label{tab:cocoa_table11}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -762,6 +757,8 @@ CoCoA$_{\mathrm{MTE}}$ Light & 0.234 & 0.518 & 0.549 & 0.345 & 0.693 & 0.491 & 0
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table11}
 \end{table*}
 
 
@@ -769,8 +766,6 @@ CoCoA$_{\mathrm{MTE}}$ Light & 0.234 & 0.518 & 0.549 & 0.345 & 0.693 & 0.491 & 0
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results. Main model response obtained by selecting most probable candidate among stochastically sampled responses.}
-\label{tab:cocoa_table12}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -834,6 +829,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results. Main model response obtained by selecting most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table12}
 \end{table*}
 
 
@@ -841,8 +838,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.289 & 0.551 & 0.678 & 0.402 & 0.646 & 0.517 & 0.998 \
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results. Main model response obtained by MBR decoding.}
-\label{tab:cocoa_table13}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -906,9 +901,9 @@ CoCoA$_{\mathrm{MTE}}$ & 0.237 & 0.454 & 0.600 & 0.373 & 0.666 & 0.557 & 0.650 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results. Main model response obtained by MBR decoding.}
+\label{tab:cocoa_table13}
 \end{table*}
-
-
 \section{Alternative Performance Metrics for PRR}
 \label{app:alt_metrics}
 
@@ -920,8 +915,6 @@ The choice of PRR as a UQ quality metric of choice is dictated by its ability to
 
 \begin{table*}[htbp]
 \centering
-\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by greedy decoding.}
-\label{tab:cocoa_table14}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l cc cccc}
 \toprule
@@ -979,6 +972,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.403 & 0.529 & 0.341 & 0.762 & 0.516 & 0.551 \\
 \bottomrule
 \end{tabular}%
 }
+\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by greedy decoding.}
+\label{tab:cocoa_table14}
 \end{table*}
 
 
@@ -986,8 +981,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.403 & 0.529 & 0.341 & 0.762 & 0.516 & 0.551 \\
 
 \begin{table*}[htbp]
 \centering
-\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
-\label{tab:cocoa_table15}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l cc cccc}
 \toprule
@@ -1042,9 +1035,9 @@ CoCoA$_{\mathrm{MTE}}$ & 0.512 & 0.620 & 0.370 & 0.692 & 0.517 & 0.050 \\
 \bottomrule
 \end{tabular}%
 }
+\caption{PRRs for all models on QA and NMT tasks with alternative choice of performance metrics. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table15}
 \end{table*}
-
-
 \section{AUROC}
 \label{app:auroc}
 
@@ -1056,8 +1049,6 @@ We strongly believe that PRR is a superior metric to AUROC when comparing relati
 
 \begin{table*}[htbp]
 \centering
-\caption{AUROC for all models on QA tasks. Main model response was obtained by greedy decoding.}
-\label{tab:cocoa_table16}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l cccc}
 \toprule
@@ -1113,6 +1104,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.704 & 0.886 & 0.810 & 0.814 \\
 \bottomrule
 \end{tabular}%
 }
+\caption{AUROC for all models on QA tasks. Main model response was obtained by greedy decoding.}
+\label{tab:cocoa_table16}
 \end{table*}
 
 
@@ -1120,8 +1113,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.704 & 0.886 & 0.810 & 0.814 \\
 
 \begin{table*}[htbp]
 \centering
-\caption{AUROC for all models on QA tasks. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
-\label{tab:cocoa_table17}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l cccc}
 \toprule
@@ -1174,9 +1165,9 @@ CoCoA$_{\mathrm{MTE}}$ & 0.717 & 0.867 & 0.810 & 0.628 \\
 \bottomrule
 \end{tabular}%
 }
+\caption{AUROC for all models on QA tasks. Main model response obtained by selecting the most probable candidate among stochastically sampled responses.}
+\label{tab:cocoa_table17}
 \end{table*}
-
-
 \section{Computational Budget}
 \label{app:compute}
 
@@ -1194,8 +1185,6 @@ This table reports training configuration (not method-specific results), so \met
 
 \begin{table*}[htbp]
 \centering
-\caption{Training set sizes (number of examples) for Llama8b-Base, Falcon7b-Base, and Mistral7b-Base across several datasets.}
-\label{tab:cocoa_table18}
 \begin{tabular}{l ccc}
 \toprule
 Dataset & LLaMA & Falcon & Mistral \\
@@ -1209,9 +1198,9 @@ WMT19 De-En & 6{,}000 & 6{,}000 & 6{,}000 \\
 XSum & 7{,}500 & 5{,}000 & 6{,}500 \\
 \bottomrule
 \end{tabular}
+\caption{Training set sizes (number of examples) for Llama8b-Base, Falcon7b-Base, and Mistral7b-Base across several datasets.}
+\label{tab:cocoa_table18}
 \end{table*}
-
-
 \section{Larger Model Experiments}
 \label{app:larger_model}
 
@@ -1223,8 +1212,6 @@ We additionally evaluate using the Gemma~3 12B-Base model to assess performance 
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by greedy decoding.}
-\label{tab:cocoa_table19}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -1256,6 +1243,8 @@ CoCoA$_{\mathrm{MTE}}$ Light & 0.308 & 0.501 & 0.498 & 0.313 & 0.719 & 0.565 & 0
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by greedy decoding.}
+\label{tab:cocoa_table19}
 \end{table*}
 
 
@@ -1263,8 +1252,6 @@ CoCoA$_{\mathrm{MTE}}$ Light & 0.308 & 0.501 & 0.498 & 0.313 & 0.719 & 0.565 & 0
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by most probable sample decoding.}
-\label{tab:cocoa_table20}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -1292,6 +1279,8 @@ CoCoA$_{\mathrm{MTE}}$ & 0.212 & 0.546 & 0.641 & 0.369 & 0.702 & 0.591 & 0.796 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by most probable sample decoding.}
+\label{tab:cocoa_table20}
 \end{table*}
 
 
@@ -1299,8 +1288,6 @@ CoCoA$_{\mathrm{MTE}}$ & 0.212 & 0.546 & 0.641 & 0.369 & 0.702 & 0.591 & 0.796 \
 
 \begin{table*}[htbp]
 \centering
-\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by MBR decoding.}
-\label{tab:cocoa_table21}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccccccc}
 \toprule
@@ -1328,6 +1315,7 @@ CoCoA$_{\mathrm{MTE}}$ & 0.230 & 0.451 & 0.528 & 0.361 & 0.712 & 0.610 & 0.575 \
 \bottomrule
 \end{tabular}%
 }
+\caption{Detailed experimental results for Gemma 3 12B-Base model. Model response obtained by MBR decoding.}
+\label{tab:cocoa_table21}
 \end{table*}
-
 \end{document}

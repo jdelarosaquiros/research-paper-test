@@ -51,10 +51,8 @@ For \method{}, we use multi-layer embeddings from layers 14, 16, and 18 of Mistr
 
 We can see that CoCoA methods are the best across all tasks and models. They outperform existing consistency-based and hybrid state-of-the-art approaches, like Semantic Entropy and SAR. In addition, the proposed CoCoA approach consistently surpasses the baseline UQ measures: for example, $\text{CoCoA}_{\mathrm{PPL}}$ outperforms standard Perplexity, illustrating the advantage of combining token-level confidence with semantic consistency. This pattern holds for other information-based metrics as well, demonstrating that using the consistency between multiple sampled outputs reliably enhances uncertainty quantification.
 
-\begin{table*}[t]
+\begin{table*}[htbp]
 \centering
-\caption{Results for Evaluated Sequence -- Greedy Sample: Mean PRR across datasets for each task. The best-performing method is shown in bold, and the second-best is underscored. The arrows indicate improvement in CoCoA over the base version. \method{} rows show results for multi-layer embeddings + Huber loss (Mistral only; other models not tested). \textbf{TODO: Update table results with new benchmark}}
-\label{tab:cocoa_table1}
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
@@ -90,6 +88,8 @@ CoCoA$_{\mathrm{MTE}}$ Light & 0.428\,$\uparrow$ & 0.494\,$\uparrow$ & 0.372\,$\
 \bottomrule
 \end{tabular}%
 }
+\caption{Results for Evaluated Sequence -- Greedy Sample: Mean PRR across datasets for each task. The best-performing method is shown in bold, and the second-best is underscored. The arrows indicate improvement in CoCoA over the base version. \method{} rows show results for multi-layer embeddings + Huber loss (Mistral only; other models not tested). \textbf{TODO: Update table results with new benchmark}}
+\label{tab:cocoa_table1}
 \end{table*}
 
 %-------------------------------------------------------------------------------
