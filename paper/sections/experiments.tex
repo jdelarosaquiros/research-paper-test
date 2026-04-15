@@ -53,7 +53,8 @@ We can see that CoCoA methods are the best across all tasks and models. They out
 
 \begin{table*}[htbp]
 \centering
-\adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
+\small
+\adjustbox{max width=\textwidth, max totalheight=0.55\textheight}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
  & \multicolumn{3}{c}{Llama8b-Base} & \multicolumn{3}{c}{Mistral7b-Base} & \multicolumn{3}{c}{Falcon7b-Base} \\
@@ -69,7 +70,7 @@ SAR & 0.414 & 0.455 & 0.077 & 0.462 & 0.435 & 0.094 & 0.481 & 0.458 & 0.144 \\
 P(True) & $-$0.064 & 0.042 & 0.058 & $-$0.029 & 0.075 & 0.179 & 0.118 & 0.155 & $-$0.159 \\
 Consistency & 0.437 & 0.421 & 0.024 & 0.471 & 0.392 & 0.051 & 0.494 & 0.416 & 0.226 \\
 Consistency Light & 0.390 & 0.458 & $-$0.022 & 0.444 & 0.387 & $-$0.006 & 0.427 & 0.476 & 0.232 \\
-\method{} & --- & --- & --- & 0.443 & 0.490 & 0.024 & --- & --- & --- \\
+MuHu Consistency Light & --- & --- & --- & 0.443 & 0.490 & 0.024 & --- & --- & --- \\
 \midrule
 SP & 0.409 & 0.399 & 0.328 & 0.475 & 0.383 & 0.287 & 0.475 & 0.356 & 0.201 \\
 CoCoA$_{\mathrm{SP}}$ & 0.451\,$\uparrow$ & 0.519\,$\uparrow$ & 0.378\,$\uparrow$ & 0.509\,$\uparrow$ & 0.497\,$\uparrow$ & 0.330\,$\uparrow$ & 0.511\,$\uparrow$ & 0.505\,$\uparrow$ & 0.257\,$\uparrow$ \\
