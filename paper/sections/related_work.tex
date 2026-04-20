@@ -31,6 +31,7 @@ A growing line of work extracts uncertainty signals directly from LLM hidden sta
 \citet{gao2025flue} exploited the redundancy of hidden states across adjacent transformer layers to obtain single-pass Monte Carlo uncertainty estimates, matching semantic entropy with zero additional inference cost.
 \citet{chen2026querylevel} showed that pre-generation ``Internal Confidence'' from middle-layer representations achieves competitive AUROC while being 30--600$\times$ faster than post-generation methods.
 \citet{jiang2025rc} demonstrated that internal activation consistency within answer groups improves self-consistency, with SAE-sparsified activations outperforming NLI-based similarity.
+\citet{ji2025vuf} isolated a single linear direction in the residual stream---the Verbal Uncertainty Feature---via contrastive hidden-state differences, and showed that steering activations along this direction reduces confident hallucinations by 29.6\% on short-form QA.
 CoCoA Light~\citep{cocoa2024} fits within this family, using a middle-layer embedding MLP to approximate consistency scores.
 
 \paragraph{Hybrid and post-hoc correction methods.}
