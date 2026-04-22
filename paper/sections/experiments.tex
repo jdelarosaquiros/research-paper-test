@@ -61,35 +61,35 @@ We can see that CoCoA methods are the best across all tasks and models. They out
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
 Metric & QA & NMT & SUM & QA & NMT & SUM & QA & NMT & SUM \\
 \midrule
-MCSE & 0.310 & 0.323 & 0.033 & 0.389 & 0.304 & 0.007 & 0.414 & 0.317 & 0.159 \\
-MCNSE & 0.309 & 0.393 & 0.022 & 0.384 & 0.410 & 0.009 & 0.405 & 0.422 & 0.108 \\
-Semantic Entropy & 0.356 & 0.343 & 0.033 & 0.423 & 0.327 & 0.008 & 0.439 & 0.348 & 0.164 \\
-DegMat & 0.406 & 0.302 & 0.081 & 0.423 & 0.305 & 0.137 & 0.483 & 0.353 & 0.201 \\
-EigValLaplacian & 0.375 & 0.238 & 0.079 & 0.391 & 0.267 & 0.132 & 0.459 & 0.312 & 0.201 \\
-SAR & 0.414 & 0.455 & 0.077 & 0.462 & 0.435 & 0.094 & 0.481 & 0.458 & 0.144 \\
-P(True) & $-$0.064 & 0.042 & 0.058 & $-$0.029 & 0.075 & 0.179 & 0.118 & 0.155 & $-$0.159 \\
-Consistency & 0.437 & 0.421 & 0.024 & 0.471 & 0.392 & 0.051 & 0.494 & 0.416 & 0.226 \\
-Consistency Light & 0.390 & 0.458 & $-$0.022 & 0.444 & 0.387 & $-$0.006 & 0.427 & 0.476 & 0.232 \\
+MCSE & 0.409 & 0.258 & 0.008 & 0.494 & 0.244 & 0.012 & --- & --- & --- \\
+MCNSE & 0.363 & 0.348 & 0.023 & 0.395 & 0.254 & 0.000 & --- & --- & --- \\
+Semantic Entropy & 0.446 & 0.276 & 0.008 & 0.524 & 0.260 & 0.012 & --- & --- & --- \\
+DegMat & 0.465 & 0.259 & 0.066 & 0.448 & 0.244 & 0.068 & --- & --- & --- \\
+EigValLaplacian & 0.428 & 0.216 & 0.069 & 0.412 & 0.219 & 0.063 & --- & --- & --- \\
+SAR & 0.477 & 0.383 & 0.054 & 0.501 & 0.294 & 0.073 & --- & --- & --- \\
+P(True) & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Consistency & 0.365 & 0.051 & 0.096 & 0.412 & 0.077 & 0.089 & --- & --- & --- \\
+Consistency Light & 0.621 & 0.597 & 0.171 & 0.527 & 0.629 & 0.433 & --- & --- & --- \\
 MuHu Consistency Light & --- & --- & --- & 0.443 & 0.490 & 0.024 & --- & --- & --- \\
 \midrule
-SP & 0.409 & 0.399 & 0.328 & 0.475 & 0.383 & 0.287 & 0.475 & 0.356 & 0.201 \\
-CoCoA$_{\mathrm{SP}}$ & 0.451\,$\uparrow$ & 0.519\,$\uparrow$ & 0.378\,$\uparrow$ & 0.509\,$\uparrow$ & 0.497\,$\uparrow$ & 0.330\,$\uparrow$ & 0.511\,$\uparrow$ & 0.505\,$\uparrow$ & 0.257\,$\uparrow$ \\
-CoCoA$_{\mathrm{SP}}$ Light & 0.449\,$\uparrow$ & 0.502\,$\uparrow$ & 0.358\,$\uparrow$ & 0.503\,$\uparrow$ & 0.480\,$\uparrow$ & 0.309\,$\uparrow$ & 0.492\,$\uparrow$ & 0.514\,$\uparrow$ & 0.242\,$\uparrow$ \\
-\method{}$_{\mathrm{SP}}$ & --- & --- & --- & \textbf{0.552} & 0.564 & 0.321 & --- & --- & --- \\
+SP & 0.522 & 0.481 & 0.239 & 0.560 & 0.300 & 0.103 & --- & --- & --- \\
+CoCoA$_{\mathrm{SP}}$ & 0.625\,$\uparrow$ & 0.640\,$\uparrow$ & \textbf{0.305}\,$\uparrow$ & 0.661\,$\uparrow$ & 0.497\,$\uparrow$ & 0.161\,$\uparrow$ & --- & --- & --- \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.603\,$\uparrow$ & 0.627\,$\uparrow$ & 0.297\,$\uparrow$ & 0.620\,$\uparrow$ & 0.396\,$\uparrow$ & 0.154\,$\uparrow$ & --- & --- & --- \\
+\method{}$_{\mathrm{SP}}$ & --- & --- & --- & 0.552 & 0.564 & 0.321 & --- & --- & --- \\
 \midrule
-PPL & 0.381 & 0.386 & 0.369 & 0.424 & 0.427 & 0.204 & 0.456 & 0.450 & 0.155 \\
-CoCoA$_{\mathrm{PPL}}$ & 0.454\,$\uparrow$ & 0.481\,$\uparrow$ & 0.387\,$\uparrow$ & 0.494\,$\uparrow$ & 0.472\,$\uparrow$ & 0.286\,$\uparrow$ & 0.523\,$\uparrow$ & 0.508\,$\uparrow$ & 0.229\,$\uparrow$ \\
-CoCoA$_{\mathrm{PPL}}$ Light & 0.445\,$\uparrow$ & 0.487\,$\uparrow$ & 0.382\,$\uparrow$ & 0.479\,$\uparrow$ & 0.480\,$\uparrow$ & 0.260\,$\uparrow$ & 0.512\,$\uparrow$ & 0.528\,$\uparrow$ & 0.234\,$\uparrow$ \\
-\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & 0.471 & \textbf{0.573} & 0.296 & --- & --- & --- \\
+PPL & 0.559 & 0.608 & 0.242 & 0.572 & 0.690 & 0.415 & --- & --- & --- \\
+CoCoA$_{\mathrm{PPL}}$ & \textbf{0.667}\,$\uparrow$ & \textbf{0.667}\,$\uparrow$ & 0.293\,$\uparrow$ & \textbf{0.671}\,$\uparrow$ & \textbf{0.738}\,$\uparrow$ & \textbf{0.486}\,$\uparrow$ & --- & --- & --- \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.641\,$\uparrow$ & 0.663\,$\uparrow$ & 0.290\,$\uparrow$ & 0.625\,$\uparrow$ & 0.714\,$\uparrow$ & 0.480\,$\uparrow$ & --- & --- & --- \\
+\method{}$_{\mathrm{PPL}}$ & --- & --- & --- & 0.471 & 0.573 & 0.296 & --- & --- & --- \\
 \midrule
-MTE & 0.353 & 0.382 & 0.357 & 0.417 & 0.438 & 0.182 & 0.456 & 0.473 & 0.152 \\
-CoCoA$_{\mathrm{MTE}}$ & 0.447\,$\uparrow$ & 0.478\,$\uparrow$ & 0.380\,$\uparrow$ & 0.492\,$\uparrow$ & 0.469\,$\uparrow$ & 0.288\,$\uparrow$ & 0.527\,$\uparrow$ & 0.508\,$\uparrow$ & 0.228\,$\uparrow$ \\
-CoCoA$_{\mathrm{MTE}}$ Light & 0.428\,$\uparrow$ & 0.494\,$\uparrow$ & 0.372\,$\uparrow$ & 0.475\,$\uparrow$ & 0.482\,$\uparrow$ & 0.254\,$\uparrow$ & 0.507\,$\uparrow$ & 0.533\,$\uparrow$ & 0.234\,$\uparrow$ \\
+MTE & 0.526 & 0.577 & 0.184 & 0.543 & 0.574 & 0.392 & --- & --- & --- \\
+CoCoA$_{\mathrm{MTE}}$ & 0.650\,$\uparrow$ & 0.642\,$\uparrow$ & 0.275\,$\uparrow$ & 0.663\,$\uparrow$ & 0.718\,$\uparrow$ & 0.472\,$\uparrow$ & --- & --- & --- \\
+CoCoA$_{\mathrm{MTE}}$ Light & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{MTE}}$ & --- & --- & --- & 0.465 & 0.570 & 0.288 & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Results for Evaluated Sequence -- Greedy Sample: Mean PRR across datasets for each task. The best-performing method is shown in bold, and the second-best is underscored. The arrows indicate improvement in CoCoA over the base version. \method{} rows show results for multi-layer embeddings + Huber loss (Mistral only; other models not tested). \textbf{TODO: Update table results with new benchmark}}
+\caption{Results for Evaluated Sequence -- Greedy Sample: Mean PRR across datasets for each task. The best-performing method is shown in bold, and the second-best is underscored. The arrows indicate improvement in CoCoA over the base version. \method{} rows show results for multi-layer embeddings + Huber loss (Mistral only; other models not tested).}
 \label{tab:cocoa_table1}
 \end{table*}
 

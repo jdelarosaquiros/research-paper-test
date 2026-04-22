@@ -91,31 +91,31 @@
  & Sample / Metric & Greedy & Random Sample & Most Probable Sample & MBR Sample \\
 \midrule
 \multirow{7}{*}{Falcon7b-Base}
- & CoQA / Align Score & 0.793 & 0.706 & 0.783 & 0.793 \\
- & GSM8k / Accuracy & 0.776 & 0.313 & 0.205 & 0.419 \\
- & MMLU / Accuracy & 0.715 & 0.638 & 0.715 & 0.699 \\
- & TriviaQA / Align Score & 0.557 & 0.473 & 0.568 & 0.559 \\
- & WMT14FrEn / Comet & 0.867 & 0.833 & 0.857 & 0.855 \\
- & WMT19DeEn / Comet & 0.846 & 0.807 & 0.826 & 0.828 \\
- & XSUM / Align Score & 0.842 & 0.734 & 0.782 & 0.801 \\
+ & CoQA / Align Score & --- & --- & --- & --- \\
+ & GSM8k / Accuracy & --- & --- & --- & --- \\
+ & MMLU / Accuracy & --- & --- & --- & --- \\
+ & TriviaQA / Align Score & --- & --- & --- & --- \\
+ & WMT14FrEn / Comet & --- & --- & --- & --- \\
+ & WMT19DeEn / Comet & --- & --- & --- & --- \\
+ & XSUM / Align Score & --- & --- & --- & --- \\
 \midrule
 \multirow{7}{*}{Llama8b-Base}
- & CoQA / Align Score & 0.756 & 0.671 & 0.743 & 0.766 \\
- & GSM8k / Accuracy & 0.548 & 0.234 & 0.261 & 0.346 \\
- & MMLU / Accuracy & 0.570 & 0.368 & 0.577 & 0.469 \\
- & TriviaQA / Align Score & 0.686 & 0.625 & 0.687 & 0.699 \\
- & WMT14FrEn / Comet & 0.863 & 0.819 & 0.852 & 0.844 \\
- & WMT19DeEn / Comet & 0.870 & 0.816 & 0.854 & 0.845 \\
- & XSUM / Align Score & 0.848 & 0.608 & 0.825 & 0.703 \\
+ & CoQA / Align Score & 0.668 & --- & --- & --- \\
+ & GSM8k / Accuracy & 0.240 & --- & --- & --- \\
+ & MMLU / Accuracy & 0.356 & --- & --- & --- \\
+ & TriviaQA / Align Score & 0.601 & --- & --- & --- \\
+ & WMT14FrEn / Comet & 0.821 & --- & --- & --- \\
+ & WMT19DeEn / Comet & 0.814 & --- & --- & --- \\
+ & XSUM / Align Score & 0.625 & --- & --- & --- \\
 \midrule
 \multirow{7}{*}{Mistral7b-Base}
- & CoQA / Align Score & 0.793 & 0.695 & 0.777 & 0.790 \\
- & GSM8k / Accuracy & 0.382 & 0.169 & 0.190 & 0.259 \\
- & MMLU / Accuracy & 0.632 & 0.552 & 0.632 & 0.612 \\
- & TriviaQA / Align Score & 0.743 & 0.655 & 0.750 & 0.739 \\
- & WMT14FrEn / Comet & 0.863 & 0.812 & 0.830 & 0.841 \\
- & WMT19DeEn / Comet & 0.864 & 0.805 & 0.836 & 0.837 \\
- & XSUM / Align Score & 0.803 & 0.578 & 0.775 & 0.665 \\
+ & CoQA / Align Score & 0.673 & --- & --- & --- \\
+ & GSM8k / Accuracy & 0.110 & --- & --- & --- \\
+ & MMLU / Accuracy & 0.542 & --- & --- & --- \\
+ & TriviaQA / Align Score & 0.664 & --- & --- & --- \\
+ & WMT14FrEn / Comet & 0.800 & --- & --- & --- \\
+ & WMT19DeEn / Comet & 0.795 & --- & --- & --- \\
+ & XSUM / Align Score & 0.528 & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
@@ -137,8 +137,6 @@ Modern LLMs are capable of producing output using a wide range of decoding strat
 We note that selecting a random sample from the model outputs incurs a significant drop in the quality of results on several datasets, most prominently on GSM8k. Based on these observations, we evaluate the efficacy of UQ in three setups: greedy decoding, stochastic sampling with a focus on the most probable sample and MBR decoding.
 
 This table reports base quality metrics (not method-specific), so \method{} rows are not applicable.
-
-\textbf{TODO: Update table results with new benchmark}
 
 
 \section{Results Summary for Most Probable Sample and MBR Sample Strategies}
@@ -669,8 +667,6 @@ See the main paper for descriptions of the uncertainty quantification methods us
 
 \tabref{tab:cocoa_table11} includes \method{} results for Mistral-7B-Base under greedy decoding. Llama and Falcon columns show hyphens as \method{} was not tested on those models. \tabref{tab:cocoa_table12} and \tabref{tab:cocoa_table13} use most probable and MBR decoding respectively, which were not tested with \method{}.
 
-\textbf{TODO: Update table results with new benchmark}
-
 \begin{table*}[htbp]
 \centering
 \adjustbox{max width=\textwidth, max totalheight=0.85\textheight}{%
@@ -682,77 +678,77 @@ Method & XSUM & WMT14FrEn & WMT19DeEn & CoQA & TriviaQA & MMLU & GSM8k \\
 \midrule
 \multicolumn{8}{c}{\textit{Mistral7b-Base}} \\
 \midrule
-MCSE & 0.007 & 0.257 & 0.350 & 0.247 & 0.496 & 0.337 & 0.475 \\
-MCNSE & 0.009 & 0.342 & 0.478 & 0.238 & 0.540 & 0.356 & 0.401 \\
-Semantic Entropy & 0.008 & 0.271 & 0.382 & 0.271 & 0.562 & 0.387 & 0.472 \\
-DegMat & 0.137 & 0.229 & 0.382 & 0.336 & 0.646 & 0.410 & 0.299 \\
-EigValLaplacian & 0.132 & 0.207 & 0.328 & 0.301 & 0.624 & 0.398 & 0.241 \\
-SAR & 0.094 & 0.353 & 0.517 & 0.313 & 0.644 & 0.419 & 0.471 \\
-P(True) & 0.179 & 0.118 & 0.033 & $-$0.061 & $-$0.128 & 0.068 & 0.005 \\
-Consistency Light & $-$0.006 & 0.317 & 0.457 & 0.306 & 0.597 & 0.432 & 0.441 \\
-Consistency & 0.051 & 0.285 & 0.500 & 0.379 & 0.647 & 0.423 & 0.435 \\
+MCSE & 0.012 & 0.224 & 0.265 & 0.319 & 0.523 & 0.411 & 0.724 \\
+MCNSE & 0.000 & 0.213 & 0.294 & 0.285 & 0.528 & 0.409 & 0.359 \\
+Semantic Entropy & 0.012 & 0.234 & 0.286 & 0.340 & 0.574 & 0.464 & 0.716 \\
+DegMat & 0.068 & 0.210 & 0.278 & 0.396 & 0.635 & 0.476 & 0.284 \\
+EigValLaplacian & 0.063 & 0.196 & 0.242 & 0.364 & 0.620 & 0.448 & 0.215 \\
+SAR & 0.073 & 0.254 & 0.333 & 0.363 & 0.627 & 0.499 & 0.514 \\
+P(True) & --- & --- & --- & --- & --- & --- & --- \\
+Consistency Light & 0.433 & 0.653 & 0.605 & 0.466 & 0.664 & 0.351 & 0.628 \\
+Consistency & 0.089 & 0.075 & 0.079 & 0.255 & 0.602 & 0.426 & 0.367 \\
 MuHu Consistency Light & 0.024 & --- & 0.490 & 0.384 & 0.626 & 0.344 & 0.418 \\
-SP & 0.287 & 0.315 & 0.451 & 0.326 & 0.628 & 0.474 & 0.471 \\
-CoCoA$_{\mathrm{SP}}$ & 0.330 & 0.396 & 0.598 & 0.383 & 0.670 & 0.466 & 0.517 \\
-CoCoA$_{\mathrm{SP}}$ Light & 0.309 & 0.380 & 0.580 & 0.351 & 0.674 & 0.480 & 0.506 \\
+SP & 0.103 & 0.237 & 0.363 & 0.392 & 0.568 & 0.557 & 0.725 \\
+CoCoA$_{\mathrm{SP}}$ & 0.161 & 0.449 & 0.544 & 0.515 & 0.706 & 0.623 & 0.799 \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.154 & 0.347 & 0.444 & 0.461 & 0.663 & 0.579 & 0.779 \\
 \method{}$_{\mathrm{SP}}$ & 0.321 & --- & 0.564 & \textbf{0.527} & \textbf{0.696} & \textbf{0.480} & 0.503 \\
-PPL & 0.204 & 0.365 & 0.489 & 0.281 & 0.632 & 0.474 & 0.311 \\
-CoCoA$_{\mathrm{PPL}}$ & 0.286 & 0.375 & 0.568 & 0.369 & 0.674 & 0.466 & 0.467 \\
-CoCoA$_{\mathrm{PPL}}$ Light & 0.260 & 0.404 & 0.557 & 0.326 & 0.684 & 0.480 & 0.428 \\
+PPL & 0.415 & 0.702 & 0.677 & 0.397 & 0.577 & 0.556 & 0.757 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.486 & 0.750 & 0.726 & 0.530 & 0.715 & 0.624 & 0.817 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.480 & 0.729 & 0.700 & 0.464 & 0.673 & 0.579 & 0.785 \\
 \method{}$_{\mathrm{PPL}}$ & 0.296 & --- & 0.573 & 0.283 & 0.690 & \textbf{0.480} & 0.430 \\
-MTE & 0.182 & 0.392 & 0.484 & 0.243 & 0.619 & 0.456 & 0.350 \\
-CoCoA$_{\mathrm{MTE}}$ & 0.288 & 0.374 & 0.564 & 0.355 & 0.673 & 0.447 & 0.491 \\
-CoCoA$_{\mathrm{MTE}}$ Light & 0.254 & 0.415 & 0.550 & 0.303 & 0.672 & 0.465 & 0.458 \\
+MTE & 0.392 & 0.579 & 0.569 & 0.331 & 0.596 & 0.505 & 0.742 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.472 & 0.732 & 0.704 & 0.510 & 0.733 & 0.590 & 0.820 \\
+CoCoA$_{\mathrm{MTE}}$ Light & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{MTE}}$ & 0.288 & --- & 0.570 & 0.266 & 0.676 & 0.461 & 0.458 \\
 \midrule
 \multicolumn{8}{c}{\textit{Llama8b-Base}} \\
 \midrule
-MCSE & 0.033 & 0.293 & 0.354 & 0.237 & 0.482 & 0.171 & 0.351 \\
-MCNSE & 0.022 & 0.370 & 0.415 & 0.219 & 0.501 & 0.170 & 0.344 \\
-Semantic Entropy & 0.033 & 0.297 & 0.389 & 0.272 & 0.549 & 0.229 & 0.375 \\
-DegMat & 0.081 & 0.250 & 0.355 & 0.353 & 0.622 & 0.342 & 0.309 \\
-EigValLaplacian & 0.079 & 0.198 & 0.278 & 0.332 & 0.604 & 0.292 & 0.273 \\
-SAR & 0.077 & 0.427 & 0.483 & 0.311 & 0.595 & 0.352 & 0.398 \\
-P(True) & 0.058 & 0.047 & 0.037 & $-$0.037 & $-$0.066 & $-$0.180 & 0.026 \\
-Consistency Light & $-$0.022 & 0.475 & 0.441 & 0.353 & 0.552 & 0.279 & 0.378 \\
-Consistency & 0.024 & 0.389 & 0.453 & 0.375 & 0.614 & 0.391 & 0.368 \\
+MCSE & 0.008 & 0.244 & 0.271 & 0.295 & 0.478 & 0.265 & 0.596 \\
+MCNSE & 0.023 & 0.301 & 0.395 & 0.266 & 0.475 & 0.215 & 0.495 \\
+Semantic Entropy & 0.008 & 0.243 & 0.309 & 0.319 & 0.533 & 0.348 & 0.582 \\
+DegMat & 0.066 & 0.214 & 0.305 & 0.397 & 0.600 & 0.383 & 0.479 \\
+EigValLaplacian & 0.069 & 0.182 & 0.249 & 0.377 & 0.586 & 0.337 & 0.410 \\
+SAR & 0.054 & 0.338 & 0.427 & 0.345 & 0.578 & 0.456 & 0.528 \\
+P(True) & --- & --- & --- & --- & --- & --- & --- \\
+Consistency Light & 0.171 & 0.575 & 0.620 & 0.476 & 0.637 & 0.679 & 0.694 \\
+Consistency & 0.096 & 0.061 & 0.041 & 0.274 & 0.578 & 0.291 & 0.317 \\
 MuHu Consistency Light & --- & --- & --- & --- & --- & --- & --- \\
-SP & 0.328 & 0.342 & 0.456 & 0.277 & 0.526 & 0.508 & 0.324 \\
-CoCoA$_{\mathrm{SP}}$ & 0.378 & 0.456 & 0.582 & 0.349 & 0.597 & 0.485 & 0.372 \\
-CoCoA$_{\mathrm{SP}}$ Light & 0.358 & 0.448 & 0.556 & 0.340 & 0.598 & 0.504 & 0.353 \\
+SP & 0.239 & 0.452 & 0.509 & 0.332 & 0.499 & 0.695 & 0.563 \\
+CoCoA$_{\mathrm{SP}}$ & 0.305 & 0.598 & 0.682 & 0.455 & 0.633 & 0.776 & 0.637 \\
+CoCoA$_{\mathrm{SP}}$ Light & 0.297 & 0.586 & 0.669 & 0.422 & 0.598 & 0.752 & 0.641 \\
 \method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
-PPL & 0.369 & 0.351 & 0.422 & 0.253 & 0.507 & 0.461 & 0.303 \\
-CoCoA$_{\mathrm{PPL}}$ & 0.387 & 0.448 & 0.514 & 0.338 & 0.593 & 0.452 & 0.433 \\
-CoCoA$_{\mathrm{PPL}}$ Light & 0.382 & 0.483 & 0.491 & 0.319 & 0.597 & 0.467 & 0.398 \\
+PPL & 0.242 & 0.569 & 0.647 & 0.360 & 0.501 & 0.677 & 0.697 \\
+CoCoA$_{\mathrm{PPL}}$ & 0.293 & 0.629 & 0.704 & 0.479 & 0.636 & 0.763 & 0.789 \\
+CoCoA$_{\mathrm{PPL}}$ Light & 0.290 & 0.627 & 0.699 & 0.444 & 0.604 & 0.733 & 0.783 \\
 \method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
-MTE & 0.357 & 0.357 & 0.408 & 0.239 & 0.497 & 0.349 & 0.326 \\
-CoCoA$_{\mathrm{MTE}}$ & 0.380 & 0.446 & 0.511 & 0.337 & 0.601 & 0.401 & 0.447 \\
-CoCoA$_{\mathrm{MTE}}$ Light & 0.372 & 0.501 & 0.487 & 0.316 & 0.599 & 0.387 & 0.412 \\
+MTE & 0.184 & 0.542 & 0.612 & 0.325 & 0.501 & 0.573 & 0.706 \\
+CoCoA$_{\mathrm{MTE}}$ & 0.275 & 0.607 & 0.677 & 0.466 & 0.660 & 0.685 & 0.787 \\
+CoCoA$_{\mathrm{MTE}}$ Light & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
 \midrule
 \multicolumn{8}{c}{\textit{Falcon7b-Base}} \\
 \midrule
-MCSE & 0.159 & 0.297 & 0.337 & 0.258 & 0.549 & 0.420 & 0.427 \\
-MCNSE & 0.108 & 0.371 & 0.474 & 0.293 & 0.586 & 0.442 & 0.299 \\
-Semantic Entropy & 0.164 & 0.307 & 0.389 & 0.294 & 0.581 & 0.463 & 0.418 \\
-DegMat & 0.201 & 0.274 & 0.431 & 0.407 & 0.651 & 0.480 & 0.395 \\
-EigValLaplacian & 0.201 & 0.229 & 0.394 & 0.381 & 0.645 & 0.454 & 0.358 \\
-SAR & 0.144 & 0.398 & 0.517 & 0.381 & 0.649 & 0.508 & 0.387 \\
-P(True) & $-$0.159 & 0.175 & 0.135 & 0.036 & 0.275 & 0.027 & 0.133 \\
-Consistency Light & 0.232 & 0.483 & 0.468 & 0.327 & 0.657 & 0.362 & 0.363 \\
-Consistency & 0.226 & 0.337 & 0.496 & 0.408 & 0.656 & 0.485 & 0.426 \\
+MCSE & --- & --- & --- & --- & --- & --- & --- \\
+MCNSE & --- & --- & --- & --- & --- & --- & --- \\
+Semantic Entropy & --- & --- & --- & --- & --- & --- & --- \\
+DegMat & --- & --- & --- & --- & --- & --- & --- \\
+EigValLaplacian & --- & --- & --- & --- & --- & --- & --- \\
+SAR & --- & --- & --- & --- & --- & --- & --- \\
+P(True) & --- & --- & --- & --- & --- & --- & --- \\
+Consistency Light & --- & --- & --- & --- & --- & --- & --- \\
+Consistency & --- & --- & --- & --- & --- & --- & --- \\
 MuHu Consistency Light & --- & --- & --- & --- & --- & --- & --- \\
-SP & 0.201 & 0.312 & 0.400 & 0.321 & 0.662 & 0.539 & 0.377 \\
-CoCoA$_{\mathrm{SP}}$ & 0.257 & 0.433 & 0.578 & 0.396 & 0.684 & 0.529 & 0.436 \\
-CoCoA$_{\mathrm{SP}}$ Light & 0.242 & 0.463 & 0.566 & 0.349 & 0.691 & 0.522 & 0.405 \\
+SP & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{SP}}$ Light & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- \\
-PPL & 0.155 & 0.375 & 0.525 & 0.316 & 0.644 & 0.539 & 0.326 \\
-CoCoA$_{\mathrm{PPL}}$ & 0.229 & 0.436 & 0.580 & 0.406 & 0.677 & 0.529 & 0.478 \\
-CoCoA$_{\mathrm{PPL}}$ Light & 0.234 & 0.497 & 0.558 & 0.364 & 0.694 & 0.522 & 0.468 \\
+PPL & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{PPL}}$ Light & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- \\
-MTE & 0.152 & 0.409 & 0.537 & 0.291 & 0.633 & 0.533 & 0.367 \\
-CoCoA$_{\mathrm{MTE}}$ & 0.228 & 0.439 & 0.577 & 0.395 & 0.685 & 0.517 & 0.510 \\
-CoCoA$_{\mathrm{MTE}}$ Light & 0.234 & 0.518 & 0.549 & 0.345 & 0.693 & 0.491 & 0.500 \\
+MTE & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
+CoCoA$_{\mathrm{MTE}}$ Light & --- & --- & --- & --- & --- & --- & --- \\
 \method{}$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
@@ -1180,8 +1176,6 @@ Total available computational resources used to produce results amounted to 12 c
 The model architecture consisted of a simple multilayer perceptron (MLP) with a single hidden layer. \tabref{tab:cocoa_table18} details the size of a train set for each model and dataset.
 
 This table reports training configuration (not method-specific results), so \method{} rows are not applicable.
-
-\textbf{TODO: Update table results with new benchmark}
 
 \begin{table*}[htbp]
 \centering
