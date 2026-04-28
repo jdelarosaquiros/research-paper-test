@@ -4,16 +4,19 @@
 set of 10 LLM datasets, in the ``leaving one LLM out'' setup. ``--'' denotes slots that are inapplicable,
 as their values are inherited from the pre-trained model.}
 \label{tab:hp_llmout}
+\renewcommand{\arraystretch}{1.15}
 \small
-\begin{tabular}{ccccccc}
-\toprule
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
 Num.\ layers & Learning rate & Embedding size & Epochs & Dropout & Weight Decay & Patch size \\
-\midrule
-\multicolumn{7}{c}{Pre training} \\
+\hline
+\multicolumn{7}{|c|}{Pre training} \\
+\hline
 $\{3, 5\}$ & 0.001 & 128 & 5 & 0.3 & 0.001 & $\{(1,1), (8,1), (4,2)\}$ \\
-\midrule
-\multicolumn{7}{c}{LA Adaptation} \\
+\hline
+\multicolumn{7}{|c|}{LA Adaptation} \\
+\hline
 -- & 0.001 & -- & 15 & -- & $\{0.1, 0.01, 10, 20\}$ & -- \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}

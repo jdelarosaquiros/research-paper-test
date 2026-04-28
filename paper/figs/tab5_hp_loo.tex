@@ -4,16 +4,19 @@
 set of all 14 LLM datasets, in the ``leaving one dataset out'' setup. ``--'' denotes slots that are
 inapplicable, as their values are inherited from the pre-trained model.}
 \label{tab:hp_loo}
+\renewcommand{\arraystretch}{1.15}
 \small
-\begin{tabular}{ccccccc}
-\toprule
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
 Num.\ layers & Learning rate & Embedding size & Epochs & Dropout & Weight Decay & Patch size \\
-\midrule
-\multicolumn{7}{c}{Pre training (and Zero-shot)} \\
+\hline
+\multicolumn{7}{|c|}{Pre training (and Zero-shot)} \\
+\hline
 3 & 0.001 & 128 & 15 & 0.3 & 0.001 & $(1,1)$ \\
-\midrule
-\multicolumn{7}{c}{Low-data regime LA adaptation (over $\{5\%, 10\%, 20\%, 50\%, 100\%\}$ of 10{,}000 test samples)} \\
+\hline
+\multicolumn{7}{|c|}{Low-data regime LA adaptation (over $\{5\%, 10\%, 20\%, 50\%, 100\%\}$ of 10{,}000 test samples)} \\
+\hline
 -- & 0.001 & -- & 5 & -- & 0.001 & -- \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}

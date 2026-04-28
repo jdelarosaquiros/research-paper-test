@@ -3,17 +3,24 @@
 \caption{Hyperparameter search grid for ACT-ViT(s) and ACT-MLP(s), for each of the 15 LLM-dataset
 combinations.}
 \label{tab:hp_single}
-\begin{tabular}{ll}
-\toprule
-\multicolumn{2}{c}{Hyperparameter Search Grid for each of the 15 LLM-dataset combinations} \\
-\midrule
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|l|l|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Hyperparameter Search Grid for each of the 15 LLM-dataset combinations}} \\
+\hline
 Number of layers & $\{1, 3\}$ \\
+\hline
 Learning rate    & $0.001$ \\
+\hline
 Embedding size   & $\{128, 1024\}$ \\
+\hline
 Epochs           & $15$ \\
+\hline
 Dropout          & $0.3$ \\
+\hline
 Weight Decay     & $\{1, 0.001\}$ \\
+\hline
 Patch Size       & $\{(1, 1), (8, 1), (4, 2)\}$ \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}

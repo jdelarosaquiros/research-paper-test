@@ -4,15 +4,17 @@
 Best is in \textbf{Bold}.}
 \label{tab:losnet}
 \setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
 \scriptsize
-\begin{tabular}{lccc ccc ccc}
-\toprule
- & \multicolumn{3}{c}{Mis-7B} & \multicolumn{3}{c}{LlaMa-8B} & \multicolumn{3}{c}{Qwen-7B} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
-Method & HotpotQA & IMDB & Movies & HotpotQA & IMDB & Movies & HotpotQA & IMDB & Movies \\
-\midrule
+\begin{tabular}{|c|ccc|ccc|ccc|}
+\hline
+ & HotpotQA & IMDB & Movies & HotpotQA & IMDB & Movies & HotpotQA & IMDB & Movies \\
+\hline
+Method & \multicolumn{3}{c|}{Mis-7B} & \multicolumn{3}{c|}{LlaMa-8B} & \multicolumn{3}{c|}{Qwen-7B} \\
+\hline
 LOS-Net & $72.92 \pm 0.45$ & $94.73 \pm 0.58$ & $72.20 \pm 0.66$ & $72.60 \pm 0.34$ & $90.57 \pm 0.28$ & $77.43 \pm 0.66$ & $73.71 \pm 1.21$ & $88.19 \pm 0.88$ & $88.01 \pm 0.39$ \\
+\hline
 ACT-ViT & \textbf{84.33} & \textbf{97.03} & \textbf{79.63} & \textbf{82.73} & \textbf{94.12} & \textbf{84.81} & \textbf{87.62} & \textbf{96.22} & \textbf{95.08} \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}
