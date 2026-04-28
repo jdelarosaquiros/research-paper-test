@@ -1,0 +1,40 @@
+\begin{table}[t]
+\centering
+\caption{AUC HD performance comparison on all 15 LLMs-Datasets combinations. The best
+test AUC score is indicated in \textbf{Bold}, and the second-best is \underline{underlined}. The last row reports the
+improvement achieved by ACT-ViT over the best-performing baseline from prior work.}
+\label{tab:main}
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\begin{tabular}{lccccc ccccc ccccc}
+\toprule
+ & \multicolumn{5}{c}{Mis-7B} & \multicolumn{5}{c}{LlaMa-8B} & \multicolumn{5}{c}{Qwen-7B} \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-11}\cmidrule(lr){12-16}
+ & HQA & Movies & HQA-Wc & IMDB & TriviaQA & HQA & Movies & HQA-Wc & IMDB & TriviaQA & HQA & Movies & HQA-Wc & IMDB & TriviaQA \\
+\midrule
+\multicolumn{16}{l}{\textit{Probas-based}} \\
+Logits-mean & 61.00 & 63.00 & 55.00 & 57.00 & 60.00 & 65.00 & 75.00 & 56.00 & 59.00 & 66.00 & 66.20 & 71.30 & 67.40 & 74.80 & 68.20 \\
+Logits-max  & 53.00 & 54.00 & 51.00 & 47.00 & 54.00 & 59.00 & 67.00 & 56.00 & 51.00 & 54.00 & 60.40 & 65.10 & 60.60 & 60.70 & 63.90 \\
+Logits-min  & 61.00 & 66.00 & 53.00 & 52.00 & 63.00 & 67.00 & 71.00 & 55.00 & 55.00 & 74.00 & 59.80 & 42.10 & 58.50 & 72.10 & 61.60 \\
+probas-mean & 63.00 & 61.00 & 56.00 & 54.00 & 60.00 & 61.00 & 73.00 & 56.00 & 73.00 & 67.00 & 67.50 & 74.20 & 66.00 & 74.60 & 69.70 \\
+probas-max  & 50.00 & 51.00 & 53.00 & 48.00 & 50.00 & 56.00 & 64.00 & 53.00 & 49.00 & 54.00 & 61.80 & 72.90 & 59.00 & 50.10 & 64.30 \\
+probas-min  & 58.00 & 60.00 & 52.00 & 51.00 & 59.00 & 60.00 & 65.00 & 51.00 & 57.00 & 67.00 & 54.40 & 44.70 & 53.60 & 65.40 & 57.40 \\
+\midrule
+\multicolumn{16}{l}{\textit{Learning-based}} \\
+Token [0]   & 82.69 & 75.59 & 65.79 & \textbf{97.61} & 79.95 & 79.00 & 75.84 & 62.22 & 93.58 & 80.13 & 80.43 & 86.73 & 64.83 & 81.84 & 75.42 \\
+Token [1]   & 80.63 & 75.02 & 61.03 & 96.95 & 77.29 & 79.71 & 77.70 & 64.21 & 89.88 & 79.81 & 79.23 & 86.47 & 64.21 & 80.99 & 77.24 \\
+Token [2]   & 79.88 & 75.46 & 61.59 & 97.46 & 76.76 & 79.60 & 77.73 & 66.24 & 90.51 & 79.90 & 79.14 & 87.98 & 67.62 & 89.11 & 79.77 \\
+Token [-3]  & 74.19 & 69.17 & 61.34 & 92.91 & 74.26 & 70.73 & 75.76 & 63.11 & 82.26 & 76.06 & 79.29 & 88.14 & 71.98 & 90.87 & 84.12 \\
+Token [-2]  & 76.06 & 70.96 & 63.84 & 94.54 & 75.47 & 75.11 & 78.85 & 66.95 & 81.93 & 78.18 & 78.74 & 90.44 & 73.76 & 92.54 & 81.93 \\
+Token [-1]  & 77.89 & 74.87 & 66.80 & 94.99 & 76.82 & 77.98 & 83.61 & 70.56 & 80.49 & 81.09 & 80.57 & 93.22 & 75.01 & 93.76 & 87.08 \\
+Probe[$*$]  & 79.88 & 74.87 & 66.80 & \textbf{97.61} & 79.95 & 79.71 & 83.61 & 70.56 & 93.58 & 81.09 & 80.57 & 93.22 & 75.01 & 93.76 & 87.08 \\
+ACT-MLP(s)  & 78.76 & 70.64 & 59.51 & 93.65 & 78.28 & 77.95 & 76.53 & 65.18 & 91.22 & 78.23 & 82.57 & 87.47 & 72.57 & 89.07 & 86.10 \\
+ACT-MLP     & 78.41 & 74.25 & 60.57 & 94.79 & 78.11 & 77.77 & 76.33 & 63.26 & 90.23 & 78.61 & 82.70 & 87.46 & 72.75 & 90.60 & 85.53 \\
+ACT-ViT(s)  & \underline{83.62} & \underline{78.79} & \underline{65.80} & \underline{97.59} & \underline{83.37} & \underline{81.27} & \underline{83.23} & \underline{69.97} & \underline{93.71} & \underline{84.26} & \underline{88.03} & \underline{94.59} & \underline{76.44} & \underline{94.71} & \textbf{91.01} \\
+ACT-ViT     & \textbf{84.33} & \textbf{79.63} & \textbf{70.23} & 97.03 & \textbf{84.28} & \textbf{82.73} & \textbf{84.81} & \textbf{72.30} & \textbf{94.12} & \textbf{85.58} & \textbf{87.62} & \textbf{95.08} & \textbf{78.26} & \textbf{96.22} & \textbf{91.01} \\
+\midrule
+Improvement & +1.64 & +4.04 & +3.43 & $-0.58$ & +4.33 & +3.02 & +1.20 & +1.74 & +0.54 & +4.49 & +7.05 & +1.86 & +3.25 & +2.46 & +3.93 \\
+\bottomrule
+\end{tabular}
+\end{table}

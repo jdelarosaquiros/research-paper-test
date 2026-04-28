@@ -1,0 +1,53 @@
+\section{Towards Better, Non-Static Probing}
+\label{sec:non_static}
+
+In the context of a single, target LLM, \citet{orgad2024} uncovered the importance of probing on ``exact-token'' position which may vary significantly on a per-sample basis -- and generally requires external
+algorithms, such as multiple expensive queries to an LLM, in order to be identified. Complementary
+to this, the results in \citet{azaria2023} suggest a degree of variability in the position of the best probing location also
+across layers. We consolidate these observations and further extend them by examining cross-LLM
+variability for fixed target datasets, further underscoring the need to go beyond static probing.
+
+\input{figs/fig2_heatmaps}
+
+Inspired by the analyses by \citet{orgad2024} on Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B), we
+train distinct logistic regression classifiers for each layer--token combination and construct ROC-AUC heatmaps to visualize the presence and localization of hallucination signals. We conduct this analyses across three distinct LLMs and five different datasets. Since sentence lengths vary, we restrict tokens to $\mathcal{N} := \{0, 1, 2, -3, -2, -1\}$, namely the first and last three in each sentence. Heatmaps are presented in Figure~\ref{fig:heatmaps} for Mis-7B,
+Llama-3-8B-Instruct \citep{touvron2023} (LlaMa-8B) and Qwen2.5-7B-Instruct \citep{yang2024} (Qwen-7B), over the Movies
+dataset \citep{orgad2024} (we refer to Appendix~\ref{app:extended} for their full set). Figure~\ref{fig:heatmaps} shows predictive signals spread
+over multiple layer-token combinations, but it clearly indicates that the most informative positions
+vary significantly across the three different LLMs, with distinct patterns characterizing each heatmap.
+In particular, the most predictive signal in terms of layers appears around the middle of the model
+for LlaMa-8B and Mis-7B, whereas for Qwen-7B it is concentrated in the final layers. As for token
+positions, the signal tends to be strongest at the end of the sentence for both LlaMa-8B and Qwen-7B,
+while for Mis-7B it is more prominent towards the beginning. Concretely, note how the best probing
+position for Mis-7B, i.e., $(14, 0)$, delivers suboptimal results on both LlaMa-8B and Qwen-7B, where
+the gap with their respective best probing locations is $\approx 7\%$ AUC on both.
+
+\paragraph{Towards Better Probing Techniques.} Traditional probing methods rely on fixed layer/token
+selections. We claim this limits their ability to capture the dynamic nature of error signals, whose
+position vary across layers and tokens. This rigidity also hampers generalization across LLMs and
+tasks. We believe that a more effective approach should adaptively attend to relevant activations while
+remaining efficient. To this end, we introduce -- and present next -- an architecture that processes the
+full AT $A$, enabling a flexible and powerful HD across models and datasets.
+
+\subsection{Learning on Activation Tensors}
+
+Our starting observation is that Activation Tensors $A \in \mathbb{R}^{L_M \times N \times D_M}$ are highly structured objects:
+they span two sequential dimensions and a feature dimension. The former two correspond to LLM
+layers ($L_M$) as well as generated tokens ($N$), forming a structural map of neural activity across text
+positions and processing depths. The latter corresponds, instead, to the dimension of the LLM's
+hidden states ($D_M$). We note that this structure is remarkably analogous to that of images: layers and
+tokens are in correspondence with their vertical and horizontal spatial dimensions, the hidden states
+with channels (e.g., RGB). Based on this analogy, we refer to the layer-token dimensions $(L_M, N)$ as
+the spatial activation dimensions, and each layer-token location as an activation pixel. Accordingly,
+we propose to process ATs similarly to images, designing our method using techniques inspired by
+modern vision architectures and guided by the principles outlined below.
+
+\paragraph{Guiding principles.} We follow two key principles in designing architectures for Activation Tensors:
+(i) cross-LLM generalization and (ii) computational efficiency. Cross-LLM capability is especially
+crucial for hallucination detection, where annotated data is scarce, costly, or unavailable for new
+models. We aim to build a model that learns from multiple LLMs and generalizes effectively to
+unseen ones, without incurring high computational cost. Principle (ii) poses a major challenge:
+Activation Tensors are large. For example, a transformer with $L = 50$ layers, $N = 512$ tokens, and
+$D = 4096$ hidden dimensions produces a single AT of $\approx 0.2$GB in float16; a batch of 64 totals $\approx
+12.8$GB. Addressing this scale is critical for real-world use. The next section introduces ACT-ViT, an
+architecture designed to handle ATs efficiently while meeting the principles above.

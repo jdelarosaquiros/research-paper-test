@@ -1,0 +1,60 @@
+\subsection{Dataset Description}
+
+In this section, we provide an overview of the five datasets used in our analysis; we mostly follow
+the framework given in \citep{orgad2024} in constructing the datasets. We aimed to cover diverse tasks, reasoning
+skills, and datasets, highlighting each one's unique value and how it complements the rest.
+
+For all datasets, we used a consistent split of 10,000 training samples and 10,000 test samples, unless
+otherwise specified. From the 10,000 training samples, 20\% (i.e., 2,000) were selected in a stratified
+manner for validation, using a fixed random seed of 42.
+
+\begin{enumerate}
+\item HotpotQA with and without context (License: CC-BY-SA-4.0) \citep{yang2018}: HotpotQA is a
+multi-hop question answering dataset featuring diverse questions that require reasoning
+across multiple sources. Each instance includes supporting Wikipedia documents. We use
+two settings in our analysis: (1) Without context, where questions are presented alone, testing
+factual recall and reasoning; and (2) With context, where supporting documents are provided,
+emphasizing the model's ability to leverage contextual information effectively.
+\item Movies \citep{orgad2024} (License: MIT): We use this dataset to evaluate generalization in scenarios
+regarding movies involving factual inaccuracies (i.e., hallucinations). This dataset contains
+7857 test samples.
+\item IMDB (originally released with no known license by \citet{maas2011}): This dataset consists
+of movie reviews for sentiment classification. Following the method in \citep{orgad2024}, we employed a
+one-shot prompt to help the large language model (LLM) apply the predefined sentiment
+labels accurately.
+\item TriviaQA (originally released with no known license by \citep{joshi2017}): A dataset of trivia question-answer pairs presented to the LLM without any supporting context, relying only on its
+internal parametric knowledge. Multiple acceptable answer variants are provided to facilitate
+automatic evaluation of response accuracy.
+\end{enumerate}
+
+\subsection{Additional Results}
+\label{app:extra}
+
+Below in Table~\ref{tab:losnet} we provide a comparison of ACT-ViT with LOS-Net.
+
+\input{figs/tab7_losnet}
+
+\paragraph{ACT-ViT performance average over three seeds.} As outlined in the NeurIPS paper checklist, we
+provide additional results for ACT-ViT over the datasets and tasks provided Table~\ref{tab:main}, where we rerun
+ACT-ViT with three random seeds and report the mean and standard deviation. Those results are
+provided in Table~\ref{tab:seeds}.
+
+\input{figs/tab8_seeds}
+
+\subsection{Run-Time}
+\label{app:runtime}
+
+\input{figs/tab9_runtime}
+
+We present the run-time of ACT-ViT(s), on a single NVIDIA L-40 GPU, compared with probing
+classifiers, on each of the 15 LLM-dataset combinations considered in the paper; see Table~\ref{tab:runtime}.
+
+\subsection{Layer/Token Visualizations}
+
+Below we present the layer-token heatmaps, corresponding to each of the 15 LLM-dataset combination
+considered in our paper. [Layer/token heatmap figures omitted -- see original paper.]
+
+\subsection{Low-Data Regime Adaptation}
+\label{app:lowdata}
+
+Below, we present additional results in the low-data training regime for all 15 LLM--dataset combinations considered in our paper. [Per-LLM/dataset low-data figures (Figures 6--20 in the original) omitted -- see original paper.]

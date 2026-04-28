@@ -1,0 +1,25 @@
+\section{Conclusions}
+
+We introduce ACT-ViT, a fast and effective method for LLM Hallucination Detection (HD) that
+relies solely on a model's internal representation of a single response. Unlike traditional probing,
+ACT-ViT leverages the full Activation Tensor (AT) and, drawing on an analogy with images, it applies
+techniques from modern vision architectures, enabling both cross-LLM training and generalization.
+It is dramatically faster than multi-query methods (runtime $\approx 10^{-5}$ seconds), making it suitable for
+real-time use. Across 15 LLM--dataset pairs, ACT-ViT consistently outperforms prior white-box
+methods, supports zero-shot generalization to new datasets, and adapts efficiently to unseen LLMs.
+Our work opens several directions for future research. While focused on HD, ACT-ViT can be
+extended to tasks like data contamination and LLM-generated content detection. More advanced
+architectures also warrant exploration, e.g., replacing per-LLM adapters with a shared module that
+exploits permutation symmetries across ATs.
+
+\paragraph{Limitations.} Due to the large size of the ATs, we begin their processing by conducting a simple
+pooling operation to reduce their dimensionality. While effective in managing computational costs,
+this step may discard potentially informative signals. Developing more sophisticated approaches to
+handle AT size without sacrificing signal fidelity remains a promising future direction.
+
+\paragraph{Acknowledgements.}
+G.B. is supported by the Jacobs Qualcomm PhD Fellowship. F.F. conducted this work supported by
+an Aly Kaufman Post-Doctoral Fellowship. H.M. is a Robert J. Shillman Fellow and is supported by
+the Israel Science Foundation through a personal grant (ISF 264/23) and an equipment grant (ISF
+532/23). F.F. is extremely grateful to the members of the ``Eva Project'', whose support he immensely
+appreciates.

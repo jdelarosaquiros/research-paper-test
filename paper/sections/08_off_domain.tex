@@ -1,0 +1,38 @@
+\subsection{Off-domain Hallucination Detection}
+
+\paragraph{Hallucination Detection on unseen datasets.} We implement a ``leave-one-dataset-out'' setup: for
+each LLM-dataset pairing, we train ACT-ViT on the corpus of the remaining 14 out of 15 combinations, and then evaluate on the target held-out test set zero-shot\footnote{On held-out LLM-data pair $(M, D)$, this is possible as $M$'s LA is pretrained on the pairs $(M, D')$, $D' \neq D$.}. This is something fundamentally
+not possible with standard probing methods and hence compare against the best probability-based
+baseline, denoted Best-Probas, due to its training-free nature, and against ACT-MLP.
+
+Results are shown as bar plots in Figure~\ref{fig:zeroshot} on all 15 LLM--dataset combinations. We observe strong
+generalization performance: ACT-ViT outperforms Best-Probas in 13 out of 15 cases, sometimes
+substantially. On the IMDB dataset with Mis-7B, ACT-ViT achieves a gain of $+37$ AUC points.
+ACT-MLP also shows reasonable performance, but it consistently falls short of ACT-ViT. These results
+provide a positive answer to (Q\textsubscript{1}\textsuperscript{(b)}).
+
+\input{figs/fig4_zeroshot}
+
+We next consider a more tolerant setting whereby only
+a limited amount of samples from the target training
+set is available. In particular, we start with the pre-trained ACT-ViT and fine-tune the LA module keeping
+the ViT-B component frozen. We compare with Best-Probas and Probe[$*$], fitted only the corresponding available training data. Figure~\ref{fig:lowdata} shows Test AUCs for Mis-7B
+over HotpotQA across varying fine-tuning set sizes; results for other 15 LLM-dataset combinations are in Appendix~\ref{app:lowdata}. ACT-ViT consistently outperforms all baselines across all training fractions. Importantly, the performance gap between ACT-ViT and Probe[$*$] widens as the
+training set shrinks, indicating that the frozen ViT-B backbone captures strong, transferable features learned from
+(pre)training on other LLMs and datasets. Additionally,
+ACT-ViT requires only 10\% of the available training data
+(1k samples) to surpass Probe[$*$] when trained on the full 10k-sized training set.
+
+\input{figs/fig5_lowdata}
+
+\paragraph{Hallucination Detection on unseen LLMs and datasets.} We finally benchmark our method in
+the following challenging setup: we train ACT-ViT on 2 out of 3 LLMs and leave the third one out.
+Specifically, our model is pretrained on a corpus of 10 out of 15 training sets containing no data
+from target LLM $M$. It is then (separately) adapted on the remaining 5 datasets by keeping ViT-B
+frozen and only training the LA\textsubscript{$M$} module from scratch. In Table~\ref{tab:ood} we report the obtained Test
+AUCs, comparing ACT-ViT against Best-Probas and Probe[$*$]. ACT-ViT outperforms these baselines
+in 13 out of 15 cases. Recalling that the ViT-B module is frozen during adaptation, this further
+demonstrates how the features learned during (pre)training over different LLMs can strongly transfer
+to an unseen one. Along with the above, these results answer positively to Q\textsubscript{2}\textsuperscript{(b)} and Q\textsubscript{3}\textsuperscript{(b)}.
+
+\input{figs/tab2_ood}

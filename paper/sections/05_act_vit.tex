@@ -1,0 +1,67 @@
+\subsection{ACT-ViT}
+\label{sec:act_vit_subsec}
+
+\paragraph{Overview.} ACT-ViT consists of the following components (see Figure~\ref{fig:overview}): (1) a Pooling (Pool) layer
+that reduces the ``spatial'' dimensions of the activation tensor (layers and tokens) to a fixed, predefined
+size $(L_p, N_p)$; (2) a per-LLM Linear Adapter (LA) layer that compresses and ``aligns'' their feature
+dimensions; (3) a ViT-Based Backbone (ViT-B), which processes the resulting tensor using a Vision
+Transformer architecture, enhanced with shared positional encodings within each patch. In what
+follows, we expand on each of these components.
+
+\paragraph{Pool.} Similarly to image resizing, we propose to reduce the size
+of activation tensors before processing them with our architecture: as a preprocessing step, we apply a max-pooling operation
+across the spatial activation dimensions (see inset illustration).
+Specifically, we propose two possible pooling approaches. The
+first maintains full input resolution at the level of tokens and
+applies 1d pooling on the layer dimension only. This approach
+is preferred when expecting relatively concise LLM generations, or when their maximum generation
+length remains computationally manageable. Alternatively, a second approach adopts a more general
+2d pooling on both the two spatial activation dimensions, allowing to more efficiently deal with
+potentially longer LLM responses. As we will detail next, we will mainly adopt the first approach,
+and additionally experiment with the second in Section~\ref{sec:experiments}.
+
+Note that, in our applications, not only the number of generated tokens $N$ naturally varies depending on the input prompt, also, the number of LLM layers $L$ may vary across models in $\mathcal{M}$.
+With guiding principle (i) in mind, it becomes important to ensure our architecture can robustly
+deal with both these varying parameters. Accordingly, we design the two above pooling operations in a way that, regardless of the input size, their outputs, $A_p \in \mathbb{R}^{L_p \times N_p \times D_M}$, always match
+a predefined shape of $(L_p, N_p)$ in their spatial dimensions (see Algorithm~\ref{alg:pool}, in Appendix~\ref{app:pool}). Importantly, this property ensures the downstream ViT backbone is always fed with tensors of a consistent spatial shape.
+
+\paragraph{LA.} Following pooling, we map the feature dimensions to
+a shared hidden size via a linear transformation. In particular, we propose to instantiate and employ a dedicated linear
+adapter (LA) module for each LLM $M \in \mathcal{M}$; see inset illustration. All adapters project to a shared output dimensionality
+$D'$. Formally:
+\begin{equation}
+\mathcal{L} = \left\{ LA_M : A_p \mapsto A_p W_M \mid W_M \in \mathbb{R}^{D_M \times D'},\ M \in \mathcal{M} \right\},
+\end{equation}
+where $D_M$ is the hidden dimension of model $M$, and $A_p$ denotes the pooled activation tensor. The
+result is a tensor of shape $L_p \times N_p \times D'$. This design---applying a single linear transformation, $LA_M$,
+jointly across all layers and tokens of the activation tensor for a given LLM $M$, rather than using
+separate projections per layer or token---is motivated by the inherent alignment of feature spaces
+within the architecture of a single transformer model. Specifically, residual connections promote
+consistency across layers, while the weight sharing of the transformer across tokens ensures a uniform
+representation structure along the token dimension.
+
+Resorting to a set of LLM-dependent LAs is particularly relevant in relation to principle (i). Indeed,
+this expedient ensures that the downstream architectural components process objects which are
+of consistent shape and are meaningfully comparable across the internal representation spaces
+of the distinct LLMs in $\mathcal{M}$. Indeed, motivated by recent literature on representation alignment
+\citep{huh2024,morcos2018,moschella2022,kornblith2019}, we hypothesize that, despite differences in architectural design, training corpora,
+weight initializations and learning schemes, the hidden representations of LLMs can, in fact, be
+put in an approximate correspondence by some linear transformations, which we aim to learn via
+the adapters in $\mathcal{L}$. This contributes to rendering our multi-LLM setup not only computationally
+possible, but also meaningful from a learning perspective and, as we show in the next sections, also
+beneficial in terms of generalization performance. For an illustrative motivating example of how a
+linear mapping can tackle misalignment in the representation space, we refer the interested reader
+to Appendix~\ref{app:permutation}, where we specifically consider those induced by neuron symmetries, as recently
+studied in \citep{navon2023,samuelkainsworth2022}.
+
+\paragraph{ViT-B.} In view of the proposed analogy between ATs and images, the output of any LA module is
+then processed \`a la ViT \citep{dosovitskiy2020}. First, it is rearranged into a sequence of non-overlapping activation
+patches of size $(p_H, p_W)$. If $L_p$ and $N_p$ are divisible by, resp., $p_H$ and $p_W$, this gives $H = L_p/p_H$ and
+$W = N_p/p_W$ patches. The resulting reshaped tensor is denoted: $A_{\text{patches}} \in \mathbb{R}^{(H \cdot W) \times p_H \times p_W \times D'}$.
+We augment each patch with a per-patch learnable Positional Encoding (PE), providing intra-patch
+ordering over (pooled) activation pixels. The Transformer's native PEs provide a global ordering
+over activation patches. Combined with our per-patch PEs, this allows reconstructing each pooled
+pixel's original position. Similarly to ViT, the enriched activation patches are flattened and passed
+through a shared linear layer. The resulting sequence is then processed by a stack of Transformer
+blocks. Overall, using a vision-like backbone aligns with the aforementioned analogy between ATs
+and images and, as we will experimentally show next, it reveals to be an effective inductive bias.

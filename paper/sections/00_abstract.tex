@@ -1,0 +1,15 @@
+\begin{abstract}
+Detecting hallucinations in Large Language Model-generated text is crucial for
+their safe deployment. While probing classifiers show promise, they operate on
+isolated layer--token pairs and are LLM-specific, limiting their effectiveness and
+hindering cross-LLM applications. In this paper, we introduce a novel approach to
+address these shortcomings. We build on the natural sequential structure of activation data in both axes (layers $\times$ tokens) and advocate treating full activation tensors
+akin to images. We design ACT-ViT, a Vision Transformer-inspired model that can
+be effectively and efficiently applied to activation tensors and supports training on
+data from multiple LLMs simultaneously. Through comprehensive experiments encompassing diverse LLMs and datasets, we demonstrate that ACT-ViT consistently
+outperforms traditional probing techniques while remaining extremely efficient for
+deployment. In particular, we show that our architecture benefits substantially from
+multi-LLM training, achieves strong zero-shot performance on unseen datasets,
+and can be transferred effectively to new LLMs through fine-tuning. Full code is
+available at \url{https://github.com/BarSGuy/ACT-ViT}.
+\end{abstract}

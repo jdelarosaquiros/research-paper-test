@@ -1,0 +1,26 @@
+\section{Related Work}
+
+\paragraph{Probing classifiers.} In NLP, probing classifiers \citep{belinkov2022} are used to analyze model representations and
+reveal how features like syntax and semantics are encoded \citep{gupta2015,conneau2018,kissane2025}. Originating in interpretability
+research, they help identify which model components capture specific linguistic properties. E.g.,
+lower layers capture local syntax in machine translation, while higher layers encode global structure
+\citep{shi2016}. Probes typically operate at the token and layer levels, with sentence-level tasks often using the
+final token's activation \citep{adi2016,kadavath2022,snyder2024}. While both linear probes and MLPs are common \citep{alain2018,hupkes2018,nelsonfliu2019,hallmaudslay2020},
+linear probes are preferred for interpretability, as MLPs are often too expressive to distinguish whether
+the structure lies in the embeddings or the probe itself \citep{hewitt2019}. Although early interpretability studies
+favored simpler probes, more recent work uses probing as a predictive or control tool and prioritize
+prediction efficacy. Probes have recently estimated LLMs' downstream performance \citep{zhu2022,afzal2025,ghosh2025} and
+behavioral traits, e.g.\ sycophancy \citep{papadatos2024}, or have guided models to desirable behaviors, e.g.\ reduced bias
+or improved factuality \citep{vonrutte2024,qiu2024,maiya2025}. Still, many approaches use minimal setups, such as a single token
+from a single layer fed into a linear probe. Our work moves beyond these constraints by designing
+high-performing probes that better and more comprehensively leverage internal representations.
+
+\paragraph{Error Detection in LLMs.} LLMs produce diverse and complex mistakes and identifying these
+has become increasingly important. Hallucinations---a well-studied subset---are typically defined
+as outputs unfaithful to the input or external facts. Yet their definitions vary, extending to biases,
+reasoning flaws, and other failures \citep{liu2021,huang2023,ji2023,vipularawte2023}. We adopt a broader view of error detection to
+account for this ambiguity, treating hallucinations as one specific case. While we occasionally use
+the terms interchangeably, we recognize that hallucinations are only one facet of the broader error
+landscape. Most prior work approaches error detection using uncertainty estimates \citep{kadavath2022,varshney2023,kuhn2023,manakul2023} or
+probing internal representations---often focusing on the final answer token \citep{kadavath2022,snyder2024,yuksekgonul2023,zou2023,yin2024,chen2024,rateike2023,li2024,marks2023,burns2022}. Others probe the final prompt token to anticipate errors before generation \citep{slobodkin2023,snyder2024,simhi2024,gottesman2024,seo2025}. While effective, these methods under-exploit the richness of model activations. We address
+this by developing stronger methods that make fuller use of internal representations.

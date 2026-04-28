@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage[final]{neurips_2025}
+\usepackage{booktabs}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{Beyond Token Probes: Hallucination Detection via\\ Activation Tensors with ACT-ViT}
+\author{
+  Guy Bar-Shalom\thanks{Equal contribution.} \\ Technion \\ \texttt{guybs99@gmail.com}
+  \And
+  Fabrizio Frasca\footnotemark[1] \\ Technion \\ \texttt{fabriziof@campus.technion.ac.il}
+  \And
+  Yaniv Galron \\ Technion
+  \And
+  Yftah Ziser \\ University of Groningen,\\ Nvidia Research
+  \And
+  Haggai Maron \\ Technion,\\ Nvidia Research
+}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_notation}
+\input{sections/04_non_static_probing}
+\input{sections/05_act_vit}
+\input{sections/06_experiments}
+\input{sections/07_in_domain}
+\input{sections/08_off_domain}
+\input{sections/09_conclusions}
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\input{sections/A0_neurips_checklist}
+
+\appendix
+\input{sections/A1_extended_experimental}
+\input{sections/A2_dataset}
+\input{sections/A3_appendix_extra}
+
+\end{document}

@@ -1,0 +1,38 @@
+\subsection{In-domain Hallucination Detection}
+
+\paragraph{Comparing detection methods in-domain.} Table~\ref{tab:main} reports the performance of the aforementioned
+methods across all the 15 LLM--dataset combinations. The last row reports the gap between ACT-ViT
+and the best-performing baseline from prior work. First, our methods outperform both probability-based and probing classifiers on all settings, with the only exception being IMDB over Mis-7B. There,
+they closely follow the best scoring Probe[$*$]. Additional comparison with LOS-Net is available
+in Table~\ref{tab:losnet} in Appendix~\ref{app:extra}. These results yield a positive answer to (Q\textsubscript{1}\textsuperscript{(a)}), underscoring how
+leveraging the full activation tensor can significantly benefit automated HD. Second, we note that
+ACT-ViT outperforms ACT-ViT(s) in 12 out of 15 cases, sometimes with a remarkable margin. These
+results demonstrate that joint training, as implemented in ACT-ViT, can outperform training on
+individual LLM--dataset combinations, as in ACT-ViT(s). The notable performance of ACT-ViT
+suggests that the underlying signal for HD is shared across different LLMs and datasets, and that
+a simple linear adapter (module LA) can already effectively bridge these. Answering (Q\textsubscript{2}\textsuperscript{(a)}), we
+conclude that training on Activation Tensors sourced from diverse datasets and LLMs holds significant
+potential, and that our method can effectively harness it. Last, we intriguingly note how the ACT-MLP
+baselines are often outperformed by Probe[$*$]. This clearly answers (Q\textsubscript{3}\textsuperscript{(a)}) and shed light on the
+pivotal role of the design choice behind ACT-ViT.
+
+\input{figs/tab1_main}
+
+\paragraph{Run-time and performance trade-offs.} The inference run-time for ACT-ViT and ACT-ViT(s),
+is extremely contained, around $10^{-5}$ seconds. This is orders of magnitude faster than techniques
+resorting to LLM-querying \citep{kuhn2023,orgad2024}. The training time of ACT-ViT on the full training corpus (15
+LLM-dataset combinations) is below three hours on a single NVIDIA L-40 GPU. Our competitive
+ACT-ViT(s) trains, instead, in $\approx 10$ minutes. For detailed run-times see Table~\ref{tab:runtime} in Appendix~\ref{app:runtime}.
+
+One may wonder if it is possible to further reduce the run-time of our method with
+a more aggressive Pool. We study this by testing different configurations on Qwen-7B over HotpotQA. We train ACT-ViT(s) varying the number of pooled layers and tokens: $(L_p, N_p) \in \{(4, 20), (4, 100), (8, 20), (8, 100)\}$. Results, shown in Figure~\ref{fig:ablation}, are
+reported in terms of Test AUC (left) scores and corresponding training run-times (right).
+As expected, increasing $(L_p, N_p)$ improves performance,
+but at the cost of longer training.
+Notably, however, configuration $(L_p, N_p) = (4, 20)$ trains in
+around one minute while still achieving an AUC of 86\%, $\approx 6$ units higher than Probe[$*$]. In
+respect to (Q\textsubscript{4}\textsuperscript{(a)}), we conclude
+that our approach is indeed very scalable, and that operating on simple design choices can provide optimal performance-complexity
+trade-offs.
+
+\input{figs/fig3_ablation}

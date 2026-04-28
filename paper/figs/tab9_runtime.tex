@@ -1,0 +1,22 @@
+\begin{table}[h]
+\centering
+\caption{Training time (in minutes [m] and seconds [s]) for Probe[$*$] and ACT-ViT across all 15
+LLM--dataset combinations. Each ACT-ViT training run was performed on a single NVIDIA L-40
+GPU.}
+\label{tab:runtime}
+\small
+\begin{tabular}{llccccc}
+\toprule
+LLM & Method & HotpotQA & Movies & HQA-Wc & IMDB & TriviaQA \\
+\midrule
+\multirow{2}{*}{Mis-7B} & Probe[$*$] & 2[m] 45[s] & 6[m] 23[s] & 1[m] 41[s] & 1[m] 38[s] & 1[m] 50[s] \\
+                       & ACT-ViT    & 13[m] 2[s] & 11[m] 28[s] & 12[m] 49[s] & 14[m] 17[s] & 12[m] 42[s] \\
+\midrule
+\multirow{2}{*}{LlaMa-8B} & Probe[$*$] & 2[m] 50[s] & 2[m] 5[s] & 1[m] 54[s] & 2[m] 22[s] & 2[m] 36[s] \\
+                          & ACT-ViT    & 13[m] 48[s] & 27[m] 5[s] & 16[m] 34[s] & 13[m] 1[s] & 27[m] 21[s] \\
+\midrule
+\multirow{2}{*}{Qwen-7B} & Probe[$*$] & 2[m] 0[s] & 1[m] 43[s] & 1[m] 51[s] & 1[m] 39[s] & 1[m] 53[s] \\
+                         & ACT-ViT    & 10[m] 29[s] & 13[m] 12[s] & 11[m] 49[s] & 11[m] 30[s] & 10[m] 46[s] \\
+\bottomrule
+\end{tabular}
+\end{table}

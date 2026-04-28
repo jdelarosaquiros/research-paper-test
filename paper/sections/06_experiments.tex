@@ -1,0 +1,57 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Setup.} We experimentally analyze various aspects of learning on ATs with ACT-ViT. We consider,
+in particular, two relevant setups: (a) in-domain and (b) out-of-domain.
+
+The in-domain setup (a) is the setting commonly considered in HD literature: it assesses the generalization performance on data from a known LLM on known generative tasks, i.e., it assumes
+training-time access to annotated data for a target LLM and task of interest. In this standard scenario, we attempt answering the following questions: (Q\textsubscript{1}\textsuperscript{(a)}) Does our method outperform standard
+methods, including probing classifiers? (Q\textsubscript{2}\textsuperscript{(a)}) What is the contribution of multi-dataset training?
+(Q\textsubscript{3}\textsuperscript{(a)}) Is the vision architectural inductive bias effective? (Q\textsubscript{4}\textsuperscript{(a)}) How scalable is our approach?
+
+Harder -- but more compelling -- is the out-of-domain setup
+(b). Here, we benchmark methods in cases where either
+the target dataset is unseen at training time, or, even more
+challenging, both the target dataset and the target LLM
+are unseen. We study, in particular, the performance of
+our approach when either no data or only a small amount
+is available for adaptation. Those correspond, resp., to
+zero-shot generalization, and to fine-tuning only the LA
+in our pipeline, keeping the other parameters frozen (see
+inset). These settings reflect relevant real-world use-cases
+pertaining to, e.g., newly introduced LLMs and/or generative tasks with hardly accessible hallucination labels. Our experiments revolve around the following questions: (Q\textsubscript{1}\textsuperscript{(b)}) Can our method
+effectively generalize on unseen datasets? Does it adapt in a sample-efficient manner? (Q\textsubscript{2}\textsuperscript{(b)}) Can it
+handle unseen LLMs by only training the corresponding Linear Adapters? (Q\textsubscript{3}\textsuperscript{(b)}) Does this approach
+favorably compare with baselines?
+
+\paragraph{LLMs and datasets.} Aligning with prior work, we focus on the datasets and LLMs considered
+in \citep{orgad2024,barshalom2025}. We experiment with Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B) and Llama-3-8B-Instruct
+\citep{touvron2023} (LlaMa-8B) over the generation tasks encompassed by the following datasets: TriviaQA \citep{joshi2017}
+(question answering), HotpotQA with (HQA-Wc) and without supporting context (HQA) \citep{yang2018}
+(question answering), IMDB movie review \citep{maas2011} (sentiment analysis), and Movies \citep{orgad2024} (actor role
+retrieval). On top of this, we additionally include another LLM: Qwen2.5-7B-Instruct \citep{yang2024} (Qwen-7B). This setup yields a total of 15 distinct LLM-dataset combinations. We use the area under the
+ROC curve (AUC) to evaluate error detectors, a standard metric in this domain \citep{orgad2024,snyder2024,barshalom2025}.
+
+\paragraph{Methods in comparison.} We compare the performance of a diverse set of methods: (1) Probabilities/logits-based. To detect errors, several works \citep{nunomguerreiro2022,kadavath2022,varshney2023,huang2023a} assess LLM confidence by
+aggregating output token probabilities or logits by taking the mean, max, or min across these scores.
+We refer to these with the naming Logit/Probas-mean/min/max. These approaches operate in a
+less-restrictive setting, and thus constitute important baselines for our method. They are especially
+relevant in the out-of-domain setup (b), since, being training-free, these methods are (degenerately)
+sample-efficient by construction. We also compare against LOS-Net \citep{barshalom2025}, a recent, learnable approach on output probabilities. (2) Probing Classifiers \citep{belinkov2022} constitute natural and effective white-box
+baselines for our approach \citep{kadavath2022,li2024}. For each benchmark, we learn logistic regression probes on
+each layer of the LLM and across a fixed set of token positions $\mathcal{N}$ (see Section~\ref{sec:non_static}), a superset of the
+top-performing (static) tokens identified in \citep{orgad2024}. The best layer-token combination, as well as the
+$L_2$ regularization coefficient, is selected on the respective validation sets. We refer to this method
+as Probe[$*$]. With Token[$n$], $n \in \mathcal{N}$, we refer, instead, to the probe specific to token position
+$n$. (3) Activation Tensors-Methods are those designed and introduced in this work. ACT-ViT,
+(Section~\ref{sec:act_vit_subsec}) is trained on the corpus of all available training sets across LLMs and datasets. In the
+out-of-domain setup (b), some of these are purposely segregated from the corpus in an effort to study
+domain adaptation abilities; this will be appropriately specified. We also benchmark two variants
+of our approach to separately study the benefits of multi-dataset training and architectural inductive
+biases. We use ACT-ViT(s) to refer to the single LLM-dataset counterpart of our method trained
+individually on each of the 15 LLM--dataset combinations. ACT-MLP and ACT-MLP(s) denote, instead,
+simplified variants in which MLPs operate on the output of Pool, flattened. These are trained, resp.,
+on the full training corpus\footnote{With appropriate padding to $D_{\max}$ -- the largest hidden size among the considered LLMs} or separately on each single training set. Across all these architectures, if
+not specified otherwise, we use the fixed pooling hyperparameter of $(L_p, N_p) = (8, 100)$.
+
+Next we present our main results, with additional experimental details and experiments in Appendix~\ref{app:extended}.

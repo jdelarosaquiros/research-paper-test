@@ -1,0 +1,28 @@
+\section{Notation, Problem Formulation and Setup}
+
+Given LLM $M$, input query $\vec{s}$ and the LLM-generated response $\vec{\hat{g}}$, the goal is to predict whether
+$\vec{\hat{g}}$ is correct or not. We assume a white-box setting, i.e.\ full access to the internal states of $M$, but
+disallow using external resources (such as search engines or auxiliary LLMs). We restrict the setting
+to single-pass prompting with no rounds of interactions due to their high cost.
+
+\paragraph{Activation Tensors.} We define the activation tensors as the hidden representations within the LLM
+across all layers and all tokens in the output text.\footnote{This definition can be readily extended to include the input text as well.} Formally, the Activation Tensor (AT) of an LLM
+$M$ is a third-order tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, where $L_M$ is the number of layers in the model, $N$ is
+the output sequence length, and $D_M$ is the feature (hidden state) dimension; see Figure~\ref{fig:overview}. Throughout
+this paper, we focus on the hidden states at each layer after the application of the feed-forward
+network and the residual connection, refer to Appendix~\ref{app:extended} for details.
+
+\paragraph{Dataset construction.} Following the setup of \citet{orgad2024}, we consider datasets $\mathcal{D} = \{(\vec{s}_i, \vec{g}_i)\}_{i=1}^m$,
+consisting of $m$ question-answer pairs, such as: (``Who developed the theory of general relativity?'',
+``Albert Einstein''). For each query $\vec{s}_i$, the model produces a response $\vec{\hat{g}}$, and we extract the associated
+activation tensor $A_i$, yielding a collection $\{A_i\}_{i=1}^m$. We calculate binary hallucination labels, by
+comparing each response $\vec{\hat{g}}_i$ with answer $\vec{g}_i$ to determine its correctness. We assign label $y_i = 1$ for a
+correct response, $y_i = 0$ otherwise. Our final activation dataset is $\mathcal{A} = \{(A_i, y_i, M_i)\}_{i=1}^m$, where
+$M_i$ is the LLM producing AT $A_i$ associated with hallucination label $y_i$. We importantly note that
+multiple distinct $M_i$'s from a known collection $\mathcal{M}$ are allowed within the same dataset.
+
+\paragraph{Problem Statement.} Our objective is to train a parametric model mapping ATs to their corresponding hallucination labels. We additionally consider the following more general and challenging
+scenarios: (i) Off-domain data generalization: ATs are drawn from a known model $M \in \mathcal{M}$, but
+correspond to tasks or domains not seen during training (e.g., training on $M$'s activation tensors from
+sentiment analysis, but testing on trivia question answering). (ii) Off-domain model generalization:
+ATs are drawn from a previously unseen LLM $M \notin \mathcal{M}$.

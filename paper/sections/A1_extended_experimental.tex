@@ -1,0 +1,64 @@
+\section{Extended Experimental Section}
+\label{app:extended}
+
+Our experiments were conducted using the PyTorch \citep{paszke2019} framework (License: BSD), using a single
+NVIDIA L-40 GPU for all experiments. We use a fixed batch size of 128 for all experiments, other
+than the ones with ACT-ViT(s), ACT-MLP(s), where we used a batch size of 64. We used 4 heads in
+the transformer part of ViT for all experiments. Hyperparameter tuning was performed utilizing the
+Weight and Biases framework \citep{biewald2020} -- see Appendix~\ref{app:hyperparams}.
+
+\paragraph{Optimizer and Schedulers.} For all datasets, we use the AdamW optimizer \citep{loshchilov2017} in combination with
+a cosine learning rate scheduler, incorporating a warm-up phase over the first 10\% of training epochs.
+
+\paragraph{LLMs.} We consider the following LLMs for our experiments:
+\begin{enumerate}
+\item Mistral-7b-instruct-v0.2 \citep{albertqjiang2023} (License: Apache-2.0). Referred to as Mis-7B in the main
+text and accessed through the Hugging Face interface at \url{https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3}.
+\item Llama-3-8b-Instruct \citep{touvron2023} (License: Llama-3\footnote{\url{https://huggingface.co/meta-llama/Meta-Llama-3-8B/blob/main/LICENSE}}). Referred to as LlaMa-8B in the main
+text and accessed through the Hugging Face interface at \url{https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct}.
+\item Qwen-2.5-7b-Instruct (License: Apache-2.0): Referred to as Qwen-7B in the main text
+and accessed through the Hugging Face interface at \url{https://huggingface.co/Qwen/Qwen2.5-7B-Instruct}.
+\end{enumerate}
+
+\paragraph{Generating Activation Tensors.} Given a large language model (LLM) $M$ and an output sequence of
+$N$ tokens, we define the activation tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, where $L_M$ is the number of layers in
+$M$, and $D_M$ is the hidden dimension. Let $A^{(l)} := A[l, :, :]$ denote the hidden representations at the
+$l$-th layer across the entire sequence. In a standard transformer architecture, these representations are
+computed as:
+\begin{equation}
+A^{(l)} = A^{(l-1)} + \mathrm{ReLU}\!\left[\mathrm{Attn}(A^{(l-1)}) W_l^1 + b_l^1\right] W_l^2 + b_l^2,
+\label{eq:transformer}
+\end{equation}
+where Attn denotes the output of the multi-head attention mechanism, followed by batch normalization. The matrices $W_l^1, W_l^2 \in \mathbb{R}^{D_M \times D_M}$ and biases $b_l^1, b_l^2 \in \mathbb{R}^{D_M}$ correspond to the feed-forward
+subnetwork at layer $l$. Throughout this paper, we use the term activation tensor to refer to $A$ as
+defined in Equation~\eqref{eq:transformer}.
+
+\subsection{HyperParameters}
+\label{app:hyperparams}
+
+This section outlines the hyperparameter search performed for our experiments. We employ the same
+hyperparameter grid for both our primary model, ACT-ViT, and our proposed baseline, ACT-MLP\footnote{The patch size parameter does not apply to these baselines, as it is not part of their configuration.}.
+Hyperparameter grid search is performed to optimize the AUC on the validation set. The best
+hyperparameters are selected based on the run that achieves the highest validation AUC, for each of
+our two proposed methods, namely ACT-ViT, and ACT-MLP. The hyperparameter grids used for all
+experiments are outlined below, corresponding to each experimental setup:
+
+\begin{enumerate}
+\item Training on a single LLM-specific dataset -- see Table~\ref{tab:hp_single}.
+\item Joint training on all 15 datasets simultaneously -- see Table~\ref{tab:hp_joint}.
+\item Leave-one-out training (excluding 1 out of 15 datasets) -- upper part of Table~\ref{tab:hp_loo}.
+\item Low-data regime adaptation on the held-out dataset -- lower part of Table~\ref{tab:hp_loo}. ``--'' refers to
+slot which are inapplicable, or taken from the pre-trained model.
+\item Leaving out one LLM (excluding 5 out of 15 LLM-dataset combinations) -- see Table~\ref{tab:hp_llmout}.
+\end{enumerate}
+
+For the probing baselines---specifically Token[$n$] for $n \in \mathcal{N}$ (see Section~\ref{sec:non_static}) and Probe[$*$]---we
+performed a grid search over inverse regularization strengths $C \in \{10000, 100, 1.0, 0.01, 0.0001\}$.
+For each token probe, we selected the best-performing model based on validation set performance,
+corresponding to the optimal value of $C$. In the case of Probe[$*$], we additionally selected the best
+token position using the validation set.
+
+\input{figs/tab3_hp_single}
+\input{figs/tab4_hp_joint}
+\input{figs/tab5_hp_loo}
+\input{figs/tab6_hp_llmout}

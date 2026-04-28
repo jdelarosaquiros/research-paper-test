@@ -1,0 +1,73 @@
+\section{Introduction}
+Despite their remarkable performance across a wide range of tasks, the inner workings of Large
+Language Models (LLMs) remain poorly understood. This lack of transparency is particularly
+problematic in high-stakes scenarios, where LLMs are prone to ``hallucinations'' -- cases in which the
+model generates false or fabricated content \citep{smtonmoy2024,liu2021,huang2023,ji2023,vipularawte2023}. Accurate Hallucination Detection
+(HD) is critical for the safe and reliable deployment of LLMs \citep{qiu2023,li2023,sahoo2024}. While existing methods
+for detecting such hallucinations often rely on auxiliary LLMs or repeated prompting \citep{kuhn2023,orgad2024},
+these approaches tend to be slow and computationally intensive (up to several seconds per instance \citep{barshalom2025}).
+A prominent class of methods suggest to overcome this additional computational cost via probing
+classifiers: simple models trained on internal LLM representations to predict certain attributes \citep{belinkov2022}.
+These techniques have been central to interpretability research \citep{gupta2015a,kohn2015,shi2016a,ettinger2016,adi2016,conneau2018a,belinkov2019}, with linear
+probes gaining popularity for their transparency and simplicity \citep{alain2018,hupkes2018,nelsonfliu2019,hallmaudslay2020,orgad2024}.
+
+Unfortunately, traditional probing classifiers exhibit two fundamental limitations. First, they operate
+on isolated layer--token pairs, neglecting information from other activations within the model. This is
+critical: while predictive hallucination signals might indeed appear at specific ``exact tokens'', their positions vary across responses, making the position-finding a difficult problem on its own---practically
+requiring (multiple) LLM queries \citep{orgad2024}. In addition to this, these signals may also peak at different
+layers on a per-dataset basis \citep{azaria2023}, underscoring the need for a more holistic processing of the model's
+internal state. A second limitation is that probing classifiers are model-specific, thus unable to generalize across LLMs or to benefit from hallucination-related insights found in other LLMs. This hinders
+sharing datasets across LLMs, transfer learning, and multi-model training. Crucially, each new
+LLM or text generation task demands annotating a new dataset, a tricky and sometimes impractical
+procedure. Motivated by the above, we ask: (i) Can we design an architecture that processes the full
+internal state of an LLM and benefit from it?; and (ii) Can it learn across multiple LLMs and benefit
+from it? In this paper, we positively answer these questions and propose a novel approach, dubbed
+ACT-ViT, addressing the aforementioned limitations in an effective and efficient way.
+
+\input{figs/fig1_overview}
+
+We start by providing further evidence on the limitations of single-position, static probing classifiers.
+On top of previous observations suggesting that the best probe-position varies across tokens and
+layers on a per-sample and dataset basis \citep{orgad2024,azaria2023}, we show that the location of predictive signals for
+hallucinations also widely varies across LLMs, even for the same dataset. This further calls for
+the development of a more sophisticated approach that can adaptively attend to the most predictive
+``locations'' within models' hidden states, especially if aiming to operate beyond the single-LLM
+regime. To this end, we propose leveraging, as our basic data type, what we term the Activation
+Tensor (AT) -- a comprehensive representation of the LLM's internal state with respect to a given
+input. Formally, for an LLM $M$ and a $N$-long response to some input query, the AT is denoted
+$A \in \mathbb{R}^{L_M \times N \times D_M}$, with $L_M$ the number of layers, $D_M$ $M$'s hidden dimension. ATs are informative
+but challenging to process: they are large, high-dimensional, and LLM-dependent. We process them
+efficiently and effectively by exploiting their structural similarity to images. An RGB image forms a
+$H \times W \times 3$ tensor with spatial dimensions (a grid of pixels) and feature channels. Similarly, Activation
+Tensors have ``spatial'' dimensions described by layer stacks ($L_M$) and token sequences ($N$), and a
+feature dimension corresponding to the dimensions of the LLM's hidden states. This analogy enables
+applying proven computer vision techniques like spatial pooling and Vision Transformers \citep{dosovitskiy2020}.
+
+To unify ATs across different LLMs into a consistent shape, we apply pooling over the spatial
+dimensions, followed by an LLM-specific Linear Adapter (LA) on the feature dimension. This
+transforms all tensors into a shared shape of $L_p \times N_p \times D'$. The resulting representation is then fed
+into a shared ViT-based backbone. See Figure~\ref{fig:overview} for a complete depiction of our framework. These
+components are jointly trained for HD on multiple annotated AT datasets originating from different
+LLMs. Importantly, our use of linear adapters is inspired by recent work \citep{huh2024,moschella2022} suggesting that
+LLMs converge towards a shared statistical model of reality, with the notion of universal truthfulness
+\citep{marks2023,slobodkin2023} positing they learn a generalizable, linearly exploitable representation of factual truth. A key
+aspect of our architecture is its ability to be applied to new, unseen LLMs. In these cases, it suffices
+to only train the lightweight, LLM-specific LA, while the backbone -- pretrained for HD in a unified
+representation space across LLMs -- is kept frozen.
+
+\paragraph{Results.} In our extensive experiments across 15 LLM--dataset combinations, ACT-ViT consistently
+outperforms traditional probing methods in both single- and multi-LLM training settings. Remarkably,
+it exhibits strong zero-shot generalization to new datasets from LLMs seen during training and
+requires as little as $\approx 5\%$ of the training data to improve performance further and -- in many cases --
+surpass traditional probes trained on the whole dataset. Furthermore, by training only the lightweight
+LA for a new unseen LLM, our model achieves superior performance than standard probes. ACT-ViT
+trains on a single GPU in less than three hours on all 15 LLM-dataset combinations together, and
+detects hallucination in less than $\approx 10^{-5}$ seconds per instance at inference time.
+
+\paragraph{Contributions.} (1) We propose Activation Tensors (ATs) as a holistic, structured representation of
+LLM internals. (2) Inspired by the similarity of ATs to images we introduce a novel architecture that
+can effectively train on ATs from multiple LLMs and datasets. We show it outperforms traditional
+probes, even when trained only on a single LLM. (3) We demonstrate strong transfer capabilities:
+zero-shot generalization to new datasets on LLMs that were seen during training, and fast adaptation
+to out-of-domain LLMs with only a newly trained linear adapter, keeping the remaining parameters
+frozen. (4) We show our method is highly efficient during both training and inference.

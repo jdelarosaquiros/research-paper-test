@@ -1,0 +1,82 @@
+\section{Pooling Algorithm}
+\label{app:pool}
+
+Our pooling algorithm is presented in Algorithm~\ref{alg:pool}.
+
+\begin{figure}[h]
+\centering
+\fbox{\begin{minipage}{0.92\linewidth}
+\textbf{Algorithm 1: Pooling}\\[2pt]
+\textbf{Require:} Tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, target sizes $L_p, N_p$\\
+\textbf{Ensure:} Tensor $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
+1: $A \leftarrow \mathrm{permute}(A, [D_M, L_M, N])$\\
+2: Pad $A$ so that $L_M$ and $N$ are divisible by $L_p$ and $N_p$\\
+3: Compute patch sizes: $f_L = \frac{L_{\text{pad}}}{L_p}$, $f_N = \frac{N_{\text{pad}}}{N_p}$\\
+4: Apply pooling:\\
+\hspace*{2em} $A \leftarrow \mathrm{F.max\_pool2d}(A, \text{kernel\_size} = (f_L, f_N))$\\
+5: $A \leftarrow \mathrm{permute}(A, [L_p, N_p, D_M])$\\
+6: \textbf{return} $A$
+\end{minipage}}
+\caption*{}
+\label{alg:pool}
+\end{figure}
+
+\section{Permutation Symmetries}
+\label{app:permutation}
+
+Given the same number of layers and hidden dimensions, two LLMs can compute the exact same
+function and yet produce entirely different activation tensors. This discrepancy stems from internal
+symmetries in the model's weight space. To illustrate this, we consider a simplified transformer
+architecture with $L$ layers, omitting residual connections and batch normalization for clarity (though
+the analysis extends to those cases as well).
+
+Recall that $A_l$ is the activation tensor at layer $l \in [L]$. Let $(Q_l, K_l, V_l)$ denote the query, key, and
+value matrices at layer $l$, computed as:
+\begin{equation}
+(Q_l, K_l, V_l) = (A_{l-1} W_l^{Q_l}, A_{l-1} W_l^{K_l}, A_{l-1} W_l^{V_l}).
+\end{equation}
+
+Assume the feed-forward network (FFN) at layer $l$ produces output:
+\begin{equation}
+A_l = \mathrm{ReLU}(\mathrm{Attn}(A_{l-1}) W_l^1 + b_l^1) W_l^2 + b_l^2.
+\label{eq:ffn}
+\end{equation}
+
+Now assume the model uses $d$-dimensional hidden features, and let $P \in \mathbb{R}^{d \times d}$ be a permutation
+matrix, and define the following weight transformation:
+\begin{align}
+(W_l^2, b_l^2) &\to (W_l^2 P^\top, b_l^2 P^\top), \\
+(W_{l+1}^{Q_{l+1}}, W_{l+1}^{K_{l+1}}, W_{l+1}^{V_{l+1}}) &\to (P W_{l+1}^{Q_{l+1}}, P W_{l+1}^{K_{l+1}}, P W_{l+1}^{V_{l+1}}).
+\end{align}
+Although the new weights (the right hand side) are very different, it is straightforward to verify that
+the permutation matrices cancel out, leaving the underlying function unchanged. However, recalling
+Equation~\eqref{eq:ffn}, the activation tensors differ significantly, as the transformation permutes the feature
+dimension as follows:
+\begin{equation}
+A[l, n, d] \to A[l, n, \sigma(d)],
+\end{equation}
+where $\sigma$ is the permutation induced by $P$.
+
+This illustrative example remarks the relevance of resorting to LLM-specific LA modules, as opposed to using a single shared linear adapter. Although padding can side-step the dimensionality
+problem, such a single adapter would be required to implicitly learn (to be invariant to) all feature
+permutations that may potentially arise ($D!$). While we note that principled approaches for handling
+such symmetries exist -- such as designing layers that are invariant to feature permutations by design
+-- we consider these less relevant to us given the limited number of considered LLMs. Exploring
+symmetry-aware architectures still remains a promising direction we envision to explore in future
+endeavors.
+
+\paragraph{Extended Analysis to Standard Transformers Activations.} The implications extend naturally
+to a standard transformer that includes residual connections and batch normalization. Residual
+connections do not affect the analysis, since in our analysis the permutation symmetry is applies
+uniformly across layers---the same permutation is used for all weight matrices, so the residual
+addition remains consistent with our analysis. Batch normalization also preserves this symmetry, as
+it is a permutation-equivariant operation: applying a permutation to the input features results in a
+correspondingly permuted output.
+
+\section{Broader Impact}
+
+By enhancing the detection of hallucinations in Large Language Models, our work contributes to the
+responsible development and deployment of generative AI by promoting greater transparency and
+trust. However, we acknowledge that our findings also reveal aspects of the predictive information
+embedded within LLM internals. This insight could be misused by malicious actors, potentially
+motivating restrictions on LLM internals access and thereby slowing progress in open research.
