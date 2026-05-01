@@ -24,3 +24,25 @@ the terms interchangeably, we recognize that hallucinations are only one facet o
 landscape. Most prior work approaches error detection using uncertainty estimates \citep{kadavath2022,varshney2023,kuhn2023,manakul2023} or
 probing internal representations---often focusing on the final answer token \citep{kadavath2022,snyder2024,yuksekgonul2023,zou2023,yin2024,chen2024,rateike2023,li2024,marks2023,burns2022}. Others probe the final prompt token to anticipate errors before generation \citep{slobodkin2023,snyder2024,simhi2024,gottesman2024,seo2025}. While effective, these methods under-exploit the richness of model activations. We address
 this by developing stronger methods that make fuller use of internal representations.
+
+\paragraph{Confidence-based uncertainty estimation.}
+Confidence-based methods derive uncertainty from the token-level probability distribution of a single generated sequence.
+Sequence probability~\citep{malinin2021uncertainty}, predictive entropy, and mean token entropy are widely used baselines.
+\citet{duan2024shifting} introduced SAR, which reweights token contributions by their relevance to the answer.
+\citet{li2025uqac} proposed attention-chain-based backtracking to identify semantically critical tokens and compute marginal answer probabilities, improving calibration on reasoning tasks.
+\citet{schweighofer2025rethinking} showed that the negative log-likelihood of the greedy output is a theoretically motivated uncertainty measure under the zero-one scoring rule, matching multi-sample methods without any sampling.
+A persistent challenge for all token-probability methods is length bias: \citet{vashurin2025line} demonstrated that even nominally length-normalized measures exhibit statistically significant linear trends with output length and proposed a post-hoc linear debiasing procedure.
+\citet{santilli2025lengthbias} further showed that mutual biases between UQ methods and evaluation metrics can distort AUROC rankings, recommending LM-as-a-judge correctness functions.
+In contrast, mechanistic and probing approaches inspect hidden representations where truth and error signals may be encoded before they surface in the output logits, learning on internal activations rather than specific output tokens and thereby decoupling the uncertainty signal from decoder calibration.
+
+\paragraph{Consistency-based uncertainty estimation.}
+Consistency methods generate multiple outputs and measure their semantic agreement.
+Semantic entropy~\citep{kuhn2023semantic} clusters outputs into equivalence classes via natural language inference (NLI) and computes entropy over cluster probabilities.
+Graph-based variants use pairwise similarity matrices to compute degree, eccentricity, or spectral features~\citep{lin2024generating}.
+\citet{nguyen2025snne} proposed Semantic Nearest Neighbor Entropy, which accounts for both intra- and inter-cluster similarity, addressing the degradation of semantic entropy on longer outputs.
+A key bottleneck is sampling efficiency: generating 5--20 diverse outputs per query is expensive.
+\citet{aichberger2025sdlg} introduced importance sampling with a semantically diverse proposal distribution that covers more clusters with fewer samples, and \citet{park2025diversity} injected continuous similarity penalties into decoding for similar effect.
+\citet{fadeeva2026beams} replaced multinomial sampling with beam search and importance-weighted estimators, proving lower variance guarantees and achieving the best consistency-based results on short-form QA.
+\citet{hamidieh2026crossmodel} diagnosed a fundamental failure mode: when an LLM is confidently wrong, self-consistency yields low uncertainty.
+They addressed this by adding cross-model epistemic disagreement, which flags confident failures that intra-model consistency misses.
+Mechanistic and probing approaches occupy a complementary middle ground: they are more robust than confidence-based methods at flagging confidently incorrect responses, while remaining more efficient than consistency-based methods since they require only a single forward pass and avoid the multi-sample overhead.
