@@ -1,13 +1,22 @@
-\documentclass{article}
-\usepackage[final]{neurips_2025}
+\pdfoutput=1
+
+\documentclass[11pt]{article}
+
+\usepackage{EMNLP2023}
+
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+
 \usepackage{booktabs}
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{url}
-\usepackage{hyperref}
-\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
 
 \title{Beyond Token Probes: Hallucination Detection via\\ Activation Tensors with ACT-ViT}
 \author{
@@ -36,10 +45,8 @@
 \input{sections/08_off_domain}
 \input{sections/09_conclusions}
 
-\bibliographystyle{unsrtnat}
 \bibliography{references}
-
-\input{sections/A0_neurips_checklist}
+\bibliographystyle{acl_natbib}
 
 \appendix
 \input{sections/A1_extended_experimental}
