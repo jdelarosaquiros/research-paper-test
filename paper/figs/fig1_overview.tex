@@ -1,9 +1,19 @@
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{figs/fig1_overview.jpg}
-\caption{ACT-ViT overview: we extract Activation Tensors from (multiple) LLMs, apply Pooling,
-and project them to a shared space via per-LLM Linear Adapters. A shared ViT Backbone is then
-applied. ACT-ViT benefits from training on data from multiple LLMs and can be easily fine-tuned to
-unseen ones.}
+\includegraphics[width=0.95\linewidth]{figs/fig1_overview.png}
+\caption{Two-stage architecture for weakly supervised temporal uncertainty
+localization. \textbf{Stage~1} (top) trains an ACT-ViT sequence classifier
+on the full activation tensor $A \in \mathbb{R}^{L \times T \times D}$: a
+per-LLM linear adapter projects the hidden dimension into a shared space,
+followed by max pooling, ViT patching over the layer--token plane, the
+ACT-ViT backbone, and a linear head producing a sequence-level uncertainty
+score. \textbf{Stage~2} (bottom) freezes the ACT-ViT encoder and applies
+it to centered token windows, yielding per-window embeddings in
+$\mathbb{R}^{T \times d_{\text{model}}}$. A residual Mamba-2 + LayerNorm
+temporal head emits per-window logits, which a top-$k$ multiple-instance
+learning rule aggregates into a sequence-level score. The per-window
+logits also localize the generated-token regions whose hidden-state
+activations most contribute to the prediction (highlighted in the
+example response).}
 \label{fig:overview}
 \end{figure*}
