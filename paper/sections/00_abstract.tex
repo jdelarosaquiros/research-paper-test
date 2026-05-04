@@ -1,15 +1,26 @@
 \begin{abstract}
 Detecting hallucinations in Large Language Model-generated text is crucial for
-their safe deployment. While probing classifiers show promise, they operate on
-isolated layer--token pairs and are LLM-specific, limiting their effectiveness and
-hindering cross-LLM applications. In this paper, we introduce a novel approach to
-address these shortcomings. We build on the natural sequential structure of activation data in both axes (layers $\times$ tokens) and advocate treating full activation tensors
-akin to images. We design ACT-ViT, a Vision Transformer-inspired model that can
-be effectively and efficiently applied to activation tensors and supports training on
-data from multiple LLMs simultaneously. Through comprehensive experiments encompassing diverse LLMs and datasets, we demonstrate that ACT-ViT consistently
-outperforms traditional probing techniques while remaining extremely efficient for
-deployment. In particular, we show that our architecture benefits substantially from
-multi-LLM training, achieves strong zero-shot performance on unseen datasets,
-and can be transferred effectively to new LLMs through fine-tuning. Full code is
-available at \url{https://github.com/BarSGuy/ACT-ViT}.
+their safe deployment. Recent mechanistic approaches show promise by using
+internal hidden states as uncertainty signals, but they face two important
+limitations. Some methods probe only isolated layer--token positions, missing
+uncertainty signals distributed across layers and generated tokens. Others
+process richer activation tensors, but are designed mainly for sequence-level
+prediction and do not localize where uncertainty arises, or are too costly for
+real-time long-form generation. In this paper, we introduce a temporal
+uncertainty localization framework that predicts hallucination likelihood while
+identifying the generated-token regions whose hidden-state activations most
+contribute to uncertainty. We build on the structured nature of activation
+tensors, treating the layer--token hidden-state plane as an activation image,
+and extend this view with a temporal localization head over token windows.
+Since hallucination labels are typically available only at the full-response
+level, we train our model using weak supervision: a frozen ACT-ViT encoder
+extracts uncertainty-aware features from local activation windows, and a
+Mamba-based temporal head assigns uncertainty logits to each window. A top-$k$
+multiple-instance learning objective aggregates the most uncertain windows into
+a sequence-level prediction, enabling localization without segment-level
+labels. Our approach separates representation learning from weak localization:
+first learning activation patterns predictive of uncertainty at the
+sequence level, then freezing the encoder and training the temporal head to
+localize suspicious regions efficiently. This yields a scalable framework for
+real-time activation-based uncertainty detection in long-form LLM generation.
 \end{abstract}
