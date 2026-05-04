@@ -1,67 +1,203 @@
-\subsection{ACT-ViT}
+\section{Model Architecture}
+\label{sec:model}
+
+We instantiate the two-stage pipeline of
+Section~\ref{sec:non_static} as illustrated in
+Figure~\ref{fig:overview}. Stage~1 is an \emph{ACT-ViT sequence encoder}
+that maps a full activation tensor
+$A \in \mathbb{R}^{L \times T \times D}$ to a sequence-level
+uncertainty logit. Stage~2 freezes that encoder and applies it to a
+sequence of centered token windows $\{A^{(t)}\}_{t=1}^{T}$, producing
+per-window embeddings that a \emph{Mamba-2 temporal head}
+\citep{albertgu2024} consumes to emit per-window logits
+$\{\hat{p}^{(t)}\}_{t=1}^{T}$. A top-$k$ multiple-instance learning
+(MIL) rule aggregates those logits into a sequence-level score, against
+which the temporal head is supervised. We describe the encoder first
+and the temporal head second.
+
+\subsection{Stage~1: ACT-ViT Encoder}
 \label{sec:act_vit_subsec}
 
-\paragraph{Overview.} ACT-ViT consists of the following components (see Figure~\ref{fig:overview}): (1) a Pooling (Pool) layer
-that reduces the ``spatial'' dimensions of the activation tensor (layers and tokens) to a fixed, predefined
-size $(L_p, N_p)$; (2) a per-LLM Linear Adapter (LA) layer that compresses and ``aligns'' their feature
-dimensions; (3) a ViT-Based Backbone (ViT-B), which processes the resulting tensor using a Vision
-Transformer architecture, enhanced with shared positional encodings within each patch. In what
-follows, we expand on each of these components.
+\paragraph{Overview.} ACT-ViT consists of three components (see
+Figure~\ref{fig:overview}, top): (1) a Pooling (Pool) layer that reduces
+the spatial dimensions of the activation tensor (layers and tokens) to a
+fixed, predefined size $(L_p, T_p)$; (2) a per-LLM Linear Adapter (LA)
+that compresses and aligns the LLM-specific hidden dimensions into a
+shared feature space; (3) a ViT-based backbone (ViT-B), which processes
+the resulting tensor using a Vision Transformer architecture, enhanced
+with shared positional encodings within each patch. A linear head on top
+of the backbone emits a single sequence-level uncertainty logit. We
+expand on each component below.
 
-\paragraph{Pool.} Similarly to image resizing, we propose to reduce the size
-of activation tensors before processing them with our architecture: as a preprocessing step, we apply a max-pooling operation
-across the spatial activation dimensions (see inset illustration).
-Specifically, we propose two possible pooling approaches. The
-first maintains full input resolution at the level of tokens and
-applies 1d pooling on the layer dimension only. This approach
-is preferred when expecting relatively concise LLM generations, or when their maximum generation
-length remains computationally manageable. Alternatively, a second approach adopts a more general
-2d pooling on both the two spatial activation dimensions, allowing to more efficiently deal with
-potentially longer LLM responses. As we will detail next, we will mainly adopt the first approach,
-and additionally experiment with the second in Section~\ref{sec:experiments}.
+\paragraph{Pool.} Similarly to image resizing, we propose to reduce the
+size of activation tensors before processing them with our architecture:
+as a preprocessing step, we apply a max-pooling operation across the
+spatial activation dimensions (see inset illustration). Specifically, we
+consider two pooling approaches. The first maintains full input
+resolution at the level of tokens and applies 1d pooling on the layer
+dimension only; this approach is preferred when expecting relatively
+concise LLM generations, or when the maximum generation length remains
+computationally manageable. Alternatively, a second approach adopts a
+more general 2d pooling on both spatial activation dimensions, allowing
+us to more efficiently deal with potentially longer LLM responses. As we
+will detail next, we mainly adopt the first approach and additionally
+experiment with the second in Section~\ref{sec:experiments}.
 
-Note that, in our applications, not only the number of generated tokens $N$ naturally varies depending on the input prompt, also, the number of LLM layers $L$ may vary across models in $\mathcal{M}$.
-With guiding principle (i) in mind, it becomes important to ensure our architecture can robustly
-deal with both these varying parameters. Accordingly, we design the two above pooling operations in a way that, regardless of the input size, their outputs, $A_p \in \mathbb{R}^{L_p \times N_p \times D_M}$, always match
-a predefined shape of $(L_p, N_p)$ in their spatial dimensions (see Algorithm~\ref{alg:pool}, in Appendix~\ref{app:pool}). Importantly, this property ensures the downstream ViT backbone is always fed with tensors of a consistent spatial shape.
+In our applications, the number of generated tokens $T$ naturally varies
+depending on the input prompt, and the number of LLM layers $L$ may vary
+across models in $\mathcal{M}$. With guiding principle (i) in mind, it
+becomes important to ensure our architecture can robustly deal with
+both these varying parameters. Accordingly, we design the two pooling
+operations so that, regardless of the input size, their outputs
+$A_p \in \mathbb{R}^{L_p \times T_p \times D}$ always match a predefined
+shape $(L_p, T_p)$ in their spatial dimensions (see
+Algorithm~\ref{alg:pool}, in Appendix~\ref{app:pool}). This property
+ensures the downstream ViT backbone is always fed with tensors of a
+consistent spatial shape. Crucially, the same Pool module is reused
+unchanged in Stage~2 with a smaller token target $W_p < T_p$, so a
+single learned encoder operates on both full sequences and short
+windows.
 
-\paragraph{LA.} Following pooling, we map the feature dimensions to
-a shared hidden size via a linear transformation. In particular, we propose to instantiate and employ a dedicated linear
-adapter (LA) module for each LLM $M \in \mathcal{M}$; see inset illustration. All adapters project to a shared output dimensionality
-$D'$. Formally:
+\paragraph{LA.} Following pooling, we map the feature dimension to a
+shared hidden size via a linear transformation. We instantiate a
+dedicated linear adapter for each LLM $M \in \mathcal{M}$, all
+projecting to a shared output dimensionality $D'$:
 \begin{equation}
 \mathcal{L} = \left\{ LA_M : A_p \mapsto A_p W_M \mid W_M \in \mathbb{R}^{D_M \times D'},\ M \in \mathcal{M} \right\},
 \end{equation}
-where $D_M$ is the hidden dimension of model $M$, and $A_p$ denotes the pooled activation tensor. The
-result is a tensor of shape $L_p \times N_p \times D'$. This design---applying a single linear transformation, $LA_M$,
-jointly across all layers and tokens of the activation tensor for a given LLM $M$, rather than using
-separate projections per layer or token---is motivated by the inherent alignment of feature spaces
-within the architecture of a single transformer model. Specifically, residual connections promote
-consistency across layers, while the weight sharing of the transformer across tokens ensures a uniform
-representation structure along the token dimension.
+where $D_M$ is the hidden dimension of model $M$ and $A_p$ denotes its
+pooled activation tensor; the result has shape
+$L_p \times T_p \times D'$. Applying a single linear transformation
+$LA_M$ jointly across all layers and tokens of the activation tensor
+for a given LLM $M$---rather than using separate projections per layer
+or token---is motivated by the inherent alignment of feature spaces
+within a single transformer: residual connections promote consistency
+across layers, while transformer weight sharing across tokens ensures
+a uniform representation structure along the token axis.
 
-Resorting to a set of LLM-dependent LAs is particularly relevant in relation to principle (i). Indeed,
-this expedient ensures that the downstream architectural components process objects which are
-of consistent shape and are meaningfully comparable across the internal representation spaces
-of the distinct LLMs in $\mathcal{M}$. Indeed, motivated by recent literature on representation alignment
-\citep{huh2024,morcos2018,moschella2022,kornblith2019}, we hypothesize that, despite differences in architectural design, training corpora,
-weight initializations and learning schemes, the hidden representations of LLMs can, in fact, be
-put in an approximate correspondence by some linear transformations, which we aim to learn via
-the adapters in $\mathcal{L}$. This contributes to rendering our multi-LLM setup not only computationally
-possible, but also meaningful from a learning perspective and, as we show in the next sections, also
-beneficial in terms of generalization performance. For an illustrative motivating example of how a
-linear mapping can tackle misalignment in the representation space, we refer the interested reader
-to Appendix~\ref{app:permutation}, where we specifically consider those induced by neuron symmetries, as recently
-studied in \citep{navon2023,samuelkainsworth2022}.
+Resorting to LLM-specific LAs is particularly relevant in relation to
+principle (i). It ensures that the downstream architectural components
+process objects of consistent shape that are meaningfully comparable
+across the internal representation spaces of distinct LLMs in
+$\mathcal{M}$. Motivated by recent literature on representation
+alignment \citep{huh2024,morcos2018,moschella2022,kornblith2019}, we
+hypothesize that, despite differences in architectural design, training
+corpora, weight initializations and learning schemes, the hidden
+representations of LLMs can be put in approximate correspondence by
+some linear transformations, which we aim to learn via the adapters in
+$\mathcal{L}$. This contributes to rendering our multi-LLM setup not
+only computationally possible, but also meaningful from a learning
+perspective and, as we show in the next sections, beneficial in terms
+of generalization performance. For an illustrative motivating example
+of how a linear mapping can tackle misalignment in the representation
+space, we refer the interested reader to Appendix~\ref{app:permutation},
+where we specifically consider those induced by neuron symmetries, as
+recently studied in \citep{navon2023,samuelkainsworth2022}.
 
-\paragraph{ViT-B.} In view of the proposed analogy between ATs and images, the output of any LA module is
-then processed \`a la ViT \citep{dosovitskiy2020}. First, it is rearranged into a sequence of non-overlapping activation
-patches of size $(p_H, p_W)$. If $L_p$ and $N_p$ are divisible by, resp., $p_H$ and $p_W$, this gives $H = L_p/p_H$ and
-$W = N_p/p_W$ patches. The resulting reshaped tensor is denoted: $A_{\text{patches}} \in \mathbb{R}^{(H \cdot W) \times p_H \times p_W \times D'}$.
-We augment each patch with a per-patch learnable Positional Encoding (PE), providing intra-patch
-ordering over (pooled) activation pixels. The Transformer's native PEs provide a global ordering
-over activation patches. Combined with our per-patch PEs, this allows reconstructing each pooled
-pixel's original position. Similarly to ViT, the enriched activation patches are flattened and passed
-through a shared linear layer. The resulting sequence is then processed by a stack of Transformer
-blocks. Overall, using a vision-like backbone aligns with the aforementioned analogy between ATs
-and images and, as we will experimentally show next, it reveals to be an effective inductive bias.
+\paragraph{ViT-B.} In view of the proposed analogy between activation
+tensors and images, the output of any LA module is processed
+\`a la ViT \citep{dosovitskiy2020}. It is first rearranged into a
+sequence of non-overlapping activation patches of size $(p_H, p_W)$. If
+$L_p$ and $T_p$ are divisible by $p_H$ and $p_W$, this gives
+$H = L_p/p_H$ and $W = T_p/p_W$ patches; the resulting tensor is denoted
+$A_{\text{patches}} \in \mathbb{R}^{(H \cdot W) \times p_H \times p_W \times D'}$.
+We augment each patch with a per-patch learnable Positional Encoding
+(PE), providing intra-patch ordering over (pooled) activation pixels.
+The Transformer's native PEs provide a global ordering over activation
+patches, and combined with our per-patch PEs, allow reconstructing each
+pooled pixel's original position. Similarly to ViT, the enriched
+activation patches are flattened, passed through a shared linear layer,
+and processed by a stack of Transformer blocks. Overall, using a
+vision-like backbone aligns with the analogy between activation tensors
+and images and, as we will experimentally show, reveals to be an
+effective inductive bias.
+
+\paragraph{Stage~1 head and training.} A linear head on top of the
+ViT-B backbone produces a single sequence-level uncertainty logit
+$z \in \mathbb{R}$, trained with binary cross-entropy against the
+sequence-level label $y$:
+\begin{equation}
+    \mathcal{L}_{\text{stage 1}} = \mathrm{BCE}\bigl(\sigma(z),\ y\bigr).
+\end{equation}
+We select the best checkpoint by validation AUROC. The learned features
+just before the linear head form the per-sequence embedding that
+Stage~2 reuses on a per-window basis.
+
+\subsection{Stage~2: Mamba-2 Temporal Head with Top-$k$ MIL}
+\label{sec:temporal_head}
+
+Stage~2 keeps the Stage~1 encoder frozen and learns to localize
+uncertainty over generated-token windows under sequence-level
+supervision (see Figure~\ref{fig:overview}, bottom). It comprises
+(1) a frozen window encoder reusing Stage~1, (2) a Mamba-2 temporal
+head over per-window embeddings, and (3) a top-$k$ MIL aggregation that
+maps per-window logits to a sequence-level score for training.
+
+\paragraph{Frozen window encoding.} For each generated position
+$t \in \{1, \dots, T\}$, we extract the windowed activation tensor
+$A^{(t)} \in \mathbb{R}^{L \times W \times D}$ defined in
+Section~\ref{sec:notation} as $W$ consecutive token columns of $A$
+centered at $t$ (with edge padding near response boundaries). Each
+$A^{(t)}$ is processed by the same Pool module used in Stage~1 with a
+window-sized token target $(L_p, W_p)$, then passed through the frozen
+ACT-ViT to produce a per-window embedding
+$e^{(t)} \in \mathbb{R}^{d_{\text{model}}}$, taken from the
+penultimate features of Stage~1's backbone (i.e., before the
+sequence-level linear head). Stacking the $T$ windows yields a temporal
+sequence
+$E = (e^{(1)}, \dots, e^{(T)}) \in \mathbb{R}^{T \times d_{\text{model}}}$
+on which the temporal head operates. Reusing the Stage~1 Pool with a
+smaller target ensures that full-sequence and per-window encodings
+share the same operation; for example, $(L, T)=(33, 200) \to (L_p, T_p)=(16, 100)$
+in Stage~1 is paired with $(L, W)=(33, 6) \to (L_p, W_p)=(16, 3)$ in
+Stage~2.
+
+\paragraph{Mamba-2 temporal head.} A residual stack of Mamba-2 blocks
+\citep{albertgu2024} interleaved with LayerNorm processes $E$ along the
+token axis, followed by a linear head that emits one logit per
+position:
+\begin{equation}
+    \hat{z}^{(t)} = h\bigl(\mathrm{Mamba\text{-}2}(E)_t\bigr)
+    \quad \text{for } t = 1, \dots, T.
+\end{equation}
+We adopt Mamba-2 over a Transformer here because activation sequences
+in long-form generation can extend into the thousands of tokens; its
+linear-time selective state-space recurrence keeps Stage~2 viable for
+real-time, streaming use, where each new generated token requires only
+a constant-memory update of the temporal head. The corresponding
+per-window uncertainty score is
+$\hat{p}^{(t)} = \sigma(\hat{z}^{(t)}) \in [0, 1]$ and constitutes our
+\emph{localization output}.
+
+\paragraph{Top-$k$ MIL aggregation.} Because no token- or window-level
+labels are available, we train the temporal head from sequence-level
+supervision via top-$k$ multiple-instance learning. After masking
+padded positions, we select the $k$ largest per-window logits per
+sequence and average them into a single sequence-level logit:
+\begin{equation}
+    \hat{z} = \frac{1}{k} \sum_{t \in \mathrm{Top}_k\bigl(\{\hat{z}^{(t)}\}_t\bigr)} \hat{z}^{(t)},
+    \qquad
+    \hat{p} = \sigma(\hat{z}),
+\end{equation}
+where $\mathrm{Top}_k(\cdot)$ denotes the indices of the $k$ largest
+unmasked logits. Stage~2 is then trained with binary cross-entropy
+against the same sequence label as Stage~1:
+\begin{equation}
+    \mathcal{L}_{\text{stage 2}} = \mathrm{BCE}(\hat{p},\ y).
+\end{equation}
+Mean-of-top-$k$ is more stable than alternative aggregations
+(e.g., max or full mean) for long sequences: max is brittle to single
+high-logit windows, while a full mean dilutes the few suspicious
+regions with the majority of correct ones. Top-$k$ implements the
+intuition that an uncertain or incorrect response typically contains
+only a few problematic spans, and lets the model discover those spans
+under weak supervision.
+
+\paragraph{Inference.} At inference, the same Stage~2 forward pass
+yields both outputs of our problem statement
+(Section~\ref{sec:notation}): the sequence-level uncertainty score
+$\hat{p}$ and the per-window scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ used
+to localize the generated-token regions whose hidden-state activations
+most contribute to the prediction. The per-window scores can be used
+directly for visualization or as inputs to downstream verifiers and
+correction routines on long-form responses.
