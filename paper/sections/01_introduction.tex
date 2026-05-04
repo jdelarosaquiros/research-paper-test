@@ -47,8 +47,8 @@ before the false claim is generated. They may also be spread across earlier
 context. As a result, claim spans may not fully capture the true uncertainty
 signals in the activations.
 
-We address this problem using weakly supervised temporal localization. This
-idea is common in video understanding. In video action localization, the
+We address this problem using weakly supervised temporal localization
+\citep{pilhyeonlee2021}. This idea is common in video understanding. In video action localization, the
 model may only know that an action occurs somewhere in a video. It does not
 know the exact frames where the action starts and ends. The model learns to
 find the important frames using only the video-level label.
@@ -63,8 +63,8 @@ Our method has two stages. In the first stage, we train an ACT-ViT encoder on
 full activation tensors. This teaches the encoder to recognize hidden-state
 patterns related to uncertainty. In the second stage, we freeze the encoder.
 We then apply it to short token windows. This produces one feature vector per
-window. A Mamba-based temporal head processes these window features and
-predicts one uncertainty logit per window.
+window. A Mamba-based temporal head \citep{albertgu2024} processes these
+window features and predicts one uncertainty logit per window.
 
 Because we only have sequence-level labels, we train the second stage with
 top-$k$ multiple-instance learning. The model selects the top-$k$ most

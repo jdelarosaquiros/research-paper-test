@@ -65,10 +65,10 @@ Token-level labels obtained this way would therefore be both noisy and
 biased.
 
 \paragraph{Weakly supervised temporal localization.} We instead borrow
-weakly supervised temporal localization (WSTL) from video understanding.
-In WSTL for action recognition, the model is told only that an action
-occurs somewhere in a video and must learn to identify the consecutive
-frames that span it. By analogy, we treat $A$ as a temporal signal over
+weakly supervised temporal localization (WSTL) from video understanding
+\citep{pilhyeonlee2021}. In WSTL for action recognition, the model is
+told only that an action occurs somewhere in a video and must learn to
+identify the consecutive frames that span it. By analogy, we treat $A$ as a temporal signal over
 the token axis: each generated token plays the role of a ``frame'', a
 frame's ``height'' is the layer axis, its ``width'' is a single token,
 and its ``channels'' are the hidden dimension; a \emph{window} aggregates
@@ -93,6 +93,7 @@ per-window logit $\hat{p}^{(t)}$, and a top-$k$ multiple-instance learning
 rule averages the $k$ most uncertain windows into a sequence-level logit
 against which the temporal head is supervised; mean-of-top-$k$ is more
 stable than alternative aggregations, especially for long sequences. We
-use Mamba for the temporal head because it processes long sequences
-efficiently, making the method viable for real-time long-form generation.
+use Mamba \citep{albertgu2024} for the temporal head because it processes
+long sequences efficiently, making the method viable for real-time long-form
+generation.
 We detail the encoder used in Stage~1 in the next section.
