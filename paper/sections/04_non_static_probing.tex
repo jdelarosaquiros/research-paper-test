@@ -1,53 +1,98 @@
-\section{Towards Better, Non-Static Probing}
+\section{Towards Weakly Supervised Temporal Uncertainty Localization}
 \label{sec:non_static}
 
-In the context of a single, target LLM, \citet{orgad2024} uncovered the importance of probing on ``exact-token'' position which may vary significantly on a per-sample basis -- and generally requires external
-algorithms, such as multiple expensive queries to an LLM, in order to be identified. Complementary
-to this, the results in \citet{azaria2023} suggest a degree of variability in the position of the best probing location also
-across layers. We consolidate these observations and further extend them by examining cross-LLM
-variability for fixed target datasets, further underscoring the need to go beyond static probing.
+Existing mechanistic approaches to hallucination detection face a recurring
+tension between coverage and localization. On one hand, traditional probing
+classifiers \citep{azaria2023, orgad2024} operate on a single
+layer--token position, inspecting only a small slice of the activation
+tensor $A$. Predictive signals elsewhere in $A$ are ignored, and the
+optimal probing position varies across samples, datasets, and LLMs --
+often requiring an external search procedure to identify, which can entail
+multiple expensive LLM queries \citep{orgad2024}. On the other hand,
+methods that process the full activation tensor capture these distributed
+signals but only emit a single sequence-level score: they cannot indicate
+\emph{where} in the response the suspicious activations lie, and they do
+not scale well to real-time, long-form generation. For long answers,
+where most of the generated text is typically correct and only a few
+regions are problematic, a sequence-level score is both harder to
+interpret and less actionable for downstream verification or correction.
 
 \input{figs/fig2_heatmaps}
 
-Inspired by the analyses by \citet{orgad2024} on Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B), we
-train distinct logistic regression classifiers for each layer--token combination and construct ROC-AUC heatmaps to visualize the presence and localization of hallucination signals. We conduct this analyses across three distinct LLMs and five different datasets. Since sentence lengths vary, we restrict tokens to $\mathcal{N} := \{0, 1, 2, -3, -2, -1\}$, namely the first and last three in each sentence. Heatmaps are presented in Figure~\ref{fig:heatmaps} for Mis-7B,
-Llama-3-8B-Instruct \citep{touvron2023} (LlaMa-8B) and Qwen2.5-7B-Instruct \citep{yang2024} (Qwen-7B), over the Movies
-dataset \citep{orgad2024} (we refer to Appendix~\ref{app:extended} for their full set). Figure~\ref{fig:heatmaps} shows predictive signals spread
-over multiple layer-token combinations, but it clearly indicates that the most informative positions
-vary significantly across the three different LLMs, with distinct patterns characterizing each heatmap.
-In particular, the most predictive signal in terms of layers appears around the middle of the model
-for LlaMa-8B and Mis-7B, whereas for Qwen-7B it is concentrated in the final layers. As for token
-positions, the signal tends to be strongest at the end of the sentence for both LlaMa-8B and Qwen-7B,
-while for Mis-7B it is more prominent towards the beginning. Concretely, note how the best probing
-position for Mis-7B, i.e., $(14, 0)$, delivers suboptimal results on both LlaMa-8B and Qwen-7B, where
-the gap with their respective best probing locations is $\approx 7\%$ AUC on both.
+\paragraph{Signals are distributed and LLM-specific.} We first provide
+empirical support for the limitations of static probing. Inspired by the
+analyses of \citet{orgad2024} on Mistral-7B-Instruct-v0.2
+\citep{albertqjiang2023} (Mis-7B), we train distinct logistic regression
+classifiers for each layer--token combination and construct ROC-AUC
+heatmaps to visualize the presence and localization of hallucination
+signals. We conduct this analysis across three LLMs and five datasets.
+Since responses vary in length, we restrict tokens to
+$\mathcal{N} := \{0, 1, 2, -3, -2, -1\}$, namely the first and last three
+positions in each response. Heatmaps are presented in
+Figure~\ref{fig:heatmaps} for Mis-7B, Llama-3-8B-Instruct
+\citep{touvron2023} (LlaMa-8B), and Qwen2.5-7B-Instruct \citep{yang2024}
+(Qwen-7B) on the Movies dataset \citep{orgad2024} (full set in
+Appendix~\ref{app:extended}). Predictive signals are spread across many
+layer--token combinations, but the most informative positions vary
+substantially across LLMs: signals concentrate around the middle layers
+for Mis-7B and LlaMa-8B, while for Qwen-7B they sit in the final layers.
+Concretely, the best probing position for Mis-7B, $(14, 0)$, transfers
+poorly: it is $\approx 7\%$ AUC below the per-LLM optimum on both LlaMa-8B
+and Qwen-7B. No fixed layer--token slice suffices across LLMs, motivating
+models that consume the full activation tensor.
 
-\paragraph{Towards Better Probing Techniques.} Traditional probing methods rely on fixed layer/token
-selections. We claim this limits their ability to capture the dynamic nature of error signals, whose
-position vary across layers and tokens. This rigidity also hampers generalization across LLMs and
-tasks. We believe that a more effective approach should adaptively attend to relevant activations while
-remaining efficient. To this end, we introduce -- and present next -- an architecture that processes the
-full AT $A$, enabling a flexible and powerful HD across models and datasets.
+\paragraph{From sequence-level detection to localization.} Even given a
+model that processes the full $A$, a single sequence-level score is
+insufficient for long-form generation. A long response may interleave
+mostly correct text with a few uncertain spans; a sequence-level prediction
+can flag the response as risky, but cannot tell a user -- or a downstream
+verifier -- which spans to scrutinize. We therefore aim to additionally
+produce per-window uncertainty scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ that
+localize the generated-token regions whose hidden-state activations most
+contribute to the sequence-level prediction.
 
-\subsection{Learning on Activation Tensors}
+\paragraph{The weak-supervision challenge.} Localization is challenging
+because hallucination labels are typically available only at the response
+level. A natural workaround is to extract atomic claims from the response,
+verify each claim against ground truth, and label the corresponding token
+spans as hallucinated or not. This strategy, however, conflates the
+location of the \emph{false statement} with the location of the
+\emph{predictive activation signal}. The hidden-state patterns that lead
+to a hallucination may appear before the false claim is generated -- e.g.,
+during the model's processing of the question or earlier context -- so
+claim-aligned spans can systematically miss part of the relevant signal.
+Token-level labels obtained this way would therefore be both noisy and
+biased.
 
-Our starting observation is that Activation Tensors $A \in \mathbb{R}^{L_M \times N \times D_M}$ are highly structured objects:
-they span two sequential dimensions and a feature dimension. The former two correspond to LLM
-layers ($L_M$) as well as generated tokens ($N$), forming a structural map of neural activity across text
-positions and processing depths. The latter corresponds, instead, to the dimension of the LLM's
-hidden states ($D_M$). We note that this structure is remarkably analogous to that of images: layers and
-tokens are in correspondence with their vertical and horizontal spatial dimensions, the hidden states
-with channels (e.g., RGB). Based on this analogy, we refer to the layer-token dimensions $(L_M, N)$ as
-the spatial activation dimensions, and each layer-token location as an activation pixel. Accordingly,
-we propose to process ATs similarly to images, designing our method using techniques inspired by
-modern vision architectures and guided by the principles outlined below.
+\paragraph{Weakly supervised temporal localization.} We instead borrow
+weakly supervised temporal localization (WSTL) from video understanding.
+In WSTL for action recognition, the model is told only that an action
+occurs somewhere in a video and must learn to identify the consecutive
+frames that span it. By analogy, we treat $A$ as a temporal signal over
+the token axis: each generated token plays the role of a ``frame'', a
+frame's ``height'' is the layer axis, its ``width'' is a single token,
+and its ``channels'' are the hidden dimension; a \emph{window} aggregates
+the activations of $W$ consecutive tokens. Just as a video model
+identifies the windows of frames spanning an action without frame-level
+labels, our model identifies the windows of tokens whose activation
+patterns carry uncertainty without window-level labels.
 
-\paragraph{Guiding principles.} We follow two key principles in designing architectures for Activation Tensors:
-(i) cross-LLM generalization and (ii) computational efficiency. Cross-LLM capability is especially
-crucial for hallucination detection, where annotated data is scarce, costly, or unavailable for new
-models. We aim to build a model that learns from multiple LLMs and generalizes effectively to
-unseen ones, without incurring high computational cost. Principle (ii) poses a major challenge:
-Activation Tensors are large. For example, a transformer with $L = 50$ layers, $N = 512$ tokens, and
-$D = 4096$ hidden dimensions produces a single AT of $\approx 0.2$GB in float16; a batch of 64 totals $\approx
-12.8$GB. Addressing this scale is critical for real-world use. The next section introduces ACT-ViT, an
-architecture designed to handle ATs efficiently while meeting the principles above.
+\paragraph{Two-stage training.} Learning sequence-level uncertainty
+quantification \emph{and} window-level localization jointly under weak
+supervision is a difficult optimization: the model must simultaneously
+discover which activation patterns indicate uncertainty and which windows
+contain them, which is prone to overfitting and noisy predictions in the
+limited-data regime typical of hallucination annotation. To make this
+tractable, we decompose training into two stages, each focused on one
+task. In Stage~1, we train an encoder on full activation tensors with
+sequence-level labels, so it learns activation patterns predictive of
+uncertainty. In Stage~2, we freeze the encoder and train a temporal head
+over per-window encodings, focusing on aggregating information across
+tokens and localizing uncertain regions. The temporal head emits a
+per-window logit $\hat{p}^{(t)}$, and a top-$k$ multiple-instance learning
+rule averages the $k$ most uncertain windows into a sequence-level logit
+against which the temporal head is supervised; mean-of-top-$k$ is more
+stable than alternative aggregations, especially for long sequences. We
+use Mamba for the temporal head because it processes long sequences
+efficiently, making the method viable for real-time long-form generation.
+We detail the encoder used in Stage~1 in the next section.

@@ -23,7 +23,7 @@ Therefore, looking at only a few hidden states may miss important signals.
 
 Activation-tensor methods address this problem by using more of the hidden
 states. For a generated answer, we can represent the hidden states as a
-tensor $H \in \mathbb{R}^{L \times T \times D}$. Here, $L$ is the number of
+tensor $A \in \mathbb{R}^{L \times T \times D}$. Here, $L$ is the number of
 layers, $T$ is the number of generated tokens, and $D$ is the hidden
 dimension. This tensor can be viewed like an image. The layer and token axes
 form a 2D plane, and the hidden dimension acts like channels. ACT-ViT uses

@@ -1,28 +1,61 @@
 \section{Notation, Problem Formulation and Setup}
 
-Given LLM $M$, input query $\vec{s}$ and the LLM-generated response $\vec{\hat{g}}$, the goal is to predict whether
-$\vec{\hat{g}}$ is correct or not. We assume a white-box setting, i.e.\ full access to the internal states of $M$, but
-disallow using external resources (such as search engines or auxiliary LLMs). We restrict the setting
-to single-pass prompting with no rounds of interactions due to their high cost.
+Given an LLM $M$, an input query $\vec{s}$, and the model-generated response
+$\vec{\hat{g}}$ of length $T$, our goal is twofold: (i) predict whether
+$\vec{\hat{g}}$ is hallucinated, and (ii) localize which generated-token
+regions show uncertainty signals in the hidden-state activations. We assume
+a white-box setting -- i.e.\ full access to the internal states of $M$ --
+and disallow external resources such as auxiliary LLMs, retrieval, or
+repeated sampling, so that detection can run alongside generation in real
+time.
 
-\paragraph{Activation Tensors.} We define the activation tensors as the hidden representations within the LLM
-across all layers and all tokens in the output text.\footnote{This definition can be readily extended to include the input text as well.} Formally, the Activation Tensor (AT) of an LLM
-$M$ is a third-order tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, where $L_M$ is the number of layers in the model, $N$ is
-the output sequence length, and $D_M$ is the feature (hidden state) dimension; see Figure~\ref{fig:overview}. Throughout
-this paper, we focus on the hidden states at each layer after the application of the feed-forward
-network and the residual connection, refer to Appendix~\ref{app:extended} for details.
+\paragraph{Activation Tensors.} For an LLM $M$ with $L$ transformer layers
+and hidden dimension $D$, we collect the post-residual hidden states across
+all layers and all generated tokens, yielding an activation tensor
+$A \in \mathbb{R}^{L \times T \times D}$, where $T$ is the response
+length.\footnote{This definition can be readily extended to include the
+input text as well.} We refer to the layer--token plane as the spatial axes
+of $A$ and to the hidden dimension as its feature axis; see
+Figure~\ref{fig:overview}. Throughout this paper, we use the hidden states
+at each layer after the application of the feed-forward sub-layer and the
+residual connection (see Appendix~\ref{app:extended} for details).
 
-\paragraph{Dataset construction.} Following the setup of \citet{orgad2024}, we consider datasets $\mathcal{D} = \{(\vec{s}_i, \vec{g}_i)\}_{i=1}^m$,
-consisting of $m$ question-answer pairs, such as: (``Who developed the theory of general relativity?'',
-``Albert Einstein''). For each query $\vec{s}_i$, the model produces a response $\vec{\hat{g}}$, and we extract the associated
-activation tensor $A_i$, yielding a collection $\{A_i\}_{i=1}^m$. We calculate binary hallucination labels, by
-comparing each response $\vec{\hat{g}}_i$ with answer $\vec{g}_i$ to determine its correctness. We assign label $y_i = 1$ for a
-correct response, $y_i = 0$ otherwise. Our final activation dataset is $\mathcal{A} = \{(A_i, y_i, M_i)\}_{i=1}^m$, where
-$M_i$ is the LLM producing AT $A_i$ associated with hallucination label $y_i$. We importantly note that
-multiple distinct $M_i$'s from a known collection $\mathcal{M}$ are allowed within the same dataset.
+\paragraph{Token Windows.} For temporal localization, we additionally
+consider local views of $A$ along the token axis. For a window size $W$ and
+a position $t \in \{1, \dots, T\}$, the windowed activation tensor is
+\[
+    A^{(t)} \in \mathbb{R}^{L \times W \times D},
+\]
+obtained by slicing $A$ over $W$ consecutive tokens centered at $t$ (with
+edge padding when $t$ is near a response boundary). The full response is
+then covered by the sequence $\{A^{(t)}\}_{t=1}^{T}$ of overlapping windows,
+each providing a local view of the activation patterns associated with a
+short generated-token region.
 
-\paragraph{Problem Statement.} Our objective is to train a parametric model mapping ATs to their corresponding hallucination labels. We additionally consider the following more general and challenging
-scenarios: (i) Off-domain data generalization: ATs are drawn from a known model $M \in \mathcal{M}$, but
-correspond to tasks or domains not seen during training (e.g., training on $M$'s activation tensors from
-sentiment analysis, but testing on trivia question answering). (ii) Off-domain model generalization:
-ATs are drawn from a previously unseen LLM $M \notin \mathcal{M}$.
+\paragraph{Dataset construction.} Following \citet{orgad2024}, we consider
+datasets $\mathcal{D} = \{(\vec{s}_i, \vec{g}_i)\}_{i=1}^m$ of
+question--answer pairs, e.g., (``Who developed the theory of general
+relativity?'', ``Albert Einstein''). For each query $\vec{s}_i$, the model
+produces a response $\vec{\hat{g}}_i$ from which we extract the activation
+tensor $A_i$. We assign a sequence-level binary hallucination label $y_i$
+by comparing $\vec{\hat{g}}_i$ with $\vec{g}_i$, setting $y_i = 1$ when the
+response is incorrect/hallucinated and $y_i = 0$ otherwise. The final
+activation dataset is $\mathcal{A} = \{(A_i, y_i, M_i)\}_{i=1}^m$, where
+$M_i$ identifies the LLM that produced $A_i$, and multiple distinct $M_i$'s
+from a known collection $\mathcal{M}$ are allowed within the same dataset.
+\emph{Crucially, no token- or window-level labels are provided}: supervision
+is restricted to the sequence level.
+
+\paragraph{Problem statement.} We seek a parametric model that, given an
+activation tensor $A$, predicts (i) a sequence-level uncertainty score
+$\hat{p} \in [0, 1]$ and (ii) per-window uncertainty scores
+$\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token regions
+whose activations most contribute to the sequence-level prediction. The
+sequence-level prediction is supervised directly by $y$, while the
+per-window scores must be learned under \emph{weak supervision} from the
+same sequence label. Beyond the in-domain setting, we additionally consider
+the following more general and challenging scenarios: (i) Off-domain data
+generalization: ATs are drawn from a known LLM $M \in \mathcal{M}$ but
+correspond to tasks or domains unseen during training; (ii) Off-domain
+model generalization: ATs are drawn from a previously unseen LLM
+$M \notin \mathcal{M}$.
