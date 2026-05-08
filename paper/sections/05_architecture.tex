@@ -3,7 +3,7 @@
 
 We instantiate the two-stage pipeline of
 Section~\ref{sec:non_static} as illustrated in
-Figure~\ref{fig:overview}. Stage~1 is an \emph{ACT-ViT sequence encoder}
+Figure~\ref{fig:overview}. Stage~1 is a \emph{sequence encoder}
 that maps a full activation tensor
 $A \in \mathbb{R}^{L \times T \times D}$ to a sequence-level
 uncertainty logit. Stage~2 freezes that encoder and applies it to a
@@ -15,10 +15,10 @@ $\{\hat{p}^{(t)}\}_{t=1}^{T}$. A top-$k$ multiple-instance learning
 which the temporal head is supervised. We describe the encoder first
 and the temporal head second.
 
-\subsection{Stage~1: ACT-ViT Encoder}
+\subsection{Stage~1: Encoder}
 \label{sec:act_vit_subsec}
 
-\paragraph{Overview.} ACT-ViT consists of three components (see
+\paragraph{Overview.} The encoder consists of three components (see
 Figure~\ref{fig:overview}, top): (1) a Pooling (Pool) layer that reduces
 the spatial dimensions of the activation tensor (layers and tokens) to a
 fixed, predefined size $(L_p, T_p)$; (2) a per-LLM Linear Adapter (LA)
@@ -140,7 +140,7 @@ Section~\ref{sec:notation} as $W$ consecutive token columns of $A$
 centered at $t$ (with edge padding near response boundaries). Each
 $A^{(t)}$ is processed by the same Pool module used in Stage~1 with a
 window-sized token target $(L_p, W_p)$, then passed through the frozen
-ACT-ViT to produce a per-window embedding
+encoder to produce a per-window embedding
 $e^{(t)} \in \mathbb{R}^{d_{\text{model}}}$, taken from the
 penultimate features of Stage~1's backbone (i.e., before the
 sequence-level linear head). Stacking the $T$ windows yields a temporal
