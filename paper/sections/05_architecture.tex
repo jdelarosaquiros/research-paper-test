@@ -1,7 +1,7 @@
 \section{Model Architecture}
 \label{sec:model}
 
-We instantiate the two-stage pipeline of
+We instantiate the three-stage pipeline of
 Section~\ref{sec:non_static} as illustrated in
 Figure~\ref{fig:overview}. Stage~1 is a \emph{sequence encoder}
 that maps a full activation tensor
@@ -12,8 +12,14 @@ per-window embeddings that a \emph{Mamba-2 temporal head}
 \citep{albertgu2024} consumes to emit per-window logits
 $\{\hat{p}^{(t)}\}_{t=1}^{T}$. A top-$k$ multiple-instance learning
 (MIL) rule aggregates those logits into a sequence-level score, against
-which the temporal head is supervised. We describe the encoder first
-and the temporal head second.
+which the temporal head is supervised on per-atom segments. Stage~3
+then refines the temporal head on whole passages: with the encoder
+still frozen, the head is fine-tuned against per-atom auxiliary labels
+obtained from atomic-fact verification, using a smoothed top-$k$
+aggregation within each atom span. This shifts the head's loss surface
+from scoring isolated atoms to ranking uncertainty \emph{across} the
+atoms that co-occur in a passage. We describe the encoder first, the
+temporal head second, and the passage-level refinement last.
 
 \subsection{Stage~1: Encoder}
 \label{sec:act_vit_subsec}
@@ -193,11 +199,93 @@ intuition that an uncertain or incorrect response typically contains
 only a few problematic spans, and lets the model discover those spans
 under weak supervision.
 
-\paragraph{Inference.} At inference, the same Stage~2 forward pass
-yields both outputs of our problem statement
-(Section~\ref{sec:notation}): the sequence-level uncertainty score
-$\hat{p}$ and the per-window scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ used
+\subsection{Stage~3: Passage-level Refinement with Per-atom Supervision}
+\label{sec:stage3}
+
+Stages~1 and~2 train against \emph{sequence-level} labels on per-atom
+segments: at training time the temporal head sees one atom at a time,
+and its loss reflects how well it scores that atom in isolation. In
+deployment, however, the head must operate over a whole passage whose
+atoms co-occur and compete for attention; a head tuned only on isolated
+atoms tends to assign similar scores to every region of a passage and
+fails to localize the uncertain few. Stage~3 addresses this by
+fine-tuning the temporal head on whole passages under \emph{per-atom}
+auxiliary supervision, while keeping the encoder frozen.
+
+\paragraph{Inputs.} The training unit is now a full passage activation
+tensor $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom
+spans $\{(\ell_m, r_m)\}_{m=1}^{M}$ obtained from an atomic-fact
+verification pipeline, where the $m$-th atom occupies generated-token
+positions $\ell_m, \ldots, r_m$. Each span carries an auxiliary
+hallucination label $\tilde{y}_m \in \{0, 1\}$ broadcast from the
+fact-level verification result. As discussed in
+Section~\ref{sec:non_static}, these labels are noisy -- the span may
+contain non-hallucinated tokens, and the relevant activation signal can
+even fall outside the span -- so we treat them as coarse auxiliary
+supervision rather than as ground-truth token labels.
+
+\paragraph{From per-token logits to per-atom scores.} The frozen
+encoder and the Stage~2 temporal head jointly produce a per-token logit
+sequence $\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We
+convert these to per-atom scores in two steps. First, we smooth the
+logit sequence along the token axis with a centered length-$W$ window:
+\begin{equation}
+\bar{z}^{(t)}
+= \sum_{u \in \mathcal{W}(t)} \alpha_u^{(t)} \, \hat{z}^{(u)},
+\qquad
+\alpha_u^{(t)} \propto \exp(\hat{z}^{(u)}/\tau),
+\label{eq:soft-topk-smooth}
+\end{equation}
+where $\mathcal{W}(t)$ is the centered length-$W$ window at position
+$t$ (with masking near response boundaries) and $\tau > 0$ controls the
+sharpness: $\tau \to 0$ recovers the per-window max, while $\tau \to
+\infty$ recovers the arithmetic mean. The smoothing absorbs the
+window-level uncertainty signal already produced by Stage~2 in a
+differentiable way, so gradients flow back into the head from any
+informative position within the window. Second, we aggregate the
+smoothed logits within each atom span $[\ell_m, r_m]$. By default we
+use a top-$k$ mean,
+\begin{equation}
+\hat{z}_m
+= \frac{1}{k_m}
+\sum_{t \in \mathrm{Top}_{k_m}\!\bigl(\{\bar{z}^{(t)}\}_{t = \ell_m}^{r_m}\bigr)}
+\bar{z}^{(t)},
+\qquad
+k_m = \max\!\bigl(k_{\min}, \lceil \kappa \cdot (r_m - \ell_m + 1) \rceil\bigr),
+\label{eq:topk-segment}
+\end{equation}
+with $\kappa \in (0, 1]$ controlling the fraction of in-span tokens
+that participate in the atom's score. Setting $\kappa = 1$ averages
+over every token in the span; smaller $\kappa$ peaks the gradient on
+the most uncertain tokens within the span and is useful for long
+atoms. A softmax-weighted in-span max
+($\hat{z}_m \propto \sum_t \mathrm{softmax}(\bar{z}^{(t)}/\tau_{\text{seg}}) \,
+\bar{z}^{(t)}$) is available as an ablation.
+
+\paragraph{Stage~3 loss.} The temporal head is trained with a per-atom
+binary cross-entropy against the auxiliary labels:
+\begin{equation}
+\mathcal{L}_{\text{stage 3}}
+= \frac{1}{\sum_m \mathbb{1}[\text{atom } m \text{ valid}]}
+\sum_m \mathbb{1}[\text{atom } m \text{ valid}] \cdot
+\mathrm{BCE}\bigl(\sigma(\hat{z}_m),\ \tilde{y}_m\bigr).
+\end{equation}
+Compared with the sequence-level MIL objective of Stage~2, this loss
+forces the head to reason \emph{within} the passage: every atom
+contributes its own term, so the head cannot trivially explain a
+passage label by saturating a single window -- it must rank atoms
+against each other under the same encoder.
+
+\paragraph{Inference.} At inference, a single forward pass through the
+Stage~3 detector yields the per-token logits over the whole passage,
+from which we read off both outputs of our problem statement
+(Section~\ref{sec:notation}): the per-window scores
+$\{\hat{p}^{(t)}\}_{t=1}^{T} = \{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ used
 to localize the generated-token regions whose hidden-state activations
-most contribute to the prediction. The per-window scores can be used
-directly for visualization or as inputs to downstream verifiers and
-correction routines on long-form responses.
+most contribute to the prediction, and a sequence-level score obtained
+by reusing the Stage~2 top-$k$ MIL aggregation over the same per-token
+logits. The per-window scores can be used directly for visualization or
+as inputs to downstream verifiers and correction routines on long-form
+responses; when atom spans are available, the Stage~3 per-atom scores
+$\{\sigma(\hat{z}_m)\}_{m=1}^{M}$ provide a higher-level summary
+aligned with claim-level verification.

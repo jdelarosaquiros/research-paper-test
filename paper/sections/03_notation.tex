@@ -44,8 +44,17 @@ response is incorrect/hallucinated and $y_i = 0$ otherwise. The final
 activation dataset is $\mathcal{A} = \{(A_i, y_i, M_i)\}_{i=1}^m$, where
 $M_i$ identifies the LLM that produced $A_i$, and multiple distinct $M_i$'s
 from a known collection $\mathcal{M}$ are allowed within the same dataset.
-\emph{Crucially, no token- or window-level labels are provided}: supervision
-is restricted to the sequence level.
+\emph{Crucially, no clean token- or window-level labels are provided}:
+the primary supervision signal is restricted to the sequence level. For
+long-form responses we additionally have access to a noisy auxiliary
+signal: an atomic-fact verification pipeline yields per-atom spans
+$\{(\ell_m, r_m, \tilde{y}_m)\}$ over $\vec{\hat{g}}_i$, where each
+$\tilde{y}_m \in \{0, 1\}$ is broadcast from the fact-level
+verification result. As we discuss in
+Section~\ref{sec:non_static}, these per-atom labels are coarse -- spans
+typically contain tokens that are not themselves hallucinated -- so we
+treat them as auxiliary supervision rather than ground-truth
+window-level labels.
 
 \paragraph{Problem statement.} We seek a parametric model that, given an
 activation tensor $A$, predicts (i) a sequence-level uncertainty score
@@ -53,8 +62,10 @@ $\hat{p} \in [0, 1]$ and (ii) per-window uncertainty scores
 $\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token regions
 whose activations most contribute to the sequence-level prediction. The
 sequence-level prediction is supervised directly by $y$, while the
-per-window scores must be learned under \emph{weak supervision} from the
-same sequence label. Beyond the in-domain setting, we additionally consider
+per-window scores must be learned under \emph{weak supervision}: from
+$y$ alone, and -- when long-form atomic-fact pipelines are available --
+also from the noisy per-atom auxiliary labels $\tilde{y}_m$ described
+above. Beyond the in-domain setting, we additionally consider
 the following more general and challenging scenarios: (i) Off-domain data
 generalization: ATs are drawn from a known LLM $M \in \mathcal{M}$ but
 correspond to tasks or domains unseen during training; (ii) Off-domain

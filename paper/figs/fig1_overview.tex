@@ -1,19 +1,28 @@
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.95\linewidth]{figs/fig1_overview.png}
-\caption{Two-stage architecture for weakly supervised temporal uncertainty
-localization. \textbf{Stage~1} (top) trains an ACT-ViT sequence classifier
-on the full activation tensor $A \in \mathbb{R}^{L \times T \times D}$: a
-per-LLM linear adapter projects the hidden dimension into a shared space,
-followed by max pooling, ViT patching over the layer--token plane, the
-ACT-ViT backbone, and a linear head producing a sequence-level uncertainty
-score. \textbf{Stage~2} (bottom) freezes the ACT-ViT encoder and applies
-it to centered token windows, yielding per-window embeddings in
-$\mathbb{R}^{T \times d_{\text{model}}}$. A residual Mamba-2 + LayerNorm
-temporal head emits per-window logits, which a top-$k$ multiple-instance
-learning rule aggregates into a sequence-level score. The per-window
-logits also localize the generated-token regions whose hidden-state
-activations most contribute to the prediction (highlighted in the
-example response).}
+\caption{Three-stage Temp-ViT architecture for weakly supervised
+temporal uncertainty localization. \textbf{Stage~1} (top) trains an
+ACT-ViT sequence classifier on per-atom activation tensors
+$A \in \mathbb{R}^{L \times T \times D}$: a per-LLM linear adapter
+projects the hidden dimension into a shared space, followed by
+adaptive max pooling, ViT patching over the layer--token plane, the
+ACT-ViT backbone, and a linear head producing an atom-level
+uncertainty score. \textbf{Stage~2} (middle) freezes the encoder and
+applies it to centered length-$W$ token windows, producing per-window
+embeddings in $\mathbb{R}^{T \times d_{\text{model}}}$ consumed by a
+residual Mamba-2 + LayerNorm temporal head. A top-$k$
+multiple-instance learning rule aggregates the per-window logits into
+an atom-level score supervised against the same atom label as
+Stage~1. \textbf{Stage~3} (bottom) keeps the encoder frozen,
+initializes the Mamba-2 head from Stage~2, and fine-tunes it on whole
+passages: the per-token logits are smoothed along the token axis with
+a soft-top-$k$ window and aggregated within each atom span
+$(\ell_m, r_m)$ into a per-atom logit, supervised by a per-atom
+binary cross-entropy against the noisy auxiliary labels
+$\tilde{y}_m$ obtained from atomic-fact verification. Stage~3 trains
+the head to discriminate \emph{across} atoms within a passage rather
+than scoring each atom in isolation, sharpening the per-window scores
+it produces at inference (highlighted in the example response).}
 \label{fig:overview}
 \end{figure*}

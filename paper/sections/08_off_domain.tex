@@ -1,38 +1,40 @@
-\subsection{Off-domain Hallucination Detection}
+\subsection{Sequence-Level Uncertainty on the LM-Polygraph Benchmark}
+\label{sec:polygraph}
 
-\paragraph{Hallucination Detection on unseen datasets.} We implement a ``leave-one-dataset-out'' setup: for
-each LLM-dataset pairing, we train ACT-ViT on the corpus of the remaining 14 out of 15 combinations, and then evaluate on the target held-out test set zero-shot\footnote{On held-out LLM-data pair $(M, D)$, this is possible as $M$'s LA is pretrained on the pairs $(M, D')$, $D' \neq D$.}. This is something fundamentally
-not possible with standard probing methods and hence compare against the best probability-based
-baseline, denoted Best-Probas, due to its training-free nature, and against ACT-MLP.
-
-Results are shown as bar plots in Figure~\ref{fig:zeroshot} on all 15 LLM--dataset combinations. We observe strong
-generalization performance: ACT-ViT outperforms Best-Probas in 13 out of 15 cases, sometimes
-substantially. On the IMDB dataset with Mis-7B, ACT-ViT achieves a gain of $+37$ AUC points.
-ACT-MLP also shows reasonable performance, but it consistently falls short of ACT-ViT. These results
-provide a positive answer to (Q\textsubscript{1}\textsuperscript{(b)}).
-
-\input{figs/fig4_zeroshot}
-
-We next consider a more tolerant setting whereby only
-a limited amount of samples from the target training
-set is available. In particular, we start with the pre-trained ACT-ViT and fine-tune the LA module keeping
-the ViT-B component frozen. We compare with Best-Probas and Probe[$*$], fitted only the corresponding available training data. Figure~\ref{fig:lowdata} shows Test AUCs for Mis-7B
-over HotpotQA across varying fine-tuning set sizes; results for other 15 LLM-dataset combinations are in Appendix~\ref{app:lowdata}. ACT-ViT consistently outperforms all baselines across all training fractions. Importantly, the performance gap between ACT-ViT and Probe[$*$] widens as the
-training set shrinks, indicating that the frozen ViT-B backbone captures strong, transferable features learned from
-(pre)training on other LLMs and datasets. Additionally,
-ACT-ViT requires only 10\% of the available training data
-(1k samples) to surpass Probe[$*$] when trained on the full 10k-sized training set.
-
-\input{figs/fig5_lowdata}
-
-\paragraph{Hallucination Detection on unseen LLMs and datasets.} We finally benchmark our method in
-the following challenging setup: we train ACT-ViT on 2 out of 3 LLMs and leave the third one out.
-Specifically, our model is pretrained on a corpus of 10 out of 15 training sets containing no data
-from target LLM $M$. It is then (separately) adapted on the remaining 5 datasets by keeping ViT-B
-frozen and only training the LA\textsubscript{$M$} module from scratch. In Table~\ref{tab:ood} we report the obtained Test
-AUCs, comparing ACT-ViT against Best-Probas and Probe[$*$]. ACT-ViT outperforms these baselines
-in 13 out of 15 cases. Recalling that the ViT-B module is frozen during adaptation, this further
-demonstrates how the features learned during (pre)training over different LLMs can strongly transfer
-to an unseen one. Along with the above, these results answer positively to Q\textsubscript{2}\textsuperscript{(b)} and Q\textsubscript{3}\textsuperscript{(b)}.
+\paragraph{Uncertainty across QA, NMT, and SUM tasks.}
+Table~\ref{tab:polygraph} reports mean PRR aggregated within each task
+family of the LM-Polygraph benchmark
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}: QA averages
+across TriviaQA, CoQA, MMLU and GSM8k; NMT averages across WMT14
+Fr--En and WMT19 De--En; SUM uses XSUM. Detailed per-dataset
+breakdowns are deferred to Appendix~\ref{app:extended}. The Temp-ViT
+row here corresponds to the Stage~2 model: its per-window logits are
+aggregated to a single sequence-level score via the same top-$k$ MIL
+rule used at training time (Section~\ref{sec:temporal_head}), so the
+method is plug-compatible with the rest of the LM-Polygraph
+sequence-level baselines. This setting answers (Q\textsubscript{2}):
+the per-token output that Stage 2 was designed to produce remains
+competitive with sequence-level scores when one is forced to commit
+to a single number per response.
 
 \input{figs/tab2_ood}
+
+\paragraph{Scaling with model capacity.} Comparing the LlaMa-8B-Inst
+and LlaMa-70B-Inst columns of Table~\ref{tab:polygraph} addresses
+(Q\textsubscript{3}). Sequence-probability and perplexity-based scores
+typically gain very little -- and sometimes regress -- when moving to
+the larger model, because the additional capacity sharpens generations
+without making the model better at signalling its own uncertainty.
+Consistency-based and hybrid scores improve modestly. Temp-ViT, in
+contrast, retains a per-layer-per-token activation view that grows
+with model depth: the same encoder + temporal head transfers to the
+larger LLM via the LLM-specific linear adapter LA\textsubscript{$M$}
+(Section~\ref{sec:act_vit_subsec}), so each additional transformer
+layer becomes another row of the activation image. Empirical numbers
+are populated in the template above as cells are filled in.
+
+% TODO: the zero-shot and low-data figures (fig4_zeroshot, fig5_lowdata)
+% in the original ACT-ViT paper were generated against the
+% HotpotQA/Movies/IMDB/TriviaQA × Mis-7B/LlaMa-8B/Qwen-7B benchmark.
+% They do not transfer to the Polygraph benchmark and are intentionally
+% omitted here until corresponding sweeps are run on the new lineup.

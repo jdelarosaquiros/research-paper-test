@@ -4,23 +4,32 @@ their safe deployment. Recent mechanistic approaches show promise by using
 internal hidden states as uncertainty signals, but they face two important
 limitations. Some methods probe only isolated layer--token positions, missing
 uncertainty signals distributed across layers and generated tokens. Others
-process richer activation tensors, but are designed mainly for sequence-level
-prediction and do not localize where uncertainty arises, or are too costly for
-real-time long-form generation. In this paper, we introduce a temporal
-uncertainty localization framework that predicts hallucination likelihood while
-identifying the generated-token regions whose hidden-state activations most
-contribute to uncertainty. We build on the structured nature of activation
-tensors, treating the layer--token hidden-state plane as an activation image,
-and extend this view with a temporal localization head over token windows.
-Since hallucination labels are typically available only at the full-response
-level, we train our model using weak supervision: a frozen ACT-ViT encoder
+process richer activation tensors but are not equipped for long-form
+generation -- pooling over the token axis collapses the signal as responses
+grow longer -- or are too inefficient to run as tokens are produced. In this
+paper, we introduce a temporal uncertainty localization framework that
+detects hallucinations in real time by predicting which generated-token
+regions carry the hidden-state activation patterns most indicative of
+uncertainty. Because generated sequences range from a handful of tokens to
+thousands, we treat the layer--token activation tensor as a \emph{video} over
+the token axis rather than a single fixed-size image: each generated token is
+a frame whose height is the layer axis and whose channels are the hidden
+dimension, and a window aggregates the activations of consecutive tokens.
+Since clean hallucination labels are typically available only at the
+full-response level, we train our model using weak supervision: a frozen
+ACT-ViT encoder
 extracts uncertainty-aware features from local activation windows, and a
-Mamba-based temporal head assigns uncertainty logits to each window. A top-$k$
-multiple-instance learning objective aggregates the most uncertain windows into
-a sequence-level prediction, enabling localization without segment-level
-labels. Our approach separates representation learning from weak localization:
-first learning activation patterns predictive of uncertainty at the
-sequence level, then freezing the encoder and training the temporal head to
-localize suspicious regions efficiently. This yields a scalable framework for
-real-time activation-based uncertainty detection in long-form LLM generation.
+Mamba-based temporal head assigns uncertainty logits to each window. A
+top-$k$ multiple-instance learning objective aggregates the most uncertain
+windows into a sequence-level prediction, enabling localization without
+window-level labels. Our approach decomposes training into three stages:
+(i) we learn activation patterns predictive of uncertainty at the
+sequence level, (ii) we freeze the encoder and train the temporal head to
+localize suspicious windows on per-atom segments under sequence-level
+supervision, and (iii) we refine the head on whole passages using the
+noisy per-atom labels produced by atomic-fact verification as auxiliary
+supervision, so the head learns to rank uncertainty \emph{across} the
+atoms in a response rather than scoring each atom in isolation. This
+yields a scalable framework for real-time activation-based uncertainty
+detection in long-form LLM generation.
 \end{abstract}
