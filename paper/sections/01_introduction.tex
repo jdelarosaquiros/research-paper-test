@@ -64,13 +64,25 @@ long-form generation.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-    \item We frame activation-based hallucination detection as a
-    weakly supervised temporal localization problem.
-    \item We propose a three-stage curriculum that pairs an ACT-ViT
-    activation encoder with a Mamba temporal head and a passage-level
-    refinement step.
-    \item We train per-window localization from sequence-level labels
-    via top-$k$ multiple-instance learning, and use a passage-level
-    per-atom loss with smoothed in-span aggregation to discriminate
-    uncertainty across atoms in a response.
+    \item We recast mechanistic hallucination detection as weakly supervised
+    temporal localization over LLM activation tensors, enabling uncertainty
+    scores to be assigned to local regions of a long-form response rather
+    than only to the full sequence.
+
+    \item We propose Temp-ViT, a windowed activation-tensor architecture
+    that uses an ViT encoder to capture layer--token activation patterns
+    and a temporal head to model how uncertainty signals evolve
+    across generated tokens.
+
+    \item We introduce a three-stage training curriculum that learns from
+    coarse supervision: sequence-level labels for encoder pretraining,
+    top-$k$ MIL for per-window localization, and passage-level per-atom
+    refinement for ranking uncertain claims against confident neighboring
+    claims.
+
+    \item We demonstrate efficient fine-grained detection on long-form
+    hallucination benchmarks, evaluating token-, sentence-, and claim-level
+    localization, while also showing that the localized scores can be
+    aggregated into competitive sequence-level uncertainty estimates on
+    LM-Polygraph.
 \end{enumerate}
