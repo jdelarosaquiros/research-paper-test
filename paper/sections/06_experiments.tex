@@ -31,7 +31,7 @@ scale with model capacity, from 7B to 70B?
 \paragraph{LLMs.} All experiments are run on three instruction-tuned,
 open-weight LLMs:
 Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B-Inst),
-Llama-3.1-8B-Instruct \citep{touvron2023} (LlaMa-8B-Inst), and
+Llama-2-13B-chat-hf \citep{touvron2023} (LlaMa-13B-Inst), and
 Llama-3.1-70B-Instruct \citep{touvron2023} (LlaMa-70B-Inst). For each
 LLM we collect post-residual hidden states across all transformer
 layers and all generated tokens, yielding the activation tensor
@@ -55,25 +55,43 @@ formatting, and few-shot example sourcing; quality measures for PRR
 are accuracy for short-form QA, AlignScore for long-form QA and
 summarization, and COMET for translation, exactly as in the reference.
 
-\paragraph{Baselines.} We compare against the set of baselines
-maintained by LM-Polygraph
-\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}, covering
-\emph{information-based} (Sequence Probability~SP, Perplexity~PPL,
-Mean Token Entropy~MTE, Monte Carlo Sequence Entropy~MCSE, and
-Monte Carlo Normalized Sequence Entropy~MCNSE),
-\emph{consistency-based} (Degree Matrix~DegMat, Sum of
-Eigenvalues of the Graph Laplacian~EigValLaplacian),
-\emph{hybrid} (Semantic Entropy, SAR), \emph{verbalized}
-(P(True)), and the consistency-with-token-confidence CoCoA family.
-For sentence-level hallucination, each sequence-level baseline is
-re-applied per claim or per sentence; for LM-Polygraph each baseline
-is used as published. Our own rows split between Stage-2 Temp-ViT
-(per-window output aggregated by top-$k$ MIL into a sequence-level
-score, Section~\ref{sec:temporal_head}) and Stage-3 Temp-ViT
-(per-atom output trained against $\tilde{y}_m$,
-Section~\ref{sec:stage3}); Stage 2 is the natural comparison for
-Table~\ref{tab:polygraph}, while Stage 3 is what shows up in
-Table~\ref{tab:main}.
+\paragraph{Baselines.} We organize baselines into three groups that
+mirror the row bands of Tables~\ref{tab:main}--\ref{tab:claim} and
+Table~\ref{tab:polygraph}. All baselines are run through the
+LM-Polygraph evaluation infrastructure
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} on identical
+generations and gold quality measures; sequence-level scores are
+re-applied per claim, per sentence, or per token when needed.
+
+\emph{Confidence} baselines score uncertainty from the model's
+next-token distribution over generated tokens:
+\textbf{Maximum Sequence Probability} (the LM-Polygraph default),
+\textbf{Perplexity} \citep{fomicheva2020unsupervised},
+\textbf{Mean Token Entropy} \citep{fomicheva2020unsupervised},
+\textbf{Self-Certainty} \citep{kang2025selfcertainty},
+\textbf{TokenSAR} \citep{duan2023},
+\textbf{Mean Pointwise Mutual Information} \citep{takayama2019pmi},
+and \textbf{BoostedProbSequence} \citep{dinh2025boostedprob}.
+
+\emph{Mechanistic} baselines read model internals (hidden states or
+attention patterns) instead of relying solely on the output
+distribution: \textbf{Contextualized Sequence Likelihood (CSL)}
+\citep{lin2024csl},
+\textbf{Attention Score} \citep{sriramanan2024attention},
+\textbf{Recurrent Attention-based Uncertainty Quantification (RAUQ)}
+\citep{vazhentsev2025rauq},
+\textbf{Fact-Probe} \citep{han2025factprobe},
+\textbf{Feature-Gaps} \citep{bakman2025featuregaps}, and
+\textbf{Act-ViT} \citep{barshalom2025}, the pooled-tensor sequence
+encoder our architecture builds on.
+
+\emph{Ours} reports Temp-ViT in two variants:
+\textbf{Temp-ViT~(Encoder~Only)} -- the Stage-2 detector
+(Section~\ref{sec:temporal_head}) used as a stand-alone per-window
+scorer aggregated by top-$k$ MIL, which is the natural comparison for
+Table~\ref{tab:polygraph}; and \textbf{Temp-ViT} -- the full
+three-stage pipeline (Section~\ref{sec:stage3}) whose per-atom output
+is reported in Tables~\ref{tab:main}--\ref{tab:claim}.
 
 \paragraph{Evaluation Measure.} As the primary metric in both tables
 we report the Prediction Rejection Ratio

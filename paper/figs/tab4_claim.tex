@@ -4,11 +4,12 @@
 Same models, datasets, and metric (AUROC) as Table~\ref{tab:main}.
 Each row scores one atomic fact from the sidecar; the claim score is
 the max per-token uncertainty over the atom's token span (no
-AND-aggregation across same-sentence atoms). Best score per column in
-\textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
-cells whose data comes from a closely related model version
-(Mistral-7B-Instruct-v0.1 for RAGTruth, Llama-3-8B-Instruct for
-LongFact). Cells with ``---'' indicate experiments not yet run.}
+AND-aggregation across same-sentence atoms). Methods are grouped by
+category: \emph{Confidence}, \emph{Mechanistic}, and \emph{Ours}.
+Best score per column in \textbf{bold}, second-best
+\underline{underlined}. $^\dagger$ marks cells whose data comes from
+a closely related model version (Mistral-7B-Instruct-v0.1 for
+RAGTruth). Cells with ``---'' indicate experiments not yet run.}
 \label{tab:claim}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -16,29 +17,34 @@ LongFact). Cells with ``---'' indicate experiments not yet run.}
 \adjustbox{max width=\textwidth}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
- & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-8B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
+ & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-13B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
 Method & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact \\
 \midrule
-SemanticEntropy           & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-DegMat (NLI)              & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-EigValLaplacian (NLI)     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-SAR                       & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-LUQ                       & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-KernelLanguageEntropy     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\multicolumn{10}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-10}
+MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.540 & 0.513 & --- & --- & --- & --- & --- & --- \\
+Perplexity                       & 0.572$^{\dagger}$ & 0.540 & 0.513 & --- & --- & --- & --- & --- & --- \\
+MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.579 & 0.578 & --- & --- & --- & --- & --- & --- \\
+SelfCertainty                    & 0.423$^{\dagger}$ & 0.497 & 0.499 & --- & --- & --- & --- & --- & --- \\
+TokenSAR                         & 0.569$^{\dagger}$ & 0.529 & 0.461 & --- & --- & --- & --- & --- & --- \\
+MeanPointwiseMutualInformation   & \underline{0.600}$^{\dagger}$ & 0.471 & 0.462 & --- & --- & --- & --- & --- & --- \\
+BoostedProbSequence              & 0.571$^{\dagger}$ & 0.540 & 0.514 & --- & --- & --- & --- & --- & --- \\
 \midrule
-Perplexity                & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-MeanTokenEntropy          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-MCNSE                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-TokenSAR                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-\midrule
-CocoaMSP                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-\midrule
+\multicolumn{10}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-10}
+CSL                              & 0.567$^{\dagger}$ & 0.510 & 0.449 & --- & --- & --- & --- & --- & --- \\
+AttentionScore                   & 0.479$^{\dagger}$ & 0.495 & 0.557 & --- & --- & --- & --- & --- & --- \\
+RAUQ                             & 0.578$^{\dagger}$ & 0.540 & 0.532 & --- & --- & --- & --- & --- & --- \\
+FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & \underline{0.570}$^{\dagger}$ & \underline{0.692} & \underline{0.603} & --- & \underline{0.615} & \underline{0.549}$^{\dagger}$ & --- & --- & --- \\
-Temp-ViT (Stage 3, ours)  & \textbf{0.865}$^{\dagger}$ & \textbf{0.772} & \textbf{0.715} & --- & \textbf{0.690} & \textbf{0.633}$^{\dagger}$ & --- & --- & --- \\
+                                 & 0.570$^{\dagger}$ & \underline{0.692} & \underline{0.603} & \underline{0.616} & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Ours}} \\
+\cmidrule(l){1-10}
+Temp-ViT (Encoder Only)          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Temp-ViT                         & \textbf{0.865}$^{\dagger}$ & \textbf{0.772} & \textbf{0.715} & \textbf{0.814} & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }

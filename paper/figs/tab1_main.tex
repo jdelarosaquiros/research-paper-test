@@ -2,16 +2,18 @@
 \centering
 \caption{\textbf{Long-form hallucination detection --- token level.} We
 report AUROC per (LLM, dataset) cell. Models: Mistral-7B-Instruct-v0.2
-(Mis-7B-Inst), Llama-3.1-8B-Instruct (LlaMa-8B-Inst),
+(Mis-7B-Inst), Llama-2-13B-chat-hf (LlaMa-13B-Inst),
 Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets: RAGTruth
 \citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
-\citep{wei2024}. Per-token gold mask built from atom spans via
-longer-span-wins on containment, earlier-span-wins on partial overlap;
-uncovered tokens dropped. Best score per column in \textbf{bold},
-second-best \underline{underlined}. $^\dagger$ marks cells whose data
-comes from a closely related model version
-(Mistral-7B-Instruct-v0.1 for RAGTruth, Llama-3-8B-Instruct for
-LongFact). Cells with ``---'' indicate experiments not yet run.}
+\citep{wei2024}. Methods are grouped by category: \emph{Confidence}
+(sequence-level probability / entropy baselines), \emph{Mechanistic}
+(model-internal signal baselines), and \emph{Ours}. Per-token gold
+mask built from atom spans via longer-span-wins on containment,
+earlier-span-wins on partial overlap; uncovered tokens dropped. Best
+score per column in \textbf{bold}, second-best \underline{underlined}.
+$^\dagger$ marks cells whose data comes from a closely related model
+version (Mistral-7B-Instruct-v0.1 for RAGTruth). Cells with ``---''
+indicate experiments not yet run.}
 \label{tab:main}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -19,29 +21,34 @@ LongFact). Cells with ``---'' indicate experiments not yet run.}
 \adjustbox{max width=\textwidth}{%
 \begin{tabular}{l ccc ccc ccc}
 \toprule
- & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-8B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
+ & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-13B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
 Method & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact \\
 \midrule
-SemanticEntropy           & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-DegMat (NLI)              & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-EigValLaplacian (NLI)     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-SAR                       & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-LUQ                       & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-KernelLanguageEntropy     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+\multicolumn{10}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-10}
+MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
+Perplexity                       & 0.572$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
+MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.525 & 0.520 & --- & --- & --- & --- & --- & --- \\
+SelfCertainty                    & 0.423$^{\dagger}$ & 0.482 & 0.490 & --- & --- & --- & --- & --- & --- \\
+TokenSAR                         & 0.569$^{\dagger}$ & 0.524 & 0.506 & --- & --- & --- & --- & --- & --- \\
+MeanPointwiseMutualInformation   & \underline{0.600}$^{\dagger}$ & 0.500 & 0.532 & --- & --- & --- & --- & --- & --- \\
+BoostedProbSequence              & 0.571$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
 \midrule
-Perplexity                & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-MeanTokenEntropy          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-MCNSE                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-TokenSAR                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-\midrule
-CocoaMSP                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-\midrule
+\multicolumn{10}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-10}
+CSL                              & 0.567$^{\dagger}$ & 0.523 & 0.501 & --- & --- & --- & --- & --- & --- \\
+AttentionScore                   & 0.479$^{\dagger}$ & 0.491 & 0.524 & --- & --- & --- & --- & --- & --- \\
+RAUQ                             & 0.578$^{\dagger}$ & 0.524 & 0.522 & --- & --- & --- & --- & --- & --- \\
+FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & \underline{0.570}$^{\dagger}$ & \underline{0.676} & \underline{0.638} & --- & \textbf{0.673} & \underline{0.578}$^{\dagger}$ & --- & --- & --- \\
-Temp-ViT (Stage 3, ours)  & \textbf{0.865}$^{\dagger}$ & \textbf{0.696} & \textbf{0.692} & --- & \underline{0.653} & \textbf{0.601}$^{\dagger}$ & --- & --- & --- \\
+                                 & 0.570$^{\dagger}$ & \underline{0.676} & \underline{0.638} & \underline{0.615} & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Ours}} \\
+\cmidrule(l){1-10}
+Temp-ViT (Encoder Only)          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Temp-ViT                         & \textbf{0.865}$^{\dagger}$ & \textbf{0.696} & \textbf{0.692} & \textbf{0.814} & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
