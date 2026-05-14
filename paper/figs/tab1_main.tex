@@ -1,15 +1,17 @@
 \begin{table*}[t]
 \centering
 \caption{\textbf{Long-form hallucination detection --- token level.} We
-report PRR \citep{malinin2021uncertainty} per (LLM, dataset) cell.
-Models: Mistral-7B-Instruct-v0.2 (Mis-7B-Inst), Llama-3.1-8B-Instruct
-(LlaMa-8B-Inst), Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets:
-RAGTruth \citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
+report AUROC per (LLM, dataset) cell. Models: Mistral-7B-Instruct-v0.2
+(Mis-7B-Inst), Llama-3.1-8B-Instruct (LlaMa-8B-Inst),
+Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets: RAGTruth
+\citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
 \citep{wei2024}. Per-token gold mask built from atom spans via
 longer-span-wins on containment, earlier-span-wins on partial overlap;
 uncovered tokens dropped. Best score per column in \textbf{bold},
-second-best \underline{underlined}. Cells with ``---'' indicate
-experiments not yet run.}
+second-best \underline{underlined}. $^\dagger$ marks cells whose data
+comes from a closely related model version
+(Mistral-7B-Instruct-v0.1 for RAGTruth, Llama-3-8B-Instruct for
+LongFact). Cells with ``---'' indicate experiments not yet run.}
 \label{tab:main}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -38,9 +40,8 @@ CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- 
 CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \midrule
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & --- & \underline{0.406} & \textbf{0.317} & --- & \textbf{0.389} & --- & --- & --- & --- \\
-Temp-ViT (Stage 2, ours)  & --- & \textbf{0.505} & \underline{0.076} & --- & \underline{0.035} & --- & --- & --- & --- \\
-Temp-ViT (Stage 3, ours)  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+                          & \underline{0.570}$^{\dagger}$ & \underline{0.676} & \underline{0.638} & --- & \textbf{0.673} & \underline{0.578}$^{\dagger}$ & --- & --- & --- \\
+Temp-ViT (Stage 3, ours)  & \textbf{0.865}$^{\dagger}$ & \textbf{0.696} & \textbf{0.692} & --- & \underline{0.653} & \textbf{0.601}$^{\dagger}$ & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }

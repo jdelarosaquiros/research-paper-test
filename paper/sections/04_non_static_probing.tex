@@ -15,8 +15,6 @@ say \emph{where} the suspicious activations lie -- a poor fit for
 responses where most tokens are correct and only a few are
 problematic.
 
-\input{figs/fig2_heatmaps}
-
 \paragraph{Signals are distributed and LLM-specific.} Following
 \citet{orgad2024} on Mis-7B \citep{albertqjiang2023}, we train per
 layer--token logistic regression classifiers and visualize ROC-AUC
@@ -30,8 +28,7 @@ LlaMa-8B, late layers for Qwen-7B. The best position for Mis-7B,
 $(14, 0)$, transfers to LlaMa-8B and Qwen-7B with $\approx 7\%$ AUC
 loss -- no fixed slice suffices.
 
-\input{figs/fig_perf_by_length}
-\input{figs/fig_inference_time}
+\input{figs/fig2_heatmaps}
 
 \paragraph{Tensor methods scale poorly with response length.}
 Figure~\ref{fig:perf_by_length} reports per-token AUROC on LongFact as
@@ -52,6 +49,9 @@ long-form generation a single score is not actionable. We aim to
 additionally produce per-window scores
 $\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token
 regions whose activations most contribute to the prediction.
+
+\input{figs/fig_perf_by_length}
+\input{figs/fig_inference_time}
 
 \input{figs/fig_signal_propagation}
 

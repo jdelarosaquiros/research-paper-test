@@ -1,7 +1,7 @@
 \section{Pooling Algorithm}
 \label{app:pool}
 
-Our pooling algorithm is presented in Algorithm~\ref{alg:pool}.
+Our pooling algorithm is presented in Algorithm~1 below.
 
 \begin{figure}[h]
 \centering
@@ -17,8 +17,6 @@ Our pooling algorithm is presented in Algorithm~\ref{alg:pool}.
 5: $A \leftarrow \mathrm{permute}(A, [L_p, N_p, D_M])$\\
 6: \textbf{return} $A$
 \end{minipage}}
-\caption*{}
-\label{alg:pool}
 \end{figure}
 
 \section{Permutation Symmetries}
@@ -33,7 +31,7 @@ the analysis extends to those cases as well).
 Recall that $A_l$ is the activation tensor at layer $l \in [L]$. Let $(Q_l, K_l, V_l)$ denote the query, key, and
 value matrices at layer $l$, computed as:
 \begin{equation}
-(Q_l, K_l, V_l) = (A_{l-1} W_l^{Q_l}, A_{l-1} W_l^{K_l}, A_{l-1} W_l^{V_l}).
+(Q_l, K_l, V_l) = (A_{l-1} W_l^{Q}, A_{l-1} W_l^{K}, A_{l-1} W_l^{V}).
 \end{equation}
 
 Assume the feed-forward network (FFN) at layer $l$ produces output:
@@ -45,8 +43,8 @@ A_l = \mathrm{ReLU}(\mathrm{Attn}(A_{l-1}) W_l^1 + b_l^1) W_l^2 + b_l^2.
 Now assume the model uses $d$-dimensional hidden features, and let $P \in \mathbb{R}^{d \times d}$ be a permutation
 matrix, and define the following weight transformation:
 \begin{align}
-(W_l^2, b_l^2) &\to (W_l^2 P^\top, b_l^2 P^\top), \\
-(W_{l+1}^{Q_{l+1}}, W_{l+1}^{K_{l+1}}, W_{l+1}^{V_{l+1}}) &\to (P W_{l+1}^{Q_{l+1}}, P W_{l+1}^{K_{l+1}}, P W_{l+1}^{V_{l+1}}).
+(W_l^2, b_l^2) &\to (W_l^2 P^\top,\ b_l^2 P^\top), \\
+W_{l+1}^{X} &\to P\, W_{l+1}^{X} \quad \text{for } X \in \{Q, K, V\}.
 \end{align}
 Although the new weights (the right hand side) are very different, it is straightforward to verify that
 the permutation matrices cancel out, leaving the underlying function unchanged. However, recalling

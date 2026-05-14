@@ -1,122 +1,76 @@
 \section{Introduction}
 
-Large Language Models (LLMs) perform well on many tasks, but their internal
-behavior is still hard to understand. This is a serious issue because LLMs can
-hallucinate. A hallucination occurs when the model generates false or
-unsupported information. Detecting these errors is important, especially in
+Large Language Models (LLMs) hallucinate -- generate plausible but
+unsupported claims -- and detecting these errors is critical in
 high-stakes settings.
 
-Many hallucination detection methods use external tools. For example, they may
-ask another LLM to judge the answer, sample many responses, or verify claims
-with retrieval. These methods can work well, but they are often slow and
-expensive. Mechanistic methods offer a different solution. Instead of using
-extra LLM calls, they inspect the hidden states of the same model that
-generated the answer.
+Many detection methods rely on external tools: judging answers with
+another LLM, sampling many responses, or verifying claims via
+retrieval. These pipelines are accurate but slow and expensive.
+\emph{Mechanistic} methods avoid extra LLM calls and instead inspect
+the hidden states of the generating model.
 
-A common mechanistic approach is probing. A probe is a small classifier
-trained on hidden states. It tries to predict whether the answer is correct or
-hallucinated. Probing is useful because it can be fast and only needs one
-forward pass. However, many probes look at only one layer--token position.
-This is limiting. Uncertainty signals may not appear in the same place for
-every answer. They can move across layers, tokens, tasks, and models.
-Therefore, looking at only a few hidden states may miss important signals.
-
-Activation-tensor methods address this problem by using more of the hidden
-states. For a generated answer, we can represent the hidden states as a
-tensor $A \in \mathbb{R}^{L \times T \times D}$. Here, $L$ is the number of
-layers, $T$ is the number of generated tokens, and $D$ is the hidden
-dimension. ACT-ViT views this tensor like an image: the layer and token
-axes form a 2D plane, and the hidden dimension acts like channels. This
-view captures distributed signals across $A$, but it also forces a fixed
-input shape -- pooling along the token axis collapses information as
-responses grow longer. Other tensor-based methods avoid this loss at the
-cost of inference time, making them too slow to run as tokens are
-generated.
+The simplest mechanistic detectors are probes: small classifiers
+trained on a fixed layer--token position. Probes are cheap (one
+forward pass), but uncertainty signals move across layers, tokens,
+tasks, and models, so any fixed slice misses signal elsewhere.
+Activation-tensor methods address this by consuming the full hidden
+tensor $A \in \mathbb{R}^{L \times T \times D}$ -- $L$ layers, $T$
+generated tokens, $D$ hidden dimensions. ACT-ViT treats $A$ as an
+image (the $(L,T)$ plane, with $D$ as channels) and captures
+distributed signal, but its fixed pooled shape collapses information
+as $T$ grows. Other tensor methods avoid this loss only at
+prohibitive inference cost.
 
 \input{figs/fig1_overview}
 
-Even setting efficiency aside, sequence-level detection is not enough for
-long-form answers. A long answer may contain many correct parts and only a
-few uncertain parts. A model that gives one score for the whole answer can
-say that the answer is likely hallucinated. But it does not say where the
-suspicious regions are. This makes the prediction harder to interpret and
-harder to use for correction or verification.
+Even without the scaling cost, a single sequence-level score cannot
+say \emph{where} the suspicious regions are, which limits its
+usefulness for downstream correction or verification. Localizing
+uncertainty within a passage is hard because labels are typically
+response-level. The natural workaround -- extract atomic claims,
+verify each, and broadcast the verdict to every token of the span --
+yields doubly noisy supervision: spans contain non-hallucinated
+tokens, and the activation signal predictive of a hallucination often
+appears \emph{before} the false claim is generated. Span labels
+therefore neither isolate the offending tokens nor cover all the
+relevant signal around them.
 
-Localizing uncertainty is difficult because most datasets do not provide
-token-level labels. They only label the full response as correct or
-incorrect. One natural approach is to extract atomic claims, verify each
-claim, and broadcast the verification result to every token in the claim's
-span. The token labels obtained this way are noisy in two ways: an
-atomic-fact span contains tokens that are not themselves hallucinated, and
-the hidden-state signals that lead to a hallucination may appear before
-the false claim is even generated. Claim spans therefore neither isolate
-the offending tokens within them nor capture all the relevant signal
-around them.
+We frame this as weakly supervised temporal localization (WSTL),
+borrowing from video understanding \citep{pilhyeonlee2021}: a video
+model learns to localize an action using only a clip-level label,
+without per-frame supervision. We apply the same idea to $A$, framed
+as a \emph{video} over the token axis -- each token is a frame whose
+height is the layer axis and whose channels are the hidden dimension,
+and a \emph{window} aggregates $W$ consecutive tokens. The model
+learns which windows carry the predictive signal from the
+sequence-level label, with no window-level supervision required.
 
-We address this problem using weakly supervised temporal localization
-\citep{pilhyeonlee2021}. This idea is common in video understanding. In
-video action localization, the model may only know that an action occurs
-somewhere in a video. It does not know the exact frames where the action
-starts and ends. The model learns to find the important frames using only
-the video-level label.
-
-We apply the same idea to LLM hidden states. Because the number of
-generated tokens varies from a handful to thousands, treating $A$ as a
-single fixed-size image is awkward: any such framing must pool or crop
-along the token axis. Instead we frame $A$ as a video over the token
-axis. Each generated token plays the role of a frame whose height is the
-layer axis and whose channels are the hidden dimension; a window
-aggregates the activations of several consecutive tokens. Just as a video
-model identifies the windows of frames that span an action without
-frame-level labels, our model identifies the windows of tokens whose
-activation patterns carry uncertainty without window-level labels.
-
-Our method has three stages. In the first stage, we train an ACT-ViT
-encoder on full activation tensors. This teaches the encoder to recognize
-hidden-state patterns related to uncertainty. In the second stage, we
-freeze the encoder and apply it to short token windows. This produces one
-feature vector per window. A Mamba-based temporal head
-\citep{albertgu2024} processes these window features and predicts one
-uncertainty logit per window.
-
-Because only sequence-level labels are available for each atom segment,
-we train the second stage with top-$k$ multiple-instance learning. The
-model selects the top-$k$ most uncertain windows, averages their logits
-to produce one sequence-level logit, and trains that score against the
-atom-level label. In this way, the head learns which windows are most
-responsible for the prediction without needing token-level labels.
-
-The first two stages, however, only ever see one atom at a time, so the
-head is never asked to discriminate uncertain atoms from confident ones
-sitting next to them in a passage. The third stage closes this gap. With
-the encoder still frozen, we fine-tune the temporal head on whole
-passages using the per-atom labels produced by atomic-fact verification
-as auxiliary supervision. The per-token logits are smoothed along the
-token axis and aggregated within each atom span into a per-atom score,
-which is supervised by a per-atom binary cross-entropy. Even though the
-span labels are noisy, training on full passages forces the head to rank
-uncertainty \emph{across} the atoms inside a response rather than
-scoring each atom in isolation.
-
-This three-stage design makes the overall task tractable. If the model
-had to learn activation features, window-level localization, and
-cross-atom discrimination at once, training could be noisy. Instead,
-each stage focuses on one job. Mamba is used for the temporal head
-because it can process long sequences efficiently, making the method
-better suited for real-time long-form generation.
+Our method has three stages. \textbf{Stage 1} trains an ACT-ViT
+encoder on full activation tensors with sequence-level labels.
+\textbf{Stage 2} freezes the encoder, applies it to centered
+length-$W$ token windows, and trains a Mamba-based temporal head
+\citep{albertgu2024} via top-$k$ multiple-instance learning: the
+$k$ most uncertain window logits are averaged into a sequence-level
+prediction and supervised against the atom-level label. Stages 1--2
+see one atom at a time and never have to separate uncertain atoms
+from confident neighbours in a passage. \textbf{Stage 3} closes this
+gap: with the encoder frozen, the head is fine-tuned on whole
+passages, smoothing the per-token logits along the token axis and
+aggregating them within each atom span into a per-atom score
+supervised by per-atom binary cross-entropy. Mamba is used for its
+linear-time inference, making the method viable for real-time
+long-form generation.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-    \item We frame activation-based hallucination detection as a weakly
-    supervised temporal localization problem.
-    \item We propose a three-stage curriculum that combines an ACT-ViT
+    \item We frame activation-based hallucination detection as a
+    weakly supervised temporal localization problem.
+    \item We propose a three-stage curriculum that pairs an ACT-ViT
     activation encoder with a Mamba temporal head and a passage-level
     refinement step.
-    \item We use top-$k$ multiple-instance learning to train per-window
-    localization from sequence-level labels on per-atom segments, and a
-    passage-level per-atom loss with smoothed in-span aggregation to
-    train the head to discriminate uncertainty across atoms in a
-    response.
-    \item We extend activation-tensor methods from whole-answer detection to
-    localized uncertainty estimation for long-form LLM outputs.
+    \item We train per-window localization from sequence-level labels
+    via top-$k$ multiple-instance learning, and use a passage-level
+    per-atom loss with smoothed in-span aggregation to discriminate
+    uncertainty across atoms in a response.
 \end{enumerate}

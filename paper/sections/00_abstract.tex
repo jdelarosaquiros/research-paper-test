@@ -1,22 +1,26 @@
 \begin{abstract}
-Detecting hallucinations in Large Language Model-generated text is crucial for
-their safe deployment. Recent mechanistic approaches show promise by using
-internal hidden states as uncertainty signals, but they face two important
-limitations. Some methods probe only isolated layer--token positions, missing
-uncertainty signals distributed across layers and generated tokens. Others
-process richer activation tensors but are not equipped for long-form
-generation -- pooling over the token axis collapses the signal as responses
-grow longer -- or are too inefficient to run as tokens are produced. In this
-paper, we introduce a temporal uncertainty localization framework that
-detects hallucinations per token by finding uncertainty signals in activation
-patterns from across all layers of its own and neighboring tokens. We train it
-in three stages: \textbf{Stage 1} pre-trains an encoder on per-claim
-segments to learn uncertainty patterns; \textbf{Stage 2} freezes it and
-trains a temporal head over per-token windows with top-$k$ MIL to
-localize signals within a claim; \textbf{Stage 3} refines the head on
-whole passages with per-claim labels so it ranks windows across claims. On long-form hallucination corpora (RAGTruth, FactScore,
-LongFact) and the LM-Polygraph short-form benchmark across three
-instruction-tuned LLMs, our method improves sentence-level AUROC by
-$8$--$25$ points over the strongest pooled activation-tensor baseline
-while running $\approx 25\times$ faster on long passages.
+Detecting hallucinations in long-form LLM outputs requires uncertainty
+estimates that are both fine-grained and efficient. Existing
+sampling-based methods capture uncertainty but are too expensive for
+long generations, while recent mechanistic methods use hidden states
+efficiently but often probe isolated layer--token positions or pool
+over long sequences, losing token-level signals.
+
+We introduce a temporal uncertainty localization framework
+that predicts token-level hallucination uncertainty from hidden-state
+activations. Our method analyzes activation patterns across all
+layers within local token windows and uses a temporal head to model
+how uncertainty signals evolve across the generated text. It is
+trained in three stages: an encoder first learns uncertainty patterns
+from claim spans, a temporal head then localizes uncertain windows
+within claims using top-$k$ MIL, and a final passage-level stage
+refines the model to rank uncertain regions across claims.
+
+Across long-form hallucination benchmarks (RAGTruth, FActScore, LongFact) 
+and the LM-Polygraph short-form uncertainty benchmark, our method
+improves token-level AUROC by up to $\approx 30\%$ over pooled
+activation-tensor baselines, remains competitive on short-form tasks,
+and runs $\approx 25\times$ faster on long passages. These results
+show that temporal modeling of hidden-state signals enables scalable
+token-level hallucination detection for long-form generation.
 \end{abstract}

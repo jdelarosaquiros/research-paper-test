@@ -1,12 +1,14 @@
 \begin{table*}[t]
 \centering
 \caption{\textbf{Long-form hallucination detection --- claim level.}
-Same models, datasets, and metric as Table~\ref{tab:main}. Each row
-scores one atomic fact from the sidecar; the claim score is the max
-per-token uncertainty over the atom's token span (no AND-aggregation
-across same-sentence atoms). Best score per column in \textbf{bold},
-second-best \underline{underlined}. Cells with ``---'' indicate
-experiments not yet run.}
+Same models, datasets, and metric (AUROC) as Table~\ref{tab:main}.
+Each row scores one atomic fact from the sidecar; the claim score is
+the max per-token uncertainty over the atom's token span (no
+AND-aggregation across same-sentence atoms). Best score per column in
+\textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
+cells whose data comes from a closely related model version
+(Mistral-7B-Instruct-v0.1 for RAGTruth, Llama-3-8B-Instruct for
+LongFact). Cells with ``---'' indicate experiments not yet run.}
 \label{tab:claim}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -35,9 +37,8 @@ CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- 
 CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \midrule
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & --- & \underline{0.413} & \textbf{0.200} & --- & \textbf{0.333} & --- & --- & --- & --- \\
-Temp-ViT (Stage 2, ours)  & --- & \textbf{0.648} & \underline{0.134} & --- & \underline{0.223} & --- & --- & --- & --- \\
-Temp-ViT (Stage 3, ours)  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+                          & \underline{0.570}$^{\dagger}$ & \underline{0.692} & \underline{0.603} & --- & \underline{0.615} & \underline{0.549}$^{\dagger}$ & --- & --- & --- \\
+Temp-ViT (Stage 3, ours)  & \textbf{0.865}$^{\dagger}$ & \textbf{0.772} & \textbf{0.715} & --- & \textbf{0.690} & \textbf{0.633}$^{\dagger}$ & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }

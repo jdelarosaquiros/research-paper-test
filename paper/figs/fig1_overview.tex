@@ -1,28 +1,18 @@
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.95\linewidth]{figs/fig1_overview.png}
-\caption{Three-stage Temp-ViT architecture for weakly supervised
-temporal uncertainty localization. \textbf{Stage~1} (top) trains an
-ACT-ViT sequence classifier on per-atom activation tensors
-$A \in \mathbb{R}^{L \times T \times D}$: a per-LLM linear adapter
-projects the hidden dimension into a shared space, followed by
-adaptive max pooling, ViT patching over the layer--token plane, the
-ACT-ViT backbone, and a linear head producing an atom-level
-uncertainty score. \textbf{Stage~2} (middle) freezes the encoder and
-applies it to centered length-$W$ token windows, producing per-window
-embeddings in $\mathbb{R}^{T \times d_{\text{model}}}$ consumed by a
-residual Mamba-2 + LayerNorm temporal head. A top-$k$
-multiple-instance learning rule aggregates the per-window logits into
-an atom-level score supervised against the same atom label as
-Stage~1. \textbf{Stage~3} (bottom) keeps the encoder frozen,
-initializes the Mamba-2 head from Stage~2, and fine-tunes it on whole
-passages: the per-token logits are smoothed along the token axis with
-a soft-top-$k$ window and aggregated within each atom span
-$(\ell_m, r_m)$ into a per-atom logit, supervised by a per-atom
-binary cross-entropy against the noisy auxiliary labels
-$\tilde{y}_m$ obtained from atomic-fact verification. Stage~3 trains
-the head to discriminate \emph{across} atoms within a passage rather
-than scoring each atom in isolation, sharpening the per-window scores
-it produces at inference (highlighted in the example response).}
+\caption{Three-stage Temp-ViT.
+\textbf{Stage~1} (top): an ACT-ViT encoder maps a per-atom activation
+tensor $A \in \mathbb{R}^{L \times T \times D}$ to an atom-level
+uncertainty score via Pool $\to$ per-LLM linear adapter $\to$ ViT
+$\to$ linear head.
+\textbf{Stage~2} (middle): the encoder is frozen and applied to
+centered length-$W$ token windows; a Mamba-2 temporal head emits one
+logit per window, aggregated by top-$k$ MIL into an atom-level score.
+\textbf{Stage~3} (bottom): the head is fine-tuned on whole passages
+with noisy per-atom labels $\tilde{y}_m$ from atomic-fact
+verification; per-token logits are smoothed and aggregated within
+each atom span $(\ell_m, r_m)$ via a per-atom BCE, so the head ranks
+uncertainty across atoms rather than scoring each in isolation.}
 \label{fig:overview}
 \end{figure*}
