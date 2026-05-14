@@ -1,154 +1,94 @@
 \section{Towards Weakly Supervised Temporal Uncertainty Localization}
 \label{sec:non_static}
 
-Existing mechanistic approaches to hallucination detection face a recurring
-tension between coverage and scalability. On one hand, traditional probing
-classifiers \citep{azaria2023, orgad2024} operate on a single
-layer--token position, inspecting only a small slice of the activation
-tensor $A$. Predictive signals elsewhere in $A$ are ignored, and the
-optimal probing position varies across samples, datasets, and LLMs --
-often requiring an external search procedure to identify, which can entail
-multiple expensive LLM queries \citep{orgad2024}. On the other hand,
-methods that process the full activation tensor capture these distributed
-signals but are not well suited to real-time, long-form generation: some
-must collapse the token axis into a fixed-size representation, so the
-signal dilutes as responses grow longer, while others remain accurate at
-long context but are too costly to run as each token is produced. Even
-when a full-tensor method does scale, it typically emits a single
-sequence-level score and cannot indicate \emph{where} in the response the
-suspicious activations lie. For long answers, where most of the generated
-text is typically correct and only a few regions are problematic, a
-sequence-level score is both harder to interpret and less actionable for
-downstream verification or correction.
+Mechanistic detectors face a tension between coverage and scalability.
+Static probing classifiers \citep{azaria2023,orgad2024} operate on a
+single layer--token position and ignore signal elsewhere in $A$; the
+optimal position varies across samples, datasets, and LLMs, often
+requiring an external search \citep{orgad2024}. Methods that process
+the whole tensor capture distributed signal but are ill-suited to
+real-time long-form generation: some pool the token axis into a fixed
+size, diluting signal as responses grow; others remain accurate at
+long context but require one forward per token. Even when a
+full-tensor method does scale, a single sequence-level score does not
+say \emph{where} the suspicious activations lie -- a poor fit for
+responses where most tokens are correct and only a few are
+problematic.
 
 \input{figs/fig2_heatmaps}
 
-\paragraph{Signals are distributed and LLM-specific.} We first provide
-empirical support for the limitations of static probing. Inspired by the
-analyses of \citet{orgad2024} on Mistral-7B-Instruct-v0.2
-\citep{albertqjiang2023} (Mis-7B), we train distinct logistic regression
-classifiers for each layer--token combination and construct ROC-AUC
-heatmaps to visualize the presence and localization of hallucination
-signals. We conduct this analysis across three LLMs and five datasets.
-Since responses vary in length, we restrict tokens to
-$\mathcal{N} := \{0, 1, 2, -3, -2, -1\}$, namely the first and last three
-positions in each response. Heatmaps are presented in
-Figure~\ref{fig:heatmaps} for Mis-7B, Llama-3-8B-Instruct
-\citep{touvron2023} (LlaMa-8B), and Qwen2.5-7B-Instruct \citep{yang2024}
-(Qwen-7B) on the Movies dataset \citep{orgad2024} (full set in
-Appendix~\ref{app:extended}). Predictive signals are spread across many
-layer--token combinations, but the most informative positions vary
-substantially across LLMs: signals concentrate around the middle layers
-for Mis-7B and LlaMa-8B, while for Qwen-7B they sit in the final layers.
-Concretely, the best probing position for Mis-7B, $(14, 0)$, transfers
-poorly: it is $\approx 7\%$ AUC below the per-LLM optimum on both LlaMa-8B
-and Qwen-7B. No fixed layer--token slice suffices across LLMs, motivating
-models that consume the full activation tensor.
+\paragraph{Signals are distributed and LLM-specific.} Following
+\citet{orgad2024} on Mis-7B \citep{albertqjiang2023}, we train per
+layer--token logistic regression classifiers and visualize ROC-AUC
+heatmaps. Tokens are restricted to
+$\mathcal{N} = \{0, 1, 2, -3, -2, -1\}$ (first/last three positions).
+Figure~\ref{fig:heatmaps} shows the heatmap on Movies
+\citep{orgad2024} for three LLMs; the appendix carries the full set.
+Predictive signals spread across many $(L, T)$ cells, but the most
+informative positions shift across LLMs: middle layers for Mis-7B and
+LlaMa-8B, late layers for Qwen-7B. The best position for Mis-7B,
+$(14, 0)$, transfers to LlaMa-8B and Qwen-7B with $\approx 7\%$ AUC
+loss -- no fixed slice suffices.
 
 \input{figs/fig_perf_by_length}
 \input{figs/fig_inference_time}
 
-\paragraph{Tensor methods scale poorly with response length.} Models
-that already consume the full activation tensor must contend with the
-second tension noted above: long-form responses either dilute their
-signal or blow up their inference cost. We show both effects
-empirically. Figure~\ref{fig:perf_by_length} reports per-token AUROC
-on the LongFact prefix-truncation test as the generated-token prefix
-length $T$ grows from 12 to 384. ACT-ViT with its default short
-pooled token axis peaks at very short prefixes but collapses past
-$T = 48$, falling below chance for $T \in \{192, 384\}$ as a growing
-number of token positions is squeezed through the same fixed-size
-pooled image; widening the pooled axis from 6 to 186 patches up the
-long-prefix collapse but does not recover the short-prefix peak and
-leaves a $4\times$ wider AUROC spread than a per-token model on the
-same data. Figure~\ref{fig:inference_time} reports the corresponding
-wall-clock cost of producing predictions at every token of one
-$T = 384$ passage on a single H200: ACT-ViT emits one scalar per call,
-so labelling every token requires $T$ sequential forwards and the
-total latency scales linearly with the response length, even when the
-post-pool input is widened. A per-token model that produces the
-entire logit vector in a single forward is $\approx 25\times$ faster
-on this passage, and -- crucially -- does not require choosing between
-short-prefix accuracy and long-prefix stability. Together, these two
-results motivate models whose architecture is per-token by
-construction rather than pooled-then-classified.
+\paragraph{Tensor methods scale poorly with response length.}
+Figure~\ref{fig:perf_by_length} reports per-token AUROC on LongFact as
+prefix length $T$ grows. ACT-ViT with its default short pooled token
+axis peaks at very short prefixes but collapses past $T = 48$,
+dropping below chance for $T \in \{192, 384\}$ as more tokens are
+squeezed through a fixed-size pooled image. Widening the pooled axis
+from 6 to 186 patches the long-prefix collapse but does not recover
+the short-prefix peak. Figure~\ref{fig:inference_time} reports the
+matching wall-clock cost on one $T = 384$ passage: ACT-ViT needs $T$
+sequential forwards, so total latency scales linearly with response
+length. A per-token model that produces all logits in a single
+forward is $\approx 25\times$ faster while keeping a flat AUROC
+profile across the prefix grid.
 
-\paragraph{From sequence-level detection to localization.} Even given a
-model that processes the full $A$, a single sequence-level score is
-insufficient for long-form generation. A long response may interleave
-mostly correct text with a few uncertain spans; a sequence-level prediction
-can flag the response as risky, but cannot tell a user -- or a downstream
-verifier -- which spans to scrutinize. We therefore aim to additionally
-produce per-window uncertainty scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ that
-localize the generated-token regions whose hidden-state activations most
-contribute to the sequence-level prediction.
+\paragraph{From sequence-level detection to localization.} For
+long-form generation a single score is not actionable. We aim to
+additionally produce per-window scores
+$\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token
+regions whose activations most contribute to the prediction.
 
-\paragraph{The weak-supervision challenge.} Localization is challenging
-because hallucination labels are typically available only at the response
-level. A natural workaround is to extract atomic claims from the response,
-verify each claim against ground truth, and broadcast the verification
-result to every token in the claim's span. Token-level labels obtained
-this way are noisy in two complementary senses. First, the span is more
-granular than the response but still coarser than a token: it typically
-contains tokens that are not themselves hallucinated, so inheriting the
-span's label overestimates the support of the signal. Second, the
-hidden-state patterns that drive a hallucination may appear before the
-false claim is generated -- e.g., during the model's processing of the
-question or earlier context -- so claim-aligned spans can also miss part
-of the relevant signal. We therefore treat span labels as a coarse
-auxiliary supervision signal rather than as ground-truth token labels,
-and rely on weak supervision to localize \emph{within} the span.
+\input{figs/fig_signal_propagation}
 
-\paragraph{Weakly supervised temporal localization.} ACT-ViT shows that
-the layer--token plane of $A$ has spatial structure amenable to visual
-encoders, but framing $A$ as a single image fits the activation tensor
-poorly when the number of generated tokens varies from a handful to
-thousands: any fixed-size image must pool or crop along the token axis.
-We instead frame $A$ as a \emph{video} over the token axis and borrow
-weakly supervised temporal localization (WSTL) from video understanding
-\citep{pilhyeonlee2021}. In WSTL for action recognition, the model is
-told only that an action occurs somewhere in a video and must learn to
-identify the consecutive frames that span it. By analogy, each generated
-token plays the role of a ``frame'': a frame's ``height'' is the layer
-axis, its ``width'' is a single token, and its ``channels'' are the
-hidden dimension; a \emph{window} aggregates the activations of $W$
-consecutive tokens. Just as a video model identifies the windows of
-frames spanning an action without frame-level labels, our model
-identifies the windows of tokens whose activation patterns carry
+\paragraph{The weak-supervision challenge.} Hallucination labels are
+typically available only at the response level. Extracting atomic
+claims and broadcasting their verification result to every token of
+the span yields noisy token labels: spans contain non-hallucinated
+tokens, and the relevant activation signal may appear \emph{before}
+the false claim is even generated.
+Figure~\ref{fig:signal_propagation} measures this directly: on
+RAGTruth, a linear probe's ROC-AUC ramps from chance at offset $-24$
+to $0.66$ at the token immediately before a hallucinated span, rises
+monotonically through the span ($0.71 \to 0.79$), and decays slowly
+afterward. We therefore treat span labels as coarse auxiliary
+supervision and rely on weak supervision to localize within.
+
+\paragraph{Weakly supervised temporal localization.} ACT-ViT shows
+that the $(L,T)$ plane has spatial structure amenable to visual
+encoders, but a single fixed-size image fits poorly when $T$ ranges
+from a handful to thousands of tokens. We frame $A$ as a \emph{video}
+over the token axis and borrow WSTL from video understanding
+\citep{pilhyeonlee2021}. Each token is a frame whose height is the
+layer axis and whose channels are the hidden dimension; a
+\emph{window} aggregates $W$ consecutive tokens. The neighbourhood
+structure of Figure~\ref{fig:signal_propagation} is exactly what a
+window exploits: surrounding tokens emit usable signal about whether
+a target token is hallucinated, so the model can localize spans of
 uncertainty without window-level labels.
 
 \paragraph{Three-stage training.} Learning sequence-level uncertainty
-quantification \emph{and} window-level localization jointly under weak
-supervision is a difficult optimization: the model must simultaneously
-discover which activation patterns indicate uncertainty and which windows
-contain them, which is prone to overfitting and noisy predictions in the
-limited-data regime typical of hallucination annotation. To make this
-tractable, we decompose training into three stages, each focused on one
-task. In Stage~1, we train an encoder on full activation tensors with
-sequence-level labels, so it learns activation patterns predictive of
-uncertainty. In Stage~2, we freeze the encoder and train a temporal head
-over per-window encodings on per-atom segments, focusing on aggregating
-information across tokens and localizing uncertain regions within a
-single atom. The temporal head emits a per-window logit $\hat{p}^{(t)}$,
-and a top-$k$ multiple-instance learning rule averages the $k$ most
-uncertain windows into a sequence-level logit against which the head is
-supervised; mean-of-top-$k$ is more stable than alternative aggregations,
-especially for long sequences. We use Mamba \citep{albertgu2024} for the
-temporal head because it processes long sequences efficiently, making the
-method viable for real-time long-form generation.
-
-Stages~1 and~2 alone, however, never expose the temporal head to the
-context in which it is deployed: passages contain many atoms at once,
-and a head trained only on isolated atom segments has no incentive to
-discriminate the uncertain atoms from the confident ones that sit
-beside them. Stage~3 closes this gap by fine-tuning the head, still
-under the same frozen encoder, on whole passages with the per-atom
-auxiliary span labels introduced above. The head's per-token logits are
-smoothed along the token axis and then aggregated within each atom span
-into a per-atom logit, against which we apply a per-atom binary
-cross-entropy. The result is a temporal head that ranks uncertainty
-\emph{across} the atoms inside a passage rather than scoring each atom
-in isolation; concrete forms of the smoothing and segment aggregation
-are detailed in the next section, where we describe the encoder
-(Stage~1), the temporal head (Stage~2), and the passage-level refinement
-(Stage~3) in turn.
+and window-level localization jointly under weak supervision is a
+hard optimization. We decompose training into three stages.
+\textbf{Stage 1} trains the encoder on full activation tensors with
+sequence-level labels. \textbf{Stage 2} freezes the encoder and
+trains a Mamba-2 temporal head over per-window encodings, supervised
+via top-$k$ MIL against the same sequence label; we use Mamba
+\citep{albertgu2024} for its linear-time long-sequence inference.
+\textbf{Stage 3} fine-tunes the head on whole passages with per-atom
+auxiliary labels so it learns to rank uncertainty \emph{across} the
+atoms in a response. We describe each stage in the next section.

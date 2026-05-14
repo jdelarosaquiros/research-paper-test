@@ -1,291 +1,104 @@
 \section{Model Architecture}
 \label{sec:model}
 
-We instantiate the three-stage pipeline of
-Section~\ref{sec:non_static} as illustrated in
-Figure~\ref{fig:overview}. Stage~1 is a \emph{sequence encoder}
-that maps a full activation tensor
-$A \in \mathbb{R}^{L \times T \times D}$ to a sequence-level
-uncertainty logit. Stage~2 freezes that encoder and applies it to a
-sequence of centered token windows $\{A^{(t)}\}_{t=1}^{T}$, producing
-per-window embeddings that a \emph{Mamba-2 temporal head}
-\citep{albertgu2024} consumes to emit per-window logits
-$\{\hat{p}^{(t)}\}_{t=1}^{T}$. A top-$k$ multiple-instance learning
-(MIL) rule aggregates those logits into a sequence-level score, against
-which the temporal head is supervised on per-atom segments. Stage~3
-then refines the temporal head on whole passages: with the encoder
-still frozen, the head is fine-tuned against per-atom auxiliary labels
-obtained from atomic-fact verification, using a smoothed top-$k$
-aggregation within each atom span. This shifts the head's loss surface
-from scoring isolated atoms to ranking uncertainty \emph{across} the
-atoms that co-occur in a passage. We describe the encoder first, the
-temporal head second, and the passage-level refinement last.
+Figure~\ref{fig:overview} illustrates the three-stage pipeline.
+Stage~1 trains a sequence encoder $E_\theta$ that maps a full
+activation tensor $A \in \mathbb{R}^{L \times T \times D}$ to a
+sequence-level logit. Stage~2 freezes $E_\theta$, applies it to
+centered length-$W$ token windows $\{A^{(t)}\}_{t=1}^{T}$, and trains
+a \emph{Mamba-2 temporal head} \citep{albertgu2024} that emits one
+logit $\hat{z}^{(t)}$ per window. Stage~3 keeps the encoder frozen,
+initializes the head from Stage~2, and refines it on whole passages
+under per-atom auxiliary supervision.
 
-\subsection{Stage~1: Encoder}
+\subsection{Stage 1: Encoder}
 \label{sec:act_vit_subsec}
 
-\paragraph{Overview.} The encoder consists of three components (see
-Figure~\ref{fig:overview}, top): (1) a Pooling (Pool) layer that reduces
-the spatial dimensions of the activation tensor (layers and tokens) to a
-fixed, predefined size $(L_p, T_p)$; (2) a per-LLM Linear Adapter (LA)
-that compresses and aligns the LLM-specific hidden dimensions into a
-shared feature space; (3) a ViT-based backbone (ViT-B), which processes
-the resulting tensor using a Vision Transformer architecture, enhanced
-with shared positional encodings within each patch. A linear head on top
-of the backbone emits a single sequence-level uncertainty logit. We
-expand on each component below.
-
-\paragraph{Pool.} Similarly to image resizing, we propose to reduce the
-size of activation tensors before processing them with our architecture:
-as a preprocessing step, we apply a max-pooling operation across the
-spatial activation dimensions (see inset illustration). Specifically, we
-consider two pooling approaches. The first maintains full input
-resolution at the level of tokens and applies 1d pooling on the layer
-dimension only; this approach is preferred when expecting relatively
-concise LLM generations, or when the maximum generation length remains
-computationally manageable. Alternatively, a second approach adopts a
-more general 2d pooling on both spatial activation dimensions, allowing
-us to more efficiently deal with potentially longer LLM responses. As we
-will detail next, we mainly adopt the first approach and additionally
-experiment with the second in Section~\ref{sec:experiments}.
-
-In our applications, the number of generated tokens $T$ naturally varies
-depending on the input prompt, and the number of LLM layers $L$ may vary
-across models in $\mathcal{M}$. With guiding principle (i) in mind, it
-becomes important to ensure our architecture can robustly deal with
-both these varying parameters. Accordingly, we design the two pooling
-operations so that, regardless of the input size, their outputs
-$A_p \in \mathbb{R}^{L_p \times T_p \times D}$ always match a predefined
-shape $(L_p, T_p)$ in their spatial dimensions (see
-Algorithm~\ref{alg:pool}, in Appendix~\ref{app:pool}). This property
-ensures the downstream ViT backbone is always fed with tensors of a
-consistent spatial shape. Crucially, the same Pool module is reused
-unchanged in Stage~2 with a smaller token target $W_p < T_p$, so a
-single learned encoder operates on both full sequences and short
-windows.
-
-\paragraph{LA.} Following pooling, we map the feature dimension to a
-shared hidden size via a linear transformation. We instantiate a
-dedicated linear adapter for each LLM $M \in \mathcal{M}$, all
-projecting to a shared output dimensionality $D'$:
+The encoder has three components. \textbf{Pool} applies adaptive
+max-pooling over $(L, T)$ to a target spatial size $(L_p, T_p)$,
+yielding $A_p \in \mathbb{R}^{L_p \times T_p \times D}$. \textbf{LA}
+is a per-LLM linear adapter $LA_M : \mathbb{R}^D \to \mathbb{R}^{D'}$
+that aligns hidden dimensions across models in $\mathcal{M}$:
 \begin{equation}
-\mathcal{L} = \left\{ LA_M : A_p \mapsto A_p W_M \mid W_M \in \mathbb{R}^{D_M \times D'},\ M \in \mathcal{M} \right\},
+\mathcal{L} = \{ LA_M \mid M \in \mathcal{M},\ W_M \in \mathbb{R}^{D_M \times D'} \},
 \end{equation}
-where $D_M$ is the hidden dimension of model $M$ and $A_p$ denotes its
-pooled activation tensor; the result has shape
-$L_p \times T_p \times D'$. Applying a single linear transformation
-$LA_M$ jointly across all layers and tokens of the activation tensor
-for a given LLM $M$---rather than using separate projections per layer
-or token---is motivated by the inherent alignment of feature spaces
-within a single transformer: residual connections promote consistency
-across layers, while transformer weight sharing across tokens ensures
-a uniform representation structure along the token axis.
+motivated by recent evidence that LLM representations can be put in
+approximate correspondence by linear maps
+\citep{huh2024,moschella2022,kornblith2019}. \textbf{ViT-B} treats the
+$(L_p \times T_p)$ plane as an image, splits it into non-overlapping
+$(p_H, p_W)$ patches, adds learnable intra-patch positional encodings,
+and processes the patch sequence with a Transformer. A linear head
+emits the Stage-1 logit $z$, trained with
+$\mathcal{L}_{1} = \mathrm{BCE}(\sigma(z), y)$ where $y$ is the
+sequence label. The features before the linear head form the
+per-sequence embedding that Stages 2 and 3 reuse.
 
-Resorting to LLM-specific LAs is particularly relevant in relation to
-principle (i). It ensures that the downstream architectural components
-process objects of consistent shape that are meaningfully comparable
-across the internal representation spaces of distinct LLMs in
-$\mathcal{M}$. Motivated by recent literature on representation
-alignment \citep{huh2024,morcos2018,moschella2022,kornblith2019}, we
-hypothesize that, despite differences in architectural design, training
-corpora, weight initializations and learning schemes, the hidden
-representations of LLMs can be put in approximate correspondence by
-some linear transformations, which we aim to learn via the adapters in
-$\mathcal{L}$. This contributes to rendering our multi-LLM setup not
-only computationally possible, but also meaningful from a learning
-perspective and, as we show in the next sections, beneficial in terms
-of generalization performance. For an illustrative motivating example
-of how a linear mapping can tackle misalignment in the representation
-space, we refer the interested reader to Appendix~\ref{app:permutation},
-where we specifically consider those induced by neuron symmetries, as
-recently studied in \citep{navon2023,samuelkainsworth2022}.
-
-\paragraph{ViT-B.} In view of the proposed analogy between activation
-tensors and images, the output of any LA module is processed
-\`a la ViT \citep{dosovitskiy2020}. It is first rearranged into a
-sequence of non-overlapping activation patches of size $(p_H, p_W)$. If
-$L_p$ and $T_p$ are divisible by $p_H$ and $p_W$, this gives
-$H = L_p/p_H$ and $W = T_p/p_W$ patches; the resulting tensor is denoted
-$A_{\text{patches}} \in \mathbb{R}^{(H \cdot W) \times p_H \times p_W \times D'}$.
-We augment each patch with a per-patch learnable Positional Encoding
-(PE), providing intra-patch ordering over (pooled) activation pixels.
-The Transformer's native PEs provide a global ordering over activation
-patches, and combined with our per-patch PEs, allow reconstructing each
-pooled pixel's original position. Similarly to ViT, the enriched
-activation patches are flattened, passed through a shared linear layer,
-and processed by a stack of Transformer blocks. Overall, using a
-vision-like backbone aligns with the analogy between activation tensors
-and images and, as we will experimentally show, reveals to be an
-effective inductive bias.
-
-\paragraph{Stage~1 head and training.} A linear head on top of the
-ViT-B backbone produces a single sequence-level uncertainty logit
-$z \in \mathbb{R}$, trained with binary cross-entropy against the
-sequence-level label $y$:
-\begin{equation}
-    \mathcal{L}_{\text{stage 1}} = \mathrm{BCE}\bigl(\sigma(z),\ y\bigr).
-\end{equation}
-We select the best checkpoint by validation AUROC. The learned features
-just before the linear head form the per-sequence embedding that
-Stage~2 reuses on a per-window basis.
-
-\subsection{Stage~2: Mamba-2 Temporal Head with Top-$k$ MIL}
+\subsection{Stage 2: Mamba-2 Temporal Head with Top-$k$ MIL}
 \label{sec:temporal_head}
 
-Stage~2 keeps the Stage~1 encoder frozen and learns to localize
-uncertainty over generated-token windows under sequence-level
-supervision (see Figure~\ref{fig:overview}, bottom). It comprises
-(1) a frozen window encoder reusing Stage~1, (2) a Mamba-2 temporal
-head over per-window embeddings, and (3) a top-$k$ MIL aggregation that
-maps per-window logits to a sequence-level score for training.
+For each generated position $t$, we extract the windowed activation
+tensor $A^{(t)} \in \mathbb{R}^{L \times W \times D}$ as $W$ token
+columns of $A$ centered at $t$ (edge-padded near response boundaries).
+The same Pool is reused with a smaller token target
+$(L_p, W_p)$ and the frozen encoder produces a per-window embedding
+$e^{(t)} \in \mathbb{R}^{d}$. Stacking the $T$ windows yields
+$E \in \mathbb{R}^{T \times d}$. A residual stack of Mamba-2 blocks
+processes $E$ along the token axis followed by a linear head:
+$\hat{z}^{(t)} = h(\mathrm{Mamba\text{-}2}(E)_t)$.
+Mamba-2's linear-time selective state-space recurrence makes Stage 2
+viable for real-time streaming, where each new token requires only a
+constant-memory update.
 
-\paragraph{Frozen window encoding.} For each generated position
-$t \in \{1, \dots, T\}$, we extract the windowed activation tensor
-$A^{(t)} \in \mathbb{R}^{L \times W \times D}$ defined in
-Section~\ref{sec:notation} as $W$ consecutive token columns of $A$
-centered at $t$ (with edge padding near response boundaries). Each
-$A^{(t)}$ is processed by the same Pool module used in Stage~1 with a
-window-sized token target $(L_p, W_p)$, then passed through the frozen
-encoder to produce a per-window embedding
-$e^{(t)} \in \mathbb{R}^{d_{\text{model}}}$, taken from the
-penultimate features of Stage~1's backbone (i.e., before the
-sequence-level linear head). Stacking the $T$ windows yields a temporal
-sequence
-$E = (e^{(1)}, \dots, e^{(T)}) \in \mathbb{R}^{T \times d_{\text{model}}}$
-on which the temporal head operates. Reusing the Stage~1 Pool with a
-smaller target ensures that full-sequence and per-window encodings
-share the same operation; for example, $(L, T)=(33, 200) \to (L_p, T_p)=(16, 100)$
-in Stage~1 is paired with $(L, W)=(33, 6) \to (L_p, W_p)=(16, 3)$ in
-Stage~2.
-
-\paragraph{Mamba-2 temporal head.} A residual stack of Mamba-2 blocks
-\citep{albertgu2024} interleaved with LayerNorm processes $E$ along the
-token axis, followed by a linear head that emits one logit per
-position:
+\textbf{Top-$k$ MIL.} Because only sequence-level labels are
+available, we train via top-$k$ MIL: after masking padded positions,
+take the $k$ largest per-window logits and average them into one
+sequence-level logit:
 \begin{equation}
-    \hat{z}^{(t)} = h\bigl(\mathrm{Mamba\text{-}2}(E)_t\bigr)
-    \quad \text{for } t = 1, \dots, T.
+\hat{z} = \tfrac{1}{k}\!\!\!\sum_{t \in \mathrm{Top}_k(\{\hat{z}^{(t)}\}_t)}\!\!\!\hat{z}^{(t)}, \qquad \hat{p} = \sigma(\hat{z}),
 \end{equation}
-We adopt Mamba-2 over a Transformer here because activation sequences
-in long-form generation can extend into the thousands of tokens; its
-linear-time selective state-space recurrence keeps Stage~2 viable for
-real-time, streaming use, where each new generated token requires only
-a constant-memory update of the temporal head. The corresponding
-per-window uncertainty score is
-$\hat{p}^{(t)} = \sigma(\hat{z}^{(t)}) \in [0, 1]$ and constitutes our
-\emph{localization output}.
+and supervise with $\mathcal{L}_{2} = \mathrm{BCE}(\hat{p}, y)$.
+Mean-of-top-$k$ is more stable than max (brittle to single outliers)
+or full mean (dilutes signal in mostly-correct responses), and lets
+the model discover suspicious spans without window-level labels.
 
-\paragraph{Top-$k$ MIL aggregation.} Because no token- or window-level
-labels are available, we train the temporal head from sequence-level
-supervision via top-$k$ multiple-instance learning. After masking
-padded positions, we select the $k$ largest per-window logits per
-sequence and average them into a single sequence-level logit:
-\begin{equation}
-    \hat{z} = \frac{1}{k} \sum_{t \in \mathrm{Top}_k\bigl(\{\hat{z}^{(t)}\}_t\bigr)} \hat{z}^{(t)},
-    \qquad
-    \hat{p} = \sigma(\hat{z}),
-\end{equation}
-where $\mathrm{Top}_k(\cdot)$ denotes the indices of the $k$ largest
-unmasked logits. Stage~2 is then trained with binary cross-entropy
-against the same sequence label as Stage~1:
-\begin{equation}
-    \mathcal{L}_{\text{stage 2}} = \mathrm{BCE}(\hat{p},\ y).
-\end{equation}
-Mean-of-top-$k$ is more stable than alternative aggregations
-(e.g., max or full mean) for long sequences: max is brittle to single
-high-logit windows, while a full mean dilutes the few suspicious
-regions with the majority of correct ones. Top-$k$ implements the
-intuition that an uncertain or incorrect response typically contains
-only a few problematic spans, and lets the model discover those spans
-under weak supervision.
-
-\subsection{Stage~3: Passage-level Refinement with Per-atom Supervision}
+\subsection{Stage 3: Passage-level Refinement with Per-atom Supervision}
 \label{sec:stage3}
 
-Stages~1 and~2 train against \emph{sequence-level} labels on per-atom
-segments: at training time the temporal head sees one atom at a time,
-and its loss reflects how well it scores that atom in isolation. In
-deployment, however, the head must operate over a whole passage whose
-atoms co-occur and compete for attention; a head tuned only on isolated
-atoms tends to assign similar scores to every region of a passage and
-fails to localize the uncertain few. Stage~3 addresses this by
-fine-tuning the temporal head on whole passages under \emph{per-atom}
-auxiliary supervision, while keeping the encoder frozen.
+Stages 1--2 see one atom segment at a time and never learn to
+discriminate uncertain atoms from confident ones that co-occur in a
+passage. Stage 3 fixes this by fine-tuning the head on whole passages
+with per-atom auxiliary labels, while the encoder stays frozen.
 
-\paragraph{Inputs.} The training unit is now a full passage activation
-tensor $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom
-spans $\{(\ell_m, r_m)\}_{m=1}^{M}$ obtained from an atomic-fact
-verification pipeline, where the $m$-th atom occupies generated-token
-positions $\ell_m, \ldots, r_m$. Each span carries an auxiliary
-hallucination label $\tilde{y}_m \in \{0, 1\}$ broadcast from the
-fact-level verification result. As discussed in
-Section~\ref{sec:non_static}, these labels are noisy -- the span may
-contain non-hallucinated tokens, and the relevant activation signal can
-even fall outside the span -- so we treat them as coarse auxiliary
-supervision rather than as ground-truth token labels.
+\textbf{Inputs.} A passage tensor
+$A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom spans
+$\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
+$\tilde{y}_m \in \{0,1\}$ from atomic-fact verification.
 
-\paragraph{From per-token logits to per-atom scores.} The frozen
-encoder and the Stage~2 temporal head jointly produce a per-token logit
-sequence $\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We
-convert these to per-atom scores in two steps. First, we smooth the
-logit sequence along the token axis with a centered length-$W$ window:
+\textbf{Per-atom score.} The Stage-2 detector emits per-token logits
+$\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We smooth
+them along the token axis with a centered length-$W$ softmax-weighted
+window,
 \begin{equation}
-\bar{z}^{(t)}
-= \sum_{u \in \mathcal{W}(t)} \alpha_u^{(t)} \, \hat{z}^{(u)},
-\qquad
-\alpha_u^{(t)} \propto \exp(\hat{z}^{(u)}/\tau),
-\label{eq:soft-topk-smooth}
+\bar{z}^{(t)} = \!\!\!\!\!\sum_{u \in \mathcal{W}(t)}\!\!\!\! \alpha_u^{(t)}\, \hat{z}^{(u)},\qquad \alpha_u^{(t)} \propto \exp(\hat{z}^{(u)}/\tau),
 \end{equation}
-where $\mathcal{W}(t)$ is the centered length-$W$ window at position
-$t$ (with masking near response boundaries) and $\tau > 0$ controls the
-sharpness: $\tau \to 0$ recovers the per-window max, while $\tau \to
-\infty$ recovers the arithmetic mean. The smoothing absorbs the
-window-level uncertainty signal already produced by Stage~2 in a
-differentiable way, so gradients flow back into the head from any
-informative position within the window. Second, we aggregate the
-smoothed logits within each atom span $[\ell_m, r_m]$. By default we
-use a top-$k$ mean,
+where $\tau \to 0$ recovers max and $\tau \to \infty$ recovers mean.
+The per-atom logit is a top-$k$ mean over the smoothed logits in the
+atom span,
 \begin{equation}
-\hat{z}_m
-= \frac{1}{k_m}
-\sum_{t \in \mathrm{Top}_{k_m}\!\bigl(\{\bar{z}^{(t)}\}_{t = \ell_m}^{r_m}\bigr)}
-\bar{z}^{(t)},
-\qquad
-k_m = \max\!\bigl(k_{\min}, \lceil \kappa \cdot (r_m - \ell_m + 1) \rceil\bigr),
-\label{eq:topk-segment}
+\hat{z}_m = \frac{1}{k_m}\!\!\!\sum_{t \in \mathrm{Top}_{k_m}(\mathcal{S}_m)}\!\!\! \bar{z}^{(t)},
 \end{equation}
-with $\kappa \in (0, 1]$ controlling the fraction of in-span tokens
-that participate in the atom's score. Setting $\kappa = 1$ averages
-over every token in the span; smaller $\kappa$ peaks the gradient on
-the most uncertain tokens within the span and is useful for long
-atoms. A softmax-weighted in-span max
-($\hat{z}_m \propto \sum_t \mathrm{softmax}(\bar{z}^{(t)}/\tau_{\text{seg}}) \,
-\bar{z}^{(t)}$) is available as an ablation.
+where $\mathcal{S}_m = \{\bar{z}^{(t)}\}_{t=\ell_m}^{r_m}$ are the
+in-span smoothed logits and
+$k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
+$\kappa \in (0, 1]$. The Stage-3 loss is a per-atom BCE,
+$\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$,
+which forces the head to rank atoms against each other under the same
+encoder rather than score each in isolation.
 
-\paragraph{Stage~3 loss.} The temporal head is trained with a per-atom
-binary cross-entropy against the auxiliary labels:
-\begin{equation}
-\mathcal{L}_{\text{stage 3}}
-= \frac{1}{\sum_m \mathbb{1}[\text{atom } m \text{ valid}]}
-\sum_m \mathbb{1}[\text{atom } m \text{ valid}] \cdot
-\mathrm{BCE}\bigl(\sigma(\hat{z}_m),\ \tilde{y}_m\bigr).
-\end{equation}
-Compared with the sequence-level MIL objective of Stage~2, this loss
-forces the head to reason \emph{within} the passage: every atom
-contributes its own term, so the head cannot trivially explain a
-passage label by saturating a single window -- it must rank atoms
-against each other under the same encoder.
-
-\paragraph{Inference.} At inference, a single forward pass through the
-Stage~3 detector yields the per-token logits over the whole passage,
-from which we read off both outputs of our problem statement
-(Section~\ref{sec:notation}): the per-window scores
-$\{\hat{p}^{(t)}\}_{t=1}^{T} = \{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ used
-to localize the generated-token regions whose hidden-state activations
-most contribute to the prediction, and a sequence-level score obtained
-by reusing the Stage~2 top-$k$ MIL aggregation over the same per-token
-logits. The per-window scores can be used directly for visualization or
-as inputs to downstream verifiers and correction routines on long-form
-responses; when atom spans are available, the Stage~3 per-atom scores
-$\{\sigma(\hat{z}_m)\}_{m=1}^{M}$ provide a higher-level summary
-aligned with claim-level verification.
+\textbf{Inference.} A single forward through the Stage-3 detector
+yields the per-token logits over the whole passage, from which we
+read off (i) the per-token / per-window scores
+$\{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ for localization; (ii) a
+sequence-level score by reusing the Stage-2 top-$k$ MIL aggregation;
+and (iii) per-atom scores $\{\sigma(\hat{z}_m)\}_m$ when atom spans
+are available.

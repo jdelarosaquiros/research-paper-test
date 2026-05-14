@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Long-form dataset statistics.} Range and median token
+length of passages and atoms in the three long-form hallucination
+detection corpora. Reported on the training split. Cells with ``---''
+are not yet populated.}
+\label{tab:long_form_stats}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\linewidth}{%
+\begin{tabular}{l ccc ccc}
+\toprule
+ & \multicolumn{3}{c}{Passage length} & \multicolumn{3}{c}{Atom length} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+Dataset & Min & Median & Max & Min & Median & Max \\
+\midrule
+RAGTruth  & --- & --- & --- & --- & --- & --- \\
+FactScore & --- & --- & --- & --- & --- & --- \\
+LongFact  & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

@@ -8,28 +8,15 @@ process richer activation tensors but are not equipped for long-form
 generation -- pooling over the token axis collapses the signal as responses
 grow longer -- or are too inefficient to run as tokens are produced. In this
 paper, we introduce a temporal uncertainty localization framework that
-detects hallucinations in real time by predicting which generated-token
-regions carry the hidden-state activation patterns most indicative of
-uncertainty. Because generated sequences range from a handful of tokens to
-thousands, we treat the layer--token activation tensor as a \emph{video} over
-the token axis rather than a single fixed-size image: each generated token is
-a frame whose height is the layer axis and whose channels are the hidden
-dimension, and a window aggregates the activations of consecutive tokens.
-Since clean hallucination labels are typically available only at the
-full-response level, we train our model using weak supervision: a frozen
-ACT-ViT encoder
-extracts uncertainty-aware features from local activation windows, and a
-Mamba-based temporal head assigns uncertainty logits to each window. A
-top-$k$ multiple-instance learning objective aggregates the most uncertain
-windows into a sequence-level prediction, enabling localization without
-window-level labels. Our approach decomposes training into three stages:
-(i) we learn activation patterns predictive of uncertainty at the
-sequence level, (ii) we freeze the encoder and train the temporal head to
-localize suspicious windows on per-atom segments under sequence-level
-supervision, and (iii) we refine the head on whole passages using the
-noisy per-atom labels produced by atomic-fact verification as auxiliary
-supervision, so the head learns to rank uncertainty \emph{across} the
-atoms in a response rather than scoring each atom in isolation. This
-yields a scalable framework for real-time activation-based uncertainty
-detection in long-form LLM generation.
+detects hallucinations per token by finding uncertainty signals in activation
+patterns from across all layers of its own and neighboring tokens. We train it
+in three stages: \textbf{Stage 1} pre-trains an encoder on per-claim
+segments to learn uncertainty patterns; \textbf{Stage 2} freezes it and
+trains a temporal head over per-token windows with top-$k$ MIL to
+localize signals within a claim; \textbf{Stage 3} refines the head on
+whole passages with per-claim labels so it ranks windows across claims. On long-form hallucination corpora (RAGTruth, FactScore,
+LongFact) and the LM-Polygraph short-form benchmark across three
+instruction-tuned LLMs, our method improves sentence-level AUROC by
+$8$--$25$ points over the strongest pooled activation-tensor baseline
+while running $\approx 25\times$ faster on long passages.
 \end{abstract}

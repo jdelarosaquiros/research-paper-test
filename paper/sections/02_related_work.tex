@@ -1,63 +1,82 @@
 \section{Related Work}
 
-\paragraph{Probing classifiers.} In NLP, probing classifiers \citep{belinkov2022} are used to analyze model representations and
-reveal how features like syntax and semantics are encoded \citep{gupta2015,conneau2018,kissane2025}. Originating in interpretability
-research, they help identify which model components capture specific linguistic properties. E.g.,
-lower layers capture local syntax in machine translation, while higher layers encode global structure
-\citep{shi2016}. Probes typically operate at the token and layer levels, with sentence-level tasks often using the
-final token's activation \citep{adi2016,kadavath2022,snyder2024}. While both linear probes and MLPs are common \citep{alain2018,hupkes2018,nelsonfliu2019,hallmaudslay2020},
-linear probes are preferred for interpretability, as MLPs are often too expressive to distinguish whether
-the structure lies in the embeddings or the probe itself \citep{hewitt2019}. Although early interpretability studies
-favored simpler probes, more recent work uses probing as a predictive or control tool and prioritize
-prediction efficacy. Probes have recently estimated LLMs' downstream performance \citep{zhu2022,afzal2025,ghosh2025} and
-behavioral traits, e.g.\ sycophancy \citep{papadatos2024}, or have guided models to desirable behaviors, e.g.\ reduced bias
-or improved factuality \citep{vonrutte2024,qiu2024,maiya2025}. Still, many approaches use minimal setups, such as a single token
-from a single layer fed into a linear probe. Our work moves beyond these constraints by designing
-high-performing probes that better and more comprehensively leverage internal representations.
+\paragraph{Confidence-based UE.}
+Confidence-based methods derive uncertainty from token-level
+probabilities of a single generated sequence: sequence probability,
+predictive entropy, mean token entropy
+\citep{malinin2021uncertainty}, and SAR
+\citep{duan2024shifting}, which reweights tokens by their relevance.
+\citet{schweighofer2025rethinking} show that the negative log-likelihood
+of the greedy output is a theoretically grounded uncertainty measure
+under the zero-one rule, matching multi-sample methods without
+sampling. A persistent weakness is length bias: even nominally
+length-normalized measures show statistically significant linear
+trends with output length \citep{vashurin2025line,santilli2025lengthbias}.
+Probing-based methods inspect hidden representations where truth and
+error signals may appear before they surface in output logits,
+decoupling uncertainty from decoder calibration.
 
-\paragraph{Error Detection in LLMs.} LLMs produce diverse and complex mistakes and identifying these
-has become increasingly important. Hallucinations---a well-studied subset---are typically defined
-as outputs unfaithful to the input or external facts. Yet their definitions vary, extending to biases,
-reasoning flaws, and other failures \citep{liu2021,huang2023,ji2023,vipularawte2023}. We adopt a broader view of error detection to
-account for this ambiguity, treating hallucinations as one specific case. While we occasionally use
-the terms interchangeably, we recognize that hallucinations are only one facet of the broader error
-landscape. Most prior work approaches error detection using uncertainty estimates \citep{kadavath2022,varshney2023,kuhn2023,manakul2023} or
-probing internal representations---often focusing on the final answer token \citep{kadavath2022,snyder2024,yuksekgonul2023,zou2023,yin2024,chen2024,rateike2023,li2024,marks2023,burns2022}. Others probe the final prompt token to anticipate errors before generation \citep{slobodkin2023,snyder2024,simhi2024,gottesman2024,seo2025}. While effective, these methods under-exploit the richness of model activations. We address
-this by developing stronger methods that make fuller use of internal representations.
+\paragraph{Consistency-based UE.}
+Consistency methods generate multiple samples and measure semantic
+agreement. Semantic entropy clusters samples by NLI and computes
+entropy over clusters \citep{kuhn2023semantic};
+graph-based variants compute degree, eccentricity, or spectral
+features over pairwise similarity matrices
+\citep{lin2024generating,jiang2024}.
+\citet{nguyen2025snne} use nearest-neighbour entropy that holds up on
+long outputs. The bottleneck is sampling cost: 5--20 generations per
+query. Recent work cuts this with importance-sampled or
+diversity-penalized proposals \citep{aichberger2025sdlg,park2025diversity}
+and beam-search estimators with variance guarantees
+\citep{fadeeva2026beams}. A complementary failure mode is confident
+incorrectness: when the LLM is wrong with high agreement,
+self-consistency mis-rates it as confident, so
+\citet{hamidieh2026crossmodel} fold in cross-model disagreement.
 
-\paragraph{Confidence-based uncertainty estimation.}
-Confidence-based methods derive uncertainty from the token-level probability distribution of a single generated sequence.
-Sequence probability~\citep{malinin2021uncertainty}, predictive entropy, and mean token entropy are widely used baselines.
-\citet{duan2024shifting} introduced SAR, which reweights token contributions by their relevance to the answer.
-\citet{li2025uqac} proposed attention-chain-based backtracking to identify semantically critical tokens and compute marginal answer probabilities, improving calibration on reasoning tasks.
-\citet{schweighofer2025rethinking} showed that the negative log-likelihood of the greedy output is a theoretically motivated uncertainty measure under the zero-one scoring rule, matching multi-sample methods without any sampling.
-A persistent challenge for all token-probability methods is length bias: \citet{vashurin2025line} demonstrated that even nominally length-normalized measures exhibit statistically significant linear trends with output length and proposed a post-hoc linear debiasing procedure.
-\citet{santilli2025lengthbias} further showed that mutual biases between UQ methods and evaluation metrics can distort AUROC rankings, recommending LM-as-a-judge correctness functions.
-In contrast, mechanistic and probing approaches inspect hidden representations where truth and error signals may be encoded before they surface in the output logits, learning on internal activations rather than specific output tokens and thereby decoupling the uncertainty signal from decoder calibration.
+\paragraph{Mechanistic UE.}
+Hidden states encode signal about factuality
+\citep{marks2023,azaria2023,liu2024,ji2024} and many probes consume a
+single layer--token slice
+\citep{kadavath2022,snyder2024,zou2023,li2024}. ACT-ViT
+\citep{barshalom2025} extends this by reading the full layer--token
+plane as an activation image and pooling it through a Vision
+Transformer; this widens the receptive field but commits to one
+score per response, which dilutes the signal as responses grow long
+(Figure~\ref{fig:perf_by_length}) and forces one forward per token
+when used streaming (Figure~\ref{fig:inference_time}).
+Fact-probe \citep{snyder2024,he2024} pushes detection to claim-level
+granularity but at the cost of one forward per claim. A second axis
+of work probes \emph{attention} for hallucination patterns
+\citep{li2025uqac,duan2024shifting,he2024}; the cross-axis signal it
+captures is complementary to the layer--token plane that we operate
+on. Figure~\ref{fig:signal_propagation} shows that the relevant
+activation signal extends across tokens on both sides of a
+hallucinated span -- the structural fact that motivates our windowed
+formulation.
 
-\paragraph{Consistency-based uncertainty estimation.}
-Consistency methods generate multiple outputs and measure their semantic agreement.
-Semantic entropy~\citep{kuhn2023semantic} clusters outputs into equivalence classes via natural language inference (NLI) and computes entropy over cluster probabilities.
-Graph-based variants use pairwise similarity matrices to compute degree, eccentricity, or spectral features~\citep{lin2024generating}.
-\citet{nguyen2025snne} proposed Semantic Nearest Neighbor Entropy, which accounts for both intra- and inter-cluster similarity, addressing the degradation of semantic entropy on longer outputs.
-A key bottleneck is sampling efficiency: generating 5--20 diverse outputs per query is expensive.
-\citet{aichberger2025sdlg} introduced importance sampling with a semantically diverse proposal distribution that covers more clusters with fewer samples, and \citet{park2025diversity} injected continuous similarity penalties into decoding for similar effect.
-\citet{fadeeva2026beams} replaced multinomial sampling with beam search and importance-weighted estimators, proving lower variance guarantees and achieving the best consistency-based results on short-form QA.
-\citet{hamidieh2026crossmodel} diagnosed a fundamental failure mode: when an LLM is confidently wrong, self-consistency yields low uncertainty.
-They addressed this by adding cross-model epistemic disagreement, which flags confident failures that intra-model consistency misses.
-Mechanistic and probing approaches occupy a complementary middle ground: they are more robust than confidence-based methods at flagging confidently incorrect responses, while remaining more efficient than consistency-based methods since they require only a single forward pass and avoid the multi-sample overhead.
-
-\paragraph{Short-Form Hallucination Detection.}
-Early hallucination detection research focused primarily on detecting factual errors in brief model outputs. Likelihood-based approaches \citep{desai2020, jiang2021, malinin2021} leveraged model confidence scores but often suffered from overconfidence. Self-consistency methods \citep{manakul2023} addressed this by generating multiple responses and measuring agreement across outputs, with variations including semantic entropy \citep{farquhar2024}, binary truth estimation \citep{kadavath}, and eigenvalue-based metrics \citep{lin2023}. Verbalized uncertainty techniques \citep{lin, tiana, xiong2023} emerged as a complementary strategy, directly prompting models to express confidence levels. Finally, retrieval-augmented methods \citep{feldman2023, zhang2023, peng} grounded outputs in external knowledge sources but introduced significant computational overhead. While establishing fundamental techniques for uncertainty estimation, these methods were created for single-claim outputs rather than complex multi-claim narratives.
-
-\paragraph{Hallucination Detection in Long-Form Generations.}
-Detecting hallucinations in long-form outputs presents unique challenges as generations contain intermingled factual and non-factual claims across multiple sentences and paragraphs. Approaches to this problem generally follow two decomposition strategies. At the sentence level, self-consistency techniques have been extended \citep{manakul2023, band2024} to evaluate uncertainty by comparing multiple generated alternatives for each sentence. Atomic claim decomposition breaks long responses into minimal verifiable assertions and evaluates precision across these atomic units \citep{min2023}. This paradigm has been expanded beyond biographical content \citep{wei2024, zhao2024}, establishing broader benchmarks across diverse domains. Building on atomic decomposition, recent approaches combine self-consistency with conformal prediction for claim-level uncertainty estimation \citep{mohri2024}, while others extract uncertainty scores directly from model internals \citep{duan2023, band2024}. Graph-based uncertainty metrics have been introduced to represent relationships between generated responses and their constituent claims as bipartite graphs, using centrality measures to quantify claim reliability \citep{jiang2024}. Despite these advances, most existing methods require drawing multiple samples, creating substantial computational overhead that our probe-based approach addresses.
+\paragraph{Uncertainty in long-form generation.}
+Long responses interleave correct and uncertain content, which
+single-score detectors cannot localize. Decomposition is the standard
+remedy: at the claim level via atomic-fact extraction
+\citep{min2023,wei2024,zhao2024} or conformal claim-level prediction
+\citep{mohri2024}; at the sentence level by re-applying
+self-consistency per sentence \citep{manakul2023,band2024}; and at
+the token level via per-token probes \citep{he2024,su2024}. The
+trade-off is real: claim and sentence pipelines depend on an external
+extractor and one model call per unit, while token-level methods are
+the only ones compatible with real-time generation -- though noisier
+when read in isolation. We make the token level usable in practice by
+sharing computation across a window of tokens rather than scoring each
+in isolation, and by training under weakly supervised temporal
+localization.
 
 \paragraph{Weakly-supervised temporal localization.}
-Our localization mechanism is inspired by weakly-supervised temporal action localization (WTAL) in video understanding, where the goal is to predict the temporal intervals of action classes from only video-level labels. \citet{pilhyeonlee2021} cast WTAL as uncertainty modeling, treating background frames as out-of-distribution and aggregating per-frame scores via multiple-instance learning, achieving state-of-the-art results on THUMOS'14 and ActivityNet without frame-level supervision. The setting closely mirrors ours: only response-level hallucination labels are available, yet per-window uncertainty must be inferred. We adapt this paradigm to LLM hidden states, treating generated tokens as the temporal axis and aggregating per-window logits into a sequence-level prediction via top-$k$ MIL.
-
-\paragraph{Efficient long-sequence modeling.}
-Stage~2 of our pipeline emits a per-window logit at every generated token, requiring a temporal head that scales gracefully with response length. We adopt Mamba \citep{albertgu2024}, a selective state-space model that allows its parameters to be functions of the input and supports a hardware-aware parallel scan. Mamba achieves linear-time inference and strong long-range modeling across language, audio, and genomics, and is well suited to our streaming/real-time regime in which a long-form response's activations must be processed as they are generated.
-
-\paragraph{Latent-Space Probing of LLMs for Hallucination Detection.}
-Recent research has demonstrated that LLM hidden states encode rich signals about output factuality, offering a promising avenue for hallucination detection. Specific directions in the latent space corresponding to ``truthfulness'' in model outputs have been identified \citep{marks2023}. Probes trained on hidden states have been shown to effectively predict factuality when supervised with accuracy labels \citep{azaria2023, liu2024, ji2024}. More recently, these methods have been extended to achieve fine-grained factuality prediction at the word level \citep{he2024}. Unsupervised approaches have also emerged, with \citet{su2024} introducing real-time detection using contextualized embeddings from different Transformer layers, and \citet{zablocki2024} providing some analysis of hallucination risks through internal state examination, though most remain limited---restricted to binary questions \citep{burns2023}, requiring accuracy labels for tuning \citep{zou2023}, or demanding multiple costly generations for training \citep{chen2024, kossen2024} all on short-form generations. Unlike these methods, our approach efficiently processes complex long-form text with a single forward pass for each paragraph and atomic claim, and generalizes across both domains and model architectures---addressing key limitations in previous probing techniques.
+Our localization mechanism follows WTAL in video understanding, where
+only video-level labels are available and per-frame relevance must be
+inferred. \citet{pilhyeonlee2021} cast WTAL as uncertainty modelling,
+treating background frames as out-of-distribution and aggregating
+per-frame scores with multiple-instance learning. The analogy with
+hallucination detection is direct: only response-level labels are
+available, yet per-window uncertainty must be inferred. We treat
+generated tokens as the temporal axis and aggregate per-window logits
+with top-$k$ MIL.

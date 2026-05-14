@@ -1,16 +1,13 @@
 \begin{table*}[t]
 \centering
-\caption{\textbf{Long-form hallucination detection --- token level.} We
-report PRR \citep{malinin2021uncertainty} per (LLM, dataset) cell.
-Models: Mistral-7B-Instruct-v0.2 (Mis-7B-Inst), Llama-3.1-8B-Instruct
-(LlaMa-8B-Inst), Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets:
-RAGTruth \citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
-\citep{wei2024}. Per-token gold mask built from atom spans via
-longer-span-wins on containment, earlier-span-wins on partial overlap;
-uncovered tokens dropped. Best score per column in \textbf{bold},
+\caption{\textbf{Long-form hallucination detection --- claim level.}
+Same models, datasets, and metric as Table~\ref{tab:main}. Each row
+scores one atomic fact from the sidecar; the claim score is the max
+per-token uncertainty over the atom's token span (no AND-aggregation
+across same-sentence atoms). Best score per column in \textbf{bold},
 second-best \underline{underlined}. Cells with ``---'' indicate
 experiments not yet run.}
-\label{tab:main}
+\label{tab:claim}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -38,8 +35,8 @@ CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- 
 CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \midrule
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & --- & \underline{0.406} & \textbf{0.317} & --- & \textbf{0.389} & --- & --- & --- & --- \\
-Temp-ViT (Stage 2, ours)  & --- & \textbf{0.505} & \underline{0.076} & --- & \underline{0.035} & --- & --- & --- & --- \\
+                          & --- & \underline{0.413} & \textbf{0.200} & --- & \textbf{0.333} & --- & --- & --- & --- \\
+Temp-ViT (Stage 2, ours)  & --- & \textbf{0.648} & \underline{0.134} & --- & \underline{0.223} & --- & --- & --- & --- \\
 Temp-ViT (Stage 3, ours)  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%

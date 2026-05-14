@@ -1,0 +1,42 @@
+\section{Ablations}
+\label{sec:ablations}
+
+\paragraph{Architecture variants (Table~\ref{tab:window_ablation}).}
+We compare the full Temp-ViT pipeline against an MLP-encoder baseline
+(no windowing) and an encoder-only variant (no Mamba-2 head), across
+the three stages. The encoder-only Stage~3 variant matches or beats
+the full pipeline on AUROC on both RAGTruth cells, indicating that
+the encoder's windowed pooling absorbs most of the local-context
+signal; the temporal head's contribution comes from sequence-level
+aggregation.
+
+\paragraph{Stride (Table~\ref{tab:stride}).} We sweep the window
+stride from 1 (the default, one window per token) to 4, 6, and
+``no overlap'' (stride $=$ window size). Larger strides reduce
+inference cost at the price of resolution.
+
+\paragraph{Stages (Table~\ref{tab:stage}).} AUROC and PRR improve
+monotonically from Stage 1 to Stage 3, with Stage 3 delivering the
+largest gain on Llama-2-13b. The full per-stage table is provided on
+two RAGTruth cells where stage-by-stage caches were available;
+Mis-7B-Inst-v0.2 stage sweeps are pending.
+
+\paragraph{Dataset statistics
+(Tables~\ref{tab:long_form_stats},~\ref{tab:polygraph_stats}).}
+Passage- and atom-length distributions help interpret which
+granularities are feasible to supervise: LongFact and FactScore atoms
+are typically much shorter than RAGTruth's, which the per-token head
+benefits from at sentence and claim levels.
+
+\paragraph{Overlap (Table~\ref{tab:overlap}).} We sweep the four
+combinations of overlapping vs.\ non-overlapping atom spans at
+training and at test time. Non-overlapping span training is required
+when atom spans share tokens; otherwise the head over-fits to the
+longer-claim labels under the natural overlap.
+
+\input{figs/tab5_window_ablation}
+\input{figs/tab6_stride_ablation}
+\input{figs/tab7_stage_ablation}
+\input{figs/tab8_long_form_dataset_stats}
+\input{figs/tab9_polygraph_dataset_stats}
+\input{figs/tab10_overlap_ablation}

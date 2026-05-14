@@ -1,0 +1,37 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Window ablation} on RAGTruth (token level). Compares
+the full Temp-ViT pipeline against an MLP-encoder baseline and an
+encoder-only variant (no Mamba-2 head), across the three training
+stages. The encoder-only Stage-3 variant matches or surpasses the full
+pipeline on AUROC for both LLMs, indicating that the windowed pooling
+in the encoder absorbs most of the local-context signal that the
+temporal head adds; the head's benefit comes from sequence-level
+aggregation. Cells with ``---'' are not yet populated.}
+\label{tab:window_ablation}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\linewidth}{%
+\begin{tabular}{l cc cc}
+\toprule
+ & \multicolumn{2}{c}{Mis-7B-v0.1} & \multicolumn{2}{c}{LlaMa-2-13B} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Variant & AUROC$\uparrow$ & PRR$\uparrow$ & AUROC$\uparrow$ & PRR$\uparrow$ \\
+\midrule
+Temp-ViT (baseline, Stage 3)            & 0.865 & 0.800 & 0.814 & 0.770 \\
+Act-ViT (N\textsubscript{eff}=6, F-v2)  & 0.570 & $-0.568$ & 0.615 & $-0.049$ \\
+\midrule
+\multicolumn{5}{l}{\textit{MLP encoder + Mamba-2 head}} \\
+\quad Stage 1                           & 0.516 & 0.119  & 0.659 & 0.583 \\
+\quad Stage 2                           & 0.429 & $-0.132$ & 0.635 & 0.117 \\
+\quad Stage 3                           & 0.497 & $-0.209$ & 0.290 & $-0.272$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Encoder only (no temporal head)}} \\
+\quad Stage 1                           & 0.651 & $-0.358$ & 0.629 & $-0.835$ \\
+\quad Stage 2                           & 0.813 & 0.601  & 0.652 & $-0.701$ \\
+\quad Stage 3                           & \textbf{0.886} & \textbf{0.804} & \textbf{0.856} & 0.745 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

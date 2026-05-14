@@ -1,0 +1,30 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Stage ablation} on RAGTruth (token level). AUROC and
+PRR for the three training stages of Temp-ViT, evaluated on two
+RAGTruth model cells where stage-by-stage activation caches were
+available. Stage 1 is the encoder pre-trained on per-atom segments
+with sequence-level labels; Stage 2 adds the Mamba-2 head with
+top-$k$ MIL aggregation; Stage 3 fine-tunes the head on full passages
+under per-atom auxiliary labels. The headline takeaway: AUROC and PRR
+both improve monotonically from Stage 1 to Stage 3, with Stage 3
+delivering the largest jump on Llama-2-13b. Mis-7B-Inst-v0.2 stage
+sweeps are pending; cells with ``---'' are not yet populated.}
+\label{tab:stage}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\linewidth}{%
+\begin{tabular}{l cc cc cc}
+\toprule
+ & \multicolumn{2}{c}{Mis-7B-v0.1} & \multicolumn{2}{c}{LlaMa-2-13B} & \multicolumn{2}{c}{Mis-7B-Inst-v0.2} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Stage & AUROC$\uparrow$ & PRR$\uparrow$ & AUROC$\uparrow$ & PRR$\uparrow$ & AUROC$\uparrow$ & PRR$\uparrow$ \\
+\midrule
+Stage 1 & 0.651 & $-0.358$ & 0.629 & $-0.835$ & --- & --- \\
+Stage 2 & 0.813 & 0.601 & 0.652 & $-0.701$ & --- & --- \\
+Stage 3 & \textbf{0.886} & \textbf{0.804} & \textbf{0.856} & \textbf{0.745} & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

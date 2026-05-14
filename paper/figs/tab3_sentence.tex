@@ -1,16 +1,13 @@
 \begin{table*}[t]
 \centering
-\caption{\textbf{Long-form hallucination detection --- token level.} We
-report PRR \citep{malinin2021uncertainty} per (LLM, dataset) cell.
-Models: Mistral-7B-Instruct-v0.2 (Mis-7B-Inst), Llama-3.1-8B-Instruct
-(LlaMa-8B-Inst), Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets:
-RAGTruth \citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
-\citep{wei2024}. Per-token gold mask built from atom spans via
-longer-span-wins on containment, earlier-span-wins on partial overlap;
-uncovered tokens dropped. Best score per column in \textbf{bold},
-second-best \underline{underlined}. Cells with ``---'' indicate
-experiments not yet run.}
-\label{tab:main}
+\caption{\textbf{Long-form hallucination detection --- sentence level.}
+Same models, datasets, and metric as Table~\ref{tab:main}. Sentence
+label uses AND-on-supported: any unsupported atom flips the sentence
+to hallucinated; sentence score is the max per-token uncertainty in
+the span. Best score per column in \textbf{bold}, second-best
+\underline{underlined}. Cells with ``---'' indicate experiments not
+yet run.}
+\label{tab:sentence}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -38,8 +35,8 @@ CocoaPPL                  & --- & --- & --- & --- & --- & --- & --- & --- & --- 
 CocoaMTE                  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \midrule
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                          & --- & \underline{0.406} & \textbf{0.317} & --- & \textbf{0.389} & --- & --- & --- & --- \\
-Temp-ViT (Stage 2, ours)  & --- & \textbf{0.505} & \underline{0.076} & --- & \underline{0.035} & --- & --- & --- & --- \\
+                          & --- & \underline{0.524} & \underline{0.156} & --- & \underline{0.402} & --- & --- & --- & --- \\
+Temp-ViT (Stage 2, ours)  & --- & \textbf{0.697} & \textbf{0.474} & --- & \textbf{0.757} & --- & --- & --- & --- \\
 Temp-ViT (Stage 3, ours)  & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%

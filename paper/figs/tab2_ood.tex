@@ -1,16 +1,14 @@
 \begin{table*}[t]
 \centering
-\caption{Sequence-level uncertainty on the {\bf LM-Polygraph
-benchmark} \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}. We
-report mean PRR \citep{malinin2021uncertainty} aggregated across the
-constituent datasets within each task family: QA (TriviaQA, CoQA,
-MMLU, GSM8k), NMT (WMT14 Fr--En, WMT19 De--En), and SUM (XSUM). All
-methods are evaluated under greedy decoding for the three
-instruction-tuned LLMs. The best score per column is shown in
-\textbf{bold} and the second-best is \underline{underlined}. Arrows
-indicate improvement of a CoCoA variant over its base uncertainty
-measure. Cells with ``---'' indicate experiments not yet run for this
-template.}
+\caption{Short-form uncertainty on the {\bf LM-Polygraph benchmark}
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}. We report PRR
+\citep{malinin2021uncertainty} per dataset: MMLU and GSM8k (QA,
+binary correctness) and WMT19 De--En (NMT, COMET binarised at the
+training-set median). All methods are evaluated under greedy decoding
+with the same generations and the same gold quality measure. Best
+score per column is in \textbf{bold}; second-best is
+\underline{underlined}. Cells with ``---'' indicate experiments not
+yet run.}
 \label{tab:polygraph}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -20,28 +18,28 @@ template.}
 \toprule
  & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-8B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-Method & QA & NMT & SUM & QA & NMT & SUM & QA & NMT & SUM \\
+Method & MMLU & GSM8k & WMT19 & MMLU & GSM8k & WMT19 & MMLU & GSM8k & WMT19 \\
 \midrule
-MCSE & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-MCNSE & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-Semantic Entropy & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-DegMat & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-EigValLaplacian & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-SAR & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-P(True) & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-Consistency & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-Consistency Light & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+SemanticEntropy           & 0.0658 & 0.4982 & 0.7100 & --- & --- & --- & --- & --- & --- \\
+DegMat (NLI)              & 0.0682 & 0.4577 & 0.7499 & --- & --- & --- & --- & --- & --- \\
+EigValLaplacian (NLI)     & 0.0757 & 0.4512 & 0.7433 & --- & --- & --- & --- & --- & --- \\
+SAR                       & 0.0586 & 0.4832 & 0.7523 & --- & --- & --- & --- & --- & --- \\
+LUQ                       & 0.0679 & 0.4605 & 0.7501 & --- & --- & --- & --- & --- & --- \\
+KernelLanguageEntropy     & 0.0648 & 0.4675 & 0.7458 & --- & --- & --- & --- & --- & --- \\
 \midrule
-SP & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CoCoA$_{\mathrm{SP}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Perplexity                & 0.0649 & 0.4864 & 0.7030 & --- & --- & --- & --- & --- & --- \\
+MeanTokenEntropy          & 0.0646 & 0.4877 & 0.7330 & --- & --- & --- & --- & --- & --- \\
+MCNSE                     & 0.0640 & 0.4718 & 0.7190 & --- & --- & --- & --- & --- & --- \\
+TokenSAR                  & 0.0820 & 0.4858 & 0.7013 & --- & --- & --- & --- & --- & --- \\
 \midrule
-PPL & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CoCoA$_{\mathrm{PPL}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+CocoaMSP                  & 0.0626 & 0.5023 & 0.7407 & --- & --- & --- & --- & --- & --- \\
+CocoaPPL                  & 0.0626 & 0.4999 & 0.7565 & --- & --- & --- & --- & --- & --- \\
+CocoaMTE                  & 0.0619 & 0.5010 & 0.7722 & --- & --- & --- & --- & --- & --- \\
 \midrule
-MTE & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-CoCoA$_{\mathrm{MTE}}$ & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-\midrule
-Temp-ViT (ours) & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Act-ViT (F-v2, N\textsubscript{eff}=6)
+                          & 0.1134 & \textbf{0.5387} & 0.8150 & --- & --- & --- & --- & --- & --- \\
+Temp-ViT (Stage 2, ours)  & 0.1130 & \underline{0.5355} & \textbf{0.8185} & --- & --- & --- & --- & --- & --- \\
+Temp-ViT (Stage 3, ours)  & \textbf{0.1147} & 0.5296 & \underline{0.8155} & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
