@@ -6,13 +6,17 @@
 tensor $A \in \mathbb{R}^{L \times T \times D}$ to an atom-level
 uncertainty score via Pool $\to$ per-LLM linear adapter $\to$ ViT
 $\to$ linear head.
-\textbf{Stage~2} (middle): the encoder is frozen and applied to
-centered length-$W$ token windows; a Mamba-2 temporal head emits one
-logit per window, aggregated by top-$k$ MIL into an atom-level score.
-\textbf{Stage~3} (bottom): the head is fine-tuned on whole passages
-with noisy per-atom labels $\tilde{y}_m$ from atomic-fact
-verification; per-token logits are smoothed and aggregated within
-each atom span $(\ell_m, r_m)$ via a per-atom BCE, so the head ranks
-uncertainty across atoms rather than scoring each in isolation.}
+\textbf{Stage~2} (middle): a Mamba-2 temporal head is trained on
+centered length-$W$ token windows while the encoder is fine-tuned at
+$0.1\times$ learning rate; per-window logits are aggregated by
+top-$k$ MIL into an atom-level score.
+\textbf{Stage~3} (bottom): the encoder is frozen and the head is
+refined on whole passages with noisy per-atom labels $\tilde{y}_m$
+from atomic-fact verification; per-token logits are smoothed by a
+soft-topk window (temperature $\tau_w$) and aggregated within each
+atom span $(\ell_m, r_m)$ by a soft-max-in-spans (temperature
+$\tau_\text{seg}$) to yield per-atom probabilities $p_m$, trained
+with $\sum_m \mathrm{BCE}(p_m, \tilde{y}_m)$. Both temperatures
+anneal $1.0 \to 0.1$ over training.}
 \label{fig:overview}
 \end{figure*}
