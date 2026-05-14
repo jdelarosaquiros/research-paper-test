@@ -20,11 +20,6 @@ distributions that determine which granularity is feasible to
 supervise; LongFact and FactScore atoms are typically much shorter
 than RAGTruth's, which the per-token head benefits from.
 
-\input{figs/tab1_main}
-\input{figs/tab2_ood}
-\input{figs/tab3_sentence}
-\input{figs/tab4_claim}
-
 \paragraph{Run-time and performance trade-offs.} Temp-ViT scores
 every generated token in a single forward through the frozen encoder
 and the Mamba-2 head, so the cost of obtaining sentence- or
