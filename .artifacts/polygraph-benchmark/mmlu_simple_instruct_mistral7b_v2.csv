@@ -1,8 +1,14 @@
 estimator,auroc,prr,ece,brier,n_examples,gen_metric
+TempViT_PRR_Stage1,0.9240,0.1147,0.0471,0.0614,1461,Accuracy
+EncoderOnly_PRR_Stage1,0.9240,0.1147,0.0471,0.0614,1461,Accuracy
 TempViT_Stage1,0.9230,0.1147,0.0381,0.0568,1461,Accuracy
 TempViT_Stage3,0.9214,0.1147,0.3167,0.1601,1461,Accuracy
 ActViT_Foundation_Neff6,0.9165,0.1134,0.0613,0.0690,1461,Accuracy
+EncoderOnly_PRR_Stage2,0.9110,0.1140,0.0638,0.0682,1461,Accuracy
 TempViT_Stage2,0.9108,0.1130,0.0411,0.0594,1461,Accuracy
+TempViT_PRR_Stage2,0.8874,0.1126,0.0827,0.0844,1461,Accuracy
+EncoderOnly_PRR_Stage3,0.8630,0.1139,0.4429,0.2714,1461,Accuracy
+TempViT_PRR_Stage3,0.8223,0.1105,0.4484,0.2765,1461,Accuracy
 MeanPointwiseMutualInformation,0.8072,0.1131,0.2247,0.1102,1461,Accuracy
 MeanConditionalPointwiseMutualInformation,0.6967,0.0929,0.0958,0.0755,1461,Accuracy
 FisherRao,0.6524,0.1061,0.1026,0.1030,1461,Accuracy
