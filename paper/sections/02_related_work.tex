@@ -1,36 +1,26 @@
 \section{Related Work}
 
 \paragraph{Uncertainty estimation for LLMs.}
-Output-based estimators score uncertainty from a single sequence
-through token-level probability, predictive entropy, length-normalized
-scoring, or SAR
-\citep{malinin2021uncertainty,duan2024shifting,schweighofer2025rethinking},
-or from semantic agreement across multiple samples
-\citep{kuhn2023semantic,lin2024generating,jiang2024,nguyen2025snne};
-recent work trims the 5--20-generation cost with diversity-promoting
-or beam-based proposals
-\citep{aichberger2025sdlg,park2025diversity,fadeeva2026beams} and
-folds in cross-model disagreement to catch confident errors
-\citep{hamidieh2026crossmodel}. Both families exhibit systematic length
-bias even after normalization
-\citep{vashurin2025line,santilli2025lengthbias} and decouple uncertainty
-from the model's internal state, which motivates \emph{mechanistic}
-estimators that read hidden representations directly. A first wave of
-probes treats a single layer--token slice as input and separates truth
-from error in the residual stream
-\citep{kadavath2022,azaria2023,burns2022,marks2023,li2024,ji2024,liu2024,chen2024,orgad2024}.
-Subsequent work widens this slice along several complementary axes:
-ACT-ViT \citep{barshalom2025} pools the full layer--token plane as an
-activation image through a Vision Transformer; fact-probe pushes
-detection to claim-level granularity
-\citep{snyder2024,he2024,han2025factprobe}; attention-based variants
-exploit cross-token focus patterns
-\citep{li2025uqac,duan2024shifting,yuksekgonul2023,sriramanan2024attention,vazhentsev2025rauq};
-and feature-gap methods compare representations across contexts to
-expose epistemic uncertainty
-\citep{bakman2025featuregaps,gottesman2024,slobodkin2023,simhi2024}.
-The common limitation is one score per response (or one forward per
-claim, Figure~\ref{fig:inference_time}), which dilutes the signal as
+Output-based estimators score uncertainty from a single sequence via
+token-level probability and predictive entropy
+\citep{malinin2021uncertainty} or from semantic agreement across
+multiple samples \citep{kuhn2023semantic,jiang2024}. Both families
+exhibit systematic length bias even after normalization
+\citep{vashurin2025line} and decouple uncertainty from the model's
+internal state, which motivates \emph{mechanistic} estimators that
+read hidden representations directly. A first wave of probes treats a
+single layer--token slice as input and separates truth from error in
+the residual stream \citep{kadavath2022,azaria2023}. Subsequent work
+extends this slice along complementary axes that we use as direct
+baselines: ACT-ViT \citep{barshalom2025} pools the full layer--token
+plane as an activation image through a Vision Transformer; fact-probe
+pushes detection to claim-level granularity \citep{han2025factprobe};
+attention-based variants exploit cross-token focus patterns
+\citep{sriramanan2024attention,vazhentsev2025rauq}; and feature-gap
+methods compare representations across contexts to expose epistemic
+uncertainty \citep{bakman2025featuregaps}. The common limitation is
+one score per response (or one forward per claim,
+Figure~\ref{fig:inference_time}), which dilutes the signal as
 responses grow long (Figure~\ref{fig:perf_by_length});
 Figure~\ref{fig:signal_propagation} shows that the relevant activation
 signal extends across tokens on both sides of a hallucinated span --
