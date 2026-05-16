@@ -47,7 +47,7 @@ learns which windows carry the predictive signal from the
 sequence-level label, with no window-level supervision required.
 
 Our method has three stages. \textbf{Stage 1} trains an ACT-ViT
-encoder on full activation tensors with sequence-level labels.
+encoder on all activation tensors with sequence-level labels.
 \textbf{Stage 2} freezes the encoder, applies it to centered
 length-$W$ token windows, and trains a Mamba-based temporal head
 \citep{albertgu2024} via top-$k$ multiple-instance learning: the
@@ -72,16 +72,15 @@ long-form generation.
     scores to be assigned to local regions of a long-form response rather
     than only to the full sequence.
 
-    \item We propose Temp-ViT, a windowed activation-tensor architecture
-    that uses an ViT encoder to capture layer--token activation patterns
-    and a temporal head to model how uncertainty signals evolve
-    across generated tokens.
-
-    \item We introduce a three-stage training framework that learns from
-    coarse supervision: sequence-level labels for encoder pretraining,
-    top-$k$ MIL for per-window localization, and passage-level per-atom
-    refinement for ranking uncertain claims against confident neighboring
-    claims.
+    \item We propose Temp-ViT, a windowed uncertainty quantification model
+    that captures uncertainty signals from the hidden-state activations across layers and tokens
+    with a ViT encoder and a temporal head. To train this model, we introduce a
+    weakly supervised training framework with three stages. Stage~1 pretrains the encoder
+    on detecting uncertainty signals of labeled atom spans. Stage~2 uses weakly supervised
+    training to teach Temp-ViT to localize the uncertainty signal to a few windows of tokens
+    inside each span. Stage~3 trains the model to handle windows that contain tokens from
+    both correct and hallucinated spans, by training across spans in the full sequence
+    rather than on isolated atom segments.
 
     \item We demonstrate efficient fine-grained detection on long-form
     hallucination benchmarks, evaluating token-, sentence-, and claim-level

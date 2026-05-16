@@ -59,7 +59,8 @@ sequence-level logit:
 and supervise with $\mathcal{L}_{2} = \mathrm{BCE}(\hat{p}, y)$.
 Mean-of-top-$k$ is more stable than max (brittle to single outliers)
 or full mean (dilutes signal in mostly-correct responses), and lets
-the model discover suspicious spans without window-level labels.
+the model localize the uncertainty signal to a few windows inside
+each span without window-level labels.
 
 \subsection{Stage 3: Passage-level Refinement with Per-atom Supervision}
 \label{sec:stage3}
@@ -69,10 +70,11 @@ uncertainty activation signal changes \emph{across} a claim span. In
 particular, mixed-content windows -- windows whose receptive field
 straddles both hallucinated and supported tokens -- combine two signal
 regimes that single-atom training cannot disentangle. Stage 3 fixes
-this by fine-tuning the head on whole passages with per-atom auxiliary
-labels (the encoder stays frozen), so the head learns the spatial
-profile of the signal within and across claim spans rather than a
-single response-level summary.
+this by training the head across spans in the full sequence rather
+than on isolated atom segments: with the encoder frozen, the head is
+fine-tuned on whole passages with per-atom auxiliary labels so it
+learns the spatial profile of the signal within and across claim
+spans.
 
 \textbf{Inputs.} A passage tensor
 $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom spans

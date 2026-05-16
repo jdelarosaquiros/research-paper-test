@@ -82,12 +82,15 @@ uncertainty without window-level labels.
 and window-level localization jointly under weak supervision is a
 hard optimization. We decompose training into three stages.
 \textbf{Stage 1} trains the encoder on full activation tensors with
-sequence-level labels. \textbf{Stage 2} freezes the encoder and
-trains a Mamba-2 temporal head over per-window encodings, supervised
-via top-$k$ MIL against the same sequence label; we use Mamba
-\citep{albertgu2024} for its linear-time long-sequence inference.
-\textbf{Stage 3} fine-tunes the head on whole passages with per-atom
-auxiliary labels so it learns how the uncertainty activation signal
-changes across claim spans -- in particular, on mixed-content windows
-whose receptive field contains both hallucinated and supported tokens,
-which Stages~1--2 never see. We describe each stage in the next section.
+sequence-level labels. \textbf{Stage 2} freezes the encoder and trains a Mamba-2 temporal
+head over per-window encodings via top-$k$ MIL against the same
+sequence label, so the head learns to localize the uncertainty signal
+to a few windows inside each span without per-window supervision; we
+use Mamba \citep{albertgu2024} for its linear-time long-sequence
+inference.
+\textbf{Stage 3} trains the head across spans in the full sequence
+rather than on isolated atom segments: fine-tuning on whole passages
+with per-atom auxiliary labels teaches it how the uncertainty
+activation signal changes across claim spans, in particular on
+mixed-content windows whose receptive field contains both hallucinated
+and supported tokens (which Stages~1--2 never see). We describe each stage in the next section.
