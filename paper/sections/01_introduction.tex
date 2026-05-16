@@ -1,71 +1,49 @@
 \section{Introduction}
 
-Large Language Models (LLMs) hallucinate -- generate plausible but
-unsupported claims -- and detecting these errors is critical in
-high-stakes settings.
+\paragraph{Why this matters.}
+LLMs hallucinate -- they generate plausible but unsupported claims --
+and silently injecting these errors into long-form outputs blocks
+high-stakes deployment. A useful detector must say not only
+\emph{whether} a response contains hallucinations but \emph{where},
+so a downstream system can correct, abstain, or verify the suspicious
+spans. Existing detectors miss this on at least one of cost,
+granularity, and supervision.
 
-Many detection methods rely on external tools: judging answers with
-another LLM, sampling many responses, or verifying claims via
-retrieval. These pipelines are accurate but slow and expensive.
-\emph{Mechanistic} methods avoid extra LLM calls and instead inspect
-the hidden states of the generating model.
-
-The simplest mechanistic detectors are probes: small classifiers
-trained on a fixed layer--token position. Probes are cheap (one
-forward pass), but uncertainty signals move across layers, tokens,
-tasks, and models, so any fixed slice misses signal elsewhere.
-Activation-tensor methods address this by consuming the full hidden
-tensor $A \in \mathbb{R}^{L \times T \times D}$ -- $L$ layers, $T$
-generated tokens, $D$ hidden dimensions. ACT-ViT treats $A$ as an
-image (the $(L,T)$ plane, with $D$ as channels) and captures
-distributed signal, but its fixed pooled shape collapses information
-as $T$ grows. Other tensor methods avoid this loss only at
-prohibitive inference cost.
+\paragraph{What current methods leave open.}
+External-tool detectors -- judging with another LLM, sampling many
+responses, or retrieving evidence -- are accurate but slow and
+expensive. \emph{Mechanistic} methods avoid extra LLM calls by
+inspecting the hidden states of the generating model, but each family
+hits a different wall. Probes trained on a fixed layer--token
+position are cheap (one forward pass) yet miss signal that moves
+across layers, tokens, tasks, and models. Activation-tensor methods
+like ACT-ViT consume the full hidden tensor
+$A \in \mathbb{R}^{L \times T \times D}$ ($L$ layers, $T$ generated
+tokens, $D$ hidden dimensions) and capture distributed signal, but
+their fixed pooled shape dilutes information as $T$ grows; methods
+that avoid this loss pay prohibitive inference cost. None of these
+output \emph{where} in the response the uncertainty lives. The
+natural workaround -- extract atomic claims, verify each, and
+broadcast the verdict to every token of the span -- yields doubly
+noisy supervision: spans contain non-hallucinated tokens, and the
+predictive activation signal often appears \emph{before} the false
+claim is generated.
 
 \input{figs/fig1_overview}
 
-Even without the scaling cost, a single sequence-level score cannot
-say \emph{where} the suspicious regions are, which limits its
-usefulness for downstream correction or verification. Localizing
-uncertainty within a passage is hard because labels are typically
-response-level. The natural workaround -- extract atomic claims,
-verify each, and broadcast the verdict to every token of the span --
-yields doubly noisy supervision: spans contain non-hallucinated
-tokens, and the activation signal predictive of a hallucination often
-appears \emph{before} the false claim is generated. Span labels
-therefore neither isolate the offending tokens nor cover all the
-relevant signal around them.
-
-We frame this as weakly supervised temporal localization (WSTL),
-borrowing from video understanding \citep{pilhyeonlee2021}: a video
-model learns to localize an action using only a clip-level label,
-without per-frame supervision. We apply the same idea to $A$, framed
-as a \emph{video} over the token axis -- each token is a frame whose
-height is the layer axis and whose channels are the hidden dimension,
-and a \emph{window} aggregates $W$ consecutive tokens. The model
-learns which windows carry the predictive signal from the
-sequence-level label, with no window-level supervision required.
-
-Our method has three stages. \textbf{Stage 1} trains an ACT-ViT
-encoder on all activation tensors with sequence-level labels.
-\textbf{Stage 2} freezes the encoder, applies it to centered
-length-$W$ token windows, and trains a Mamba-based temporal head
-\citep{albertgu2024} via top-$k$ multiple-instance learning: the
-$k$ most uncertain window logits are averaged into a sequence-level
-prediction and supervised against the atom-level label. Stages 1--2
-see one atom segment at a time and never observe how the uncertainty
-activation signal changes \emph{across} a claim span -- in particular,
-windows whose receptive field straddles both hallucinated and
-supported tokens. \textbf{Stage 3} closes this gap: with the encoder
-frozen, the head is fine-tuned on whole passages so it learns the
-temporal profile of the activation signal within and across claim
-spans, by smoothing per-token logits along the token axis and
-aggregating them inside each atom span into a per-atom score
-supervised by per-atom binary cross-entropy. Mamba is used for its
-linear-time inference, making the method viable for real-time
-long-form generation.
-
-\paragraph{Contributions.}
+\paragraph{Our approach and contributions.}
+We recast mechanistic hallucination detection as weakly supervised
+temporal localization (WSTL), borrowing from video understanding
+\citep{pilhyeonlee2021}: a video model localizes an action from
+clip-level labels without per-frame supervision. We treat the
+activation tensor $A$ as a \emph{video} over the token axis -- each
+token a frame whose height is the layer axis and whose channels are
+the hidden dimension, and a length-$W$ \emph{window} the local
+context the model scores. On this representation we build
+\textbf{Temp-ViT}: a ViT encoder over the layer--token plane paired
+with a Mamba-2 temporal head \citep{albertgu2024}, whose linear-time
+inference makes the method viable for real-time long-form generation.
+Concretely we contribute:
 \begin{enumerate}
     \item We recast mechanistic hallucination detection as weakly supervised
     temporal localization over LLM activation tensors, enabling uncertainty
