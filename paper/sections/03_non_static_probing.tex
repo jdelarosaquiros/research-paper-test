@@ -15,55 +15,42 @@ say where the suspicious activations lie, a poor fit for
 responses where most tokens are correct and only a few are
 problematic.
 
-\paragraph{Signals are distributed and LLM-specific.} Following
-\citet{orgad2024} on Mis-7B \citep{albertqjiang2023}, we train per
-layer-token logistic regression classifiers and visualize ROC-AUC
-heatmaps. Tokens are restricted to
-$\mathcal{N} = \{0, 1, 2, -3, -2, -1\}$ (first/last three positions).
-Figure~\ref{fig:heatmaps} shows the heatmap on Movies
-\citep{orgad2024} for three LLMs; the appendix carries the full set.
-Predictive signals spread across many $(L, T)$ cells, but the most
-informative positions shift across LLMs: middle layers for Mis-7B and
-LlaMa-8B, late layers for Qwen-7B. The best position for Mis-7B,
-$(14, 0)$, transfers to LlaMa-8B and Qwen-7B with $\approx 7\%$ AUC
-loss; no fixed slice suffices.
-
-\input{figs/fig2_heatmaps}
-
-\paragraph{Tensor methods scale poorly with response length.}
+\paragraph{Tensor methods degrade with response length.}
 Figure~\ref{fig:perf_by_length} reports per-token AUROC on LongFact as
-prefix length $T$ grows. ACT-ViT with its default short pooled token
-axis peaks at very short prefixes but collapses past $T = 48$,
-dropping below chance for $T \in \{192, 384\}$ as more tokens are
-squeezed through a fixed-size pooled image. Widening the pooled axis
-from 6 to 186 patches the long-prefix collapse but does not recover
-the short-prefix peak. Figure~\ref{fig:inference_time} reports the
-matching wall-clock cost on one $T = 384$ passage: ACT-ViT needs $T$
-sequential forwards, so total latency scales linearly with response
-length. A per-token model that produces all logits in a single
-forward is $\approx 25\times$ faster while keeping a flat AUROC
-profile across the prefix grid.
+the input prefix length $T$ grows. ACT-ViT with a short pooled token
+axis performs well only for short prefixes, but its performance drops
+as more generated tokens are compressed into the same fixed-size
+representation; widening the pooled axis partially reduces this
+collapse, but it still does not recover Temp-ViT's flatter performance
+across response lengths. This supports our central design choice:
+instead of compressing the whole response into one fixed activation
+image, Temp-ViT scores local token windows and models their temporal
+evolution.
 
-\paragraph{From sequence-level detection to localization.} For
-long-form generation a single score is not actionable. We aim to
-additionally produce per-window scores
-$\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token
-regions whose activations most contribute to the prediction.
-
-\input{figs/fig_signal_propagation}
-
-\paragraph{The weak-supervision challenge.} Hallucination labels are
-typically available only at the response level. Extracting atomic
-claims and broadcasting their verification result to every token of
-the span yields noisy token labels: spans contain non-hallucinated
-tokens, and the relevant activation signal may appear before
-the false claim is even generated.
+\paragraph{Why windows instead of isolated tokens?} Hallucination
+labels are usually available at the response, sentence, or atom level,
+not at the exact token-window level. Moreover, the activation signal
+is not confined to the hallucinated token itself.
 Figure~\ref{fig:signal_propagation} measures this directly: on
 RAGTruth, a linear probe's ROC-AUC ramps from chance at offset $-24$
 to $0.66$ at the token immediately before a hallucinated span, rises
 monotonically through the span ($0.71 \to 0.79$), and decays slowly
-afterward. We therefore treat span labels as coarse auxiliary
-supervision and rely on weak supervision to localize within.
+afterward. Adjacent context therefore carries useful uncertainty
+signal, while direct token supervision would be noisy. We treat span
+labels as weak supervision and learn to localize uncertainty through
+window-level temporal modeling.
+
+\input{figs/fig_signal_propagation}
+
+\paragraph{Additional probe evidence.} Per layer-token probes also
+show that the most informative hidden-state positions are distributed
+across many $(L, T)$ cells and that the best position varies across
+LLMs (middle layers for Mis-7B and LlaMa-8B, late layers for Qwen-7B);
+the best Mis-7B position transfers to LlaMa-8B and Qwen-7B with
+$\approx 7\%$ AUC loss, so no fixed slice suffices. Full heatmaps are
+provided in Appendix~\ref{app:heatmaps}. This motivates an encoder
+over the layer-token plane rather than a single fixed hidden-state
+slice.
 
 \paragraph{Weakly supervised temporal localization.} ACT-ViT shows
 that the $(L,T)$ plane has spatial structure amenable to visual
