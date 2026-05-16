@@ -1,14 +1,6 @@
 \section{Ablations}
 \label{sec:ablations}
 
-\paragraph{Sentence- and claim-level results
-(Tables~\ref{tab:sentence},~\ref{tab:claim}).} The same setup as
-Table~\ref{tab:main}, reported at finer granularities: sentence-level
-under AND-on-supported aggregation (any unsupported claim flips the
-sentence) and one row per claim at the claim level. Temp-ViT (Stage~3)
-outperforms the Act-ViT baseline at every populated cell, with the
-gap widening as granularity narrows.
-
 \paragraph{Architecture variants (Table~\ref{tab:window_ablation}).}
 We compare the full Temp-ViT pipeline against an MLP-encoder baseline
 (no windowing) and an encoder-only variant (no Mamba-2 head), across
@@ -42,8 +34,27 @@ training and at test time. Non-overlapping training is required
 when claims share tokens; otherwise the head over-fits to the
 longer-claim labels under the natural overlap.
 
-\input{figs/tab3_sentence}
-\input{figs/tab4_claim}
+\paragraph{Token-level overlap resolution.}
+\label{ablation:overlap_rule}
+The token-level eval (Table~\ref{tab:main}) labels each generated
+token from per-claim spans $(\ell_m, r_m, \tilde{y}_m)$ using the
+\texttt{atom\_spans} rule. Spans are sorted by
+$(\ell_m\!\uparrow, r_m\!\downarrow)$ -- earlier start first, longer
+span first on a tie -- and walked in order; each span writes its
+label $1-\tilde{y}_m$ to every still-uncovered token in
+$[\ell_m, r_m\!+\!1)$. Uncovered tokens are then dropped from the
+eval pool. Concretely: on partial overlap the earlier-starting
+span wins; on containment with a common start the longer (outer)
+span wins; on containment with a later inner start the outer span
+still wins, because it claims the shared tokens first. The inner
+span only contributes the tokens the outer one does not cover.
+This matches the non-overlap training deduplication rule
+(Table~\ref{tab:overlap}) on the strict common-start case, and
+diverges only when the inner span starts later, where the
+earlier-start tiebreak is equivalent to a longer-span tiebreak in
+practice because the outer is necessarily $\geq$ as long.
+
+\input{figs/fig_perf_by_length}
 \input{figs/tab5_window_ablation}
 \input{figs/tab6_stride_ablation}
 \input{figs/tab7_stage_ablation}

@@ -1,38 +1,55 @@
-\subsection{Long-form Hallucination Detection}
-\label{sec:longform}
+\section{Results}
+\label{sec:results}
+
+\subsection{Temp-ViT improves token-level hallucination
+localization}
+\label{sec:results_token}
 
 \input{figs/tab1_main}
 
-The long-form setting is reported at three granularities on RAGTruth
+The headline contribution is per-token localization on long-form
+text. Table~\ref{tab:main} reports token-level AUROC on RAGTruth
 \citep{niu2024ragtruth}, FactScore \citep{min2023}, and LongFact
-\citep{wei2024}. Table~\ref{tab:main} reports the headline
-token-level numbers; Table~\ref{tab:sentence} reports
-sentence-level verdicts under AND-on-supported aggregation
-(any unsupported claim in a sentence flips the sentence to
-hallucinated, score is the max per-token uncertainty in the span);
-Table~\ref{tab:claim} reports claim-level verdicts (one row per
-claim). Temp-ViT denotes the full three-stage pipeline; at each
-granularity the score is the per-token sigmoid of the Stage-3
-detector aggregated over the relevant span. The patterns answer
-(Q\textsubscript{1}): the gap to the Act-ViT pooled tensor baseline
-widens as the granularity narrows (claims), where the head must rank
-claims against each other within the same passage.
-Table~\ref{tab:long_form_stats} reports the passage- and claim-length
-distributions that determine which granularity is feasible to
-supervise; LongFact and FactScore claims are typically much shorter
-than RAGTruth's, which the per-token head benefits from.
+\citep{wei2024} for two LLMs. On every populated cell, the
+Temp-ViT family beats both the Confidence baselines (which top out
+near 0.60) and the strongest mechanistic baseline (Act-ViT
+\citep{barshalom2025}, the pooled-tensor sequence encoder we build
+on). On RAGTruth the gap is largest -- Encoder Only + PRR reaches
+$0.888^\dagger$ on Mis-7B-Inst and $0.846$ on LlaMa-13B-Inst,
+against $\leq 0.615$ for every non-Ours row. On FactScore /
+LongFact the gap narrows but the ranking is preserved.
 
-\paragraph{Run-time and performance trade-offs.} Temp-ViT scores
-every generated token in a single forward through the frozen encoder
-and the Mamba-2 head, so the cost of obtaining sentence- or
-claim-level scores is amortized across the passage rather than
-scaling with the number of claims. Figure~\ref{fig:inference_time}
-quantifies this on a $T = 384$ LongFact passage: roughly an order of
-magnitude wall-clock advantage over sequence-level activation-tensor
-baselines that must be re-invoked per claim. Training the
-passage-level refinement stage takes under three hours on a single
-H200 across all three LLMs. Aggressive pooling
-($(L_p, N_p) = (4, 20)$) preserves most of the per-claim AUROC while
-shrinking training to a few minutes.
+The two Ours variants split the column lead: Encoder Only + PRR
+wins token-level on Mis-7B-Inst (all three datasets) and on
+LlaMa-13B-Inst (FactScore, LongFact), while Temp-ViT + PRR wins
+the LlaMa-13B-Inst RAGTruth cell. The pattern answers
+(Q\textsubscript{1}): Confidence and Mechanistic baselines are
+near chance at the token level on these corpora; the supervised
+window encoder is what lets the score localize within a passage.
 
-\input{figs/fig_inference_time}
+\subsection{Gains persist at sentence and claim level}
+\label{sec:results_aggregated}
+
+\input{figs/tab3_sentence}
+\input{figs/tab4_claim}
+
+Per-token scores aggregate upward without retraining.
+Table~\ref{tab:sentence} reports sentence-level verdicts under
+AND-on-supported aggregation (any unsupported claim in a sentence
+flips the sentence to hallucinated; score is the max per-token
+uncertainty in the span). Table~\ref{tab:claim} reports claim-level
+verdicts (one row per claim from the sidecar).
+
+At both granularities the Ours rows dominate every populated cell
+except FactScore / LongFact for LlaMa-13B-Inst, where MeanTokenEntropy
+edges out by 1--3 AUROC points. RAGTruth shows the cleanest
+separation: Temp-ViT + PRR reaches $0.929$ sentence AUROC on
+LlaMa-13B-Inst against the next-best baseline at $0.657$. The
+gap widens as granularity narrows from sentence to claim, which
+is the regime where the per-token head must rank claims against
+each other within the same passage. Sentence-length distributions
+that determine which granularity is feasible to supervise are
+reported in Table~\ref{tab:long_form_stats}; LongFact and
+FactScore claims are typically much shorter than RAGTruth's,
+which the per-token head benefits from at sentence and claim
+levels.

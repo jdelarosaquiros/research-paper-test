@@ -1,26 +1,48 @@
-\subsection{Short-form Uncertainty on the LM-Polygraph Benchmark}
-\label{sec:polygraph}
-
-The LM-Polygraph benchmark
-\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} stresses the
-sequence-level use case: each test item is a short response and the
-goal is to rank responses by likely hallucination, not to localize
-within them. Table~\ref{tab:polygraph} reports per-dataset PRR on
-MMLU and GSM8k (QA, binary accuracy) and WMT19 De-En (NMT, COMET
-binarised at the training median). The Temp-ViT row aggregates the
-Stage~2 per-window logits to one number per response via the same
-top-$k$ MIL rule used at training time
-(Section~\ref{sec:temporal_head}), so the method is plug-compatible
-with the LM-Polygraph sequence-level baselines. This setting answers
-(Q\textsubscript{2}): the per-token output Stage~2 was designed to
-produce remains competitive with sequence-level scores when one is
-forced to commit to a single number per response. Stage 3, which is
-trained on long-form passages, shows a small accuracy hit on the
-short-form sequences of LM-Polygraph
-(Table~\ref{tab:polygraph}); the per-claim loss does not transfer
-back to single-claim sequences as cleanly as the Stage 2 MIL
-objective.
-Table~\ref{tab:polygraph_stats} reports the per-dataset sequence
-length distributions.
+\subsection{Temp-ViT outperforms baselines in uncertainty
+quantification}
+\label{sec:results_polygraph}
 
 \input{figs/tab2_ood}
+
+The LM-Polygraph benchmark
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} stresses
+the sequence-level use case: each test item is a short- or long-form
+response and the goal is to rank responses by likely hallucination,
+not to localize within them. Table~\ref{tab:polygraph} reports
+per-dataset AUROC on three cells from Mis-7B-Inst:
+MMLU (QA, binary accuracy), GSM8k (math CoT, binary accuracy),
+and WMT19 De--En (NMT, COMET binarised at the training median).
+The Encoder Only + PRR row aggregates per-window logits to a
+single number per response via top-$k$ MIL, matching the
+training-time aggregator (Section~\ref{sec:temporal_head}); the
+full Temp-ViT + PRR row uses the Stage~3 passage-level head.
+
+Encoder Only + PRR wins WMT19 ($0.790$) and lands within $0.006$
+of the Act-ViT mechanistic baseline on MMLU. The full Temp-ViT
+row loses some accuracy on the short-form QA cells: its Stage~3
+objective is trained on long-form passages with many claims, and
+the per-claim loss does not transfer back to single-claim
+sequences as cleanly as the Stage~2 MIL objective. This is the
+secondary contribution; the primary use case is localization
+(Sections~\ref{sec:results_token}, \ref{sec:results_aggregated}),
+but the per-token detector remains competitive as a sequence-level
+ranker. Per-dataset sequence-length distributions are in
+Table~\ref{tab:polygraph_stats}.
+
+\subsection{Efficiency analysis}
+\label{sec:results_efficiency}
+
+\input{figs/fig_inference_time}
+
+Temp-ViT scores every generated token in a single forward through
+the frozen encoder and the Mamba-2 head, so the cost of obtaining
+sentence- or claim-level scores is amortized across the passage
+rather than scaling with the number of claims.
+Figure~\ref{fig:inference_time} quantifies this on a $T = 384$
+LongFact passage: roughly an order of magnitude wall-clock
+advantage over sequence-level activation-tensor baselines that
+must be re-invoked per claim. Training the passage-level
+refinement stage takes under three hours on a single H200 across
+all three LLMs. Aggressive pooling
+($(L_p, N_p) = (4, 20)$) preserves most of the per-claim AUROC
+while shrinking training to a few minutes.

@@ -23,28 +23,28 @@ Method & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact & RAG
 \midrule
 \multicolumn{10}{l}{\textit{Confidence}} \\
 \cmidrule(l){1-10}
-MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.540 & 0.513 & --- & --- & --- & --- & --- & --- \\
-Perplexity                       & 0.572$^{\dagger}$ & 0.540 & 0.513 & --- & --- & --- & --- & --- & --- \\
-MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.579 & 0.578 & --- & --- & --- & --- & --- & --- \\
-SelfCertainty                    & 0.423$^{\dagger}$ & 0.497 & 0.499 & --- & --- & --- & --- & --- & --- \\
-TokenSAR                         & 0.569$^{\dagger}$ & 0.529 & 0.461 & --- & --- & --- & --- & --- & --- \\
-MeanPointwiseMutualInformation   & \underline{0.600}$^{\dagger}$ & 0.471 & 0.462 & --- & --- & --- & --- & --- & --- \\
-BoostedProbSequence              & 0.571$^{\dagger}$ & 0.540 & 0.514 & --- & --- & --- & --- & --- & --- \\
+MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.540 & 0.513 & 0.536 & 0.542 & 0.562 & --- & --- & --- \\
+Perplexity                       & 0.572$^{\dagger}$ & 0.540 & 0.513 & 0.536 & 0.542 & 0.562 & --- & --- & --- \\
+MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.579 & 0.578 & 0.542 & \textbf{0.560} & \underline{0.589} & --- & --- & --- \\
+SelfCertainty                    & 0.423$^{\dagger}$ & 0.497 & 0.499 & 0.442 & 0.525 & 0.517 & --- & --- & --- \\
+TokenSAR                         & 0.569$^{\dagger}$ & 0.529 & 0.461 & 0.531 & \underline{0.550} & 0.558 & --- & --- & --- \\
+MeanPointwiseMutualInformation   & 0.600$^{\dagger}$ & 0.471 & 0.462 & 0.593 & 0.493 & 0.517 & --- & --- & --- \\
+BoostedProbSequence              & 0.571$^{\dagger}$ & 0.540 & 0.514 & 0.536 & 0.531 & 0.554 & --- & --- & --- \\
 \midrule
 \multicolumn{10}{l}{\textit{Mechanistic}} \\
 \cmidrule(l){1-10}
-CSL                              & 0.567$^{\dagger}$ & 0.510 & 0.449 & --- & --- & --- & --- & --- & --- \\
-AttentionScore                   & 0.479$^{\dagger}$ & 0.495 & 0.557 & --- & --- & --- & --- & --- & --- \\
-RAUQ                             & 0.578$^{\dagger}$ & 0.540 & 0.532 & --- & --- & --- & --- & --- & --- \\
+CSL                              & 0.567$^{\dagger}$ & 0.510 & 0.449 & 0.530 & 0.533 & 0.534 & --- & --- & --- \\
+AttentionScore                   & 0.479$^{\dagger}$ & 0.495 & 0.557 & 0.508 & 0.491 & 0.504 & --- & --- & --- \\
+RAUQ                             & 0.578$^{\dagger}$ & 0.540 & 0.532 & 0.541 & 0.542 & 0.562 & --- & --- & --- \\
 FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                                 & 0.570$^{\dagger}$ & \underline{0.692} & \underline{0.603} & \underline{0.616} & --- & --- & --- & --- & --- \\
+                                 & 0.570$^{\dagger}$ & \textbf{0.692} & 0.603 & 0.616 & --- & --- & --- & --- & --- \\
 \midrule
 \multicolumn{10}{l}{\textit{Ours}} \\
 \cmidrule(l){1-10}
-Temp-ViT (Encoder Only)          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-Temp-ViT                         & \textbf{0.865}$^{\dagger}$ & \textbf{0.772} & \textbf{0.715} & \textbf{0.814} & --- & --- & --- & --- & --- \\
+Encoder Only + PRR               & \textbf{0.888}$^{\dagger}$ & 0.676 & \textbf{0.761} & \underline{0.846} & 0.534 & \textbf{0.657} & --- & --- & --- \\
+Temp-ViT + PRR                   & \underline{0.881}$^{\dagger}$ & \underline{0.686} & \underline{0.750} & \textbf{0.894} & 0.534 & 0.559 & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }

@@ -1,82 +1,81 @@
-\section{Experiments}
+\section{Experimental Setup}
 \label{sec:experiments}
 
-\paragraph{Setup.} We evaluate Temp-ViT in two complementary settings
-that the literature treats separately. The first setting is sentence-level
-hallucination detection: given a long-form response decomposed into
-claim- or sentence-level units, the task is to assign an uncertainty
-score to each unit that aligns with a per-unit hallucination label
-obtained from atomic-fact verification. Table~\ref{tab:main} reports
-results on the three corpora that anchor this task in recent work:
-RAGTruth \citep{niu2024ragtruth}, FactScore \citep{min2023}, and
-LongFact \citep{wei2024}. The second setting is sequence-level uncertainty on
-LM-Polygraph: given a whole response, the task is to assign a single
-uncertainty score whose ranking of responses aligns with response-level
-quality. Table~\ref{tab:polygraph} reports results on the LM-Polygraph
-benchmark \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph},
-covering question answering (QA: TriviaQA, CoQA, MMLU, GSM8k),
-neural machine translation (NMT: WMT14 Fr-En, WMT19 De-En), and
-summarization (SUM: XSUM). Both setups are run on the LM-Polygraph
-infrastructure so that the baselines below share an identical
-generation, sampling, and scoring pipeline.
-
-We attempt to answer:
+\subsection{Research Questions}
+\label{sec:rqs}
+We answer three questions:
 (Q\textsubscript{1}) Does Temp-ViT outperform sequence-level and
-consistency-based baselines for sentence-level hallucination
-detection? (Q\textsubscript{2}) Does its per-token output remain
-competitive when aggregated to a single sequence-level score on the
-heterogeneous Polygraph tasks? (Q\textsubscript{3}) How do the gains
-scale with model capacity, from 7B to 70B?
+consistency-based baselines for token-level hallucination
+localization on long-form text?
+(Q\textsubscript{2}) Do those localization gains carry over to
+sentence- and claim-level verdicts under standard aggregation?
+(Q\textsubscript{3}) Does the same per-token detector remain
+competitive as a sequence-level uncertainty estimator on the
+heterogeneous LM-Polygraph benchmark?
 
-\paragraph{LLMs.} All experiments are run on three instruction-tuned,
-open-weight LLMs:
-Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B-Inst),
-Llama-2-13B-chat-hf \citep{touvron2023} (LlaMa-13B-Inst), and
-Llama-3.1-70B-Instruct \citep{touvron2023} (LlaMa-70B-Inst). For each
-LLM we collect post-residual hidden states across all transformer
-layers and all generated tokens, yielding the activation tensor
-$A \in \mathbb{R}^{L \times T \times D}$ that drives our method
-(Section~\ref{sec:notation}).
+\subsection{Datasets}
+\label{sec:datasets}
 
-\paragraph{Datasets.} For sentence-level hallucination detection
-(Table~\ref{tab:main}) we use the standard splits of
+\paragraph{Hallucination detection.} For long-form hallucination
+detection (Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim})
+we evaluate on three corpora that anchor this task in recent work:
 RAGTruth \citep{niu2024ragtruth}, a retrieval-augmented
 generation corpus with span-level hallucination annotations across
 QA, summarization, and data-to-text prompts;
 FactScore \citep{min2023}, atomic-fact-verified biography
-generations; and LongFact \citep{wei2024}, long-form
-factuality prompts paired with the SAFE atomic-fact verifier of the
-same paper. For each corpus we follow the original protocol to obtain
-per-claim or per-sentence support labels, and use them as the
-auxiliary supervision signal $\tilde{y}_m$ introduced in
-Section~\ref{sec:notation}. For LM-Polygraph (Table~\ref{tab:polygraph})
-we follow \citet{vashurin2025lmpolygraph} for subset selection, prompt
-formatting, and few-shot example sourcing; quality measures for PRR
-are accuracy for short-form QA, AlignScore for long-form QA and
-summarization, and COMET for translation, exactly as in the reference.
+generations; and LongFact \citep{wei2024}, long-form factuality
+prompts paired with the SAFE atomic-fact verifier of the same paper.
+For each corpus we follow the original protocol to obtain per-claim
+support labels and broadcast them to per-token labels via the
+overlap-resolution rule of
+Appendix~\ref{ablation:overlap_rule}, which the token-level eval
+uses to break ties when two claim spans cover the same token. The
+per-claim labels also serve as the auxiliary supervision signal
+$\tilde{y}_m$ introduced in Section~\ref{sec:notation}.
 
-\paragraph{Baselines.} We organize baselines into three groups that
-mirror the row bands of Tables~\ref{tab:main} and \ref{tab:claim} and
-Table~\ref{tab:polygraph}. All baselines are run through the
+\paragraph{Uncertainty quantification.} For sequence-level
+uncertainty quantification (Table~\ref{tab:polygraph}) we use the
+LM-Polygraph benchmark
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}, following
+\citet{vashurin2025lmpolygraph} for subset selection, prompt
+formatting, and few-shot example sourcing. Quality measures are
+accuracy for short-form QA (MMLU, GSM8k), AlignScore for long-form
+QA and summarization, and COMET for translation (WMT19 De-En).
+
+\paragraph{LLMs.} All experiments use three instruction-tuned
+open-weight LLMs:
+Mistral-7B-Instruct-v0.2 \citep{albertqjiang2023} (Mis-7B-Inst),
+Llama-2-13B-chat-hf \citep{touvron2023} (LlaMa-13B-Inst), and
+Llama-3.1-70B-Instruct \citep{touvron2023} (LlaMa-70B-Inst). For
+each LLM we collect post-residual hidden states across all
+transformer layers and all generated tokens, yielding the
+activation tensor
+$A \in \mathbb{R}^{L \times T \times D}$ that drives our method
+(Section~\ref{sec:notation}).
+
+\subsection{Baselines}
+\label{sec:baselines}
+We organize baselines into three row bands that match
+Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim},
+and~\ref{tab:polygraph}. All baselines are run through the
 LM-Polygraph evaluation infrastructure
 \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} on identical
 generations and gold quality measures; sequence-level scores are
 re-applied per claim, per sentence, or per token when needed.
 
-Confidence baselines score uncertainty from the model's
+\paragraph{Confidence.} Score uncertainty from the model's
 next-token distribution over generated tokens:
 Maximum Sequence Probability (the LM-Polygraph default),
 Perplexity \citep{fomicheva2020unsupervised},
 Mean Token Entropy \citep{fomicheva2020unsupervised},
 Self-Certainty \citep{kang2025selfcertainty},
 TokenSAR \citep{duan2023},
-Mean Pointwise Mutual Information \citep{takayama2019pmi},
-and BoostedProbSequence \citep{dinh2025boostedprob}.
+Mean Pointwise Mutual Information \citep{takayama2019pmi}, and
+BoostedProbSequence \citep{dinh2025boostedprob}.
 
-Mechanistic baselines read model internals (hidden states or
-attention patterns) instead of relying solely on the output
-distribution: Contextualized Sequence Likelihood (CSL)
-\citep{lin2024csl},
+\paragraph{Mechanistic.} Read model internals (hidden states or
+attention patterns) rather than the output distribution alone:
+Contextualized Sequence Likelihood (CSL) \citep{lin2024csl},
 Attention Score \citep{sriramanan2024attention},
 Recurrent Attention-based Uncertainty Quantification (RAUQ)
 \citep{vazhentsev2025rauq},
@@ -85,32 +84,30 @@ Feature-Gaps \citep{bakman2025featuregaps}, and
 Act-ViT \citep{barshalom2025}, the pooled-tensor sequence
 encoder our architecture builds on.
 
-Ours reports Temp-ViT in two variants:
-Temp-ViT~(Encoder~Only), the Stage-2 detector
+\paragraph{Ours.} Temp-ViT is reported in two variants:
+\emph{Encoder Only} -- the Stage-2 detector
 (Section~\ref{sec:temporal_head}) used as a stand-alone per-window
-scorer aggregated by top-$k$ MIL, which is the natural comparison for
-Table~\ref{tab:polygraph}; and Temp-ViT, the full
-three-stage pipeline (Section~\ref{sec:stage3}) whose per-claim output
-is reported in Tables~\ref{tab:main} and \ref{tab:claim}.
+scorer aggregated by top-$k$ MIL; and the full three-stage
+\emph{Temp-ViT} pipeline (Section~\ref{sec:stage3}). Both are
+trained with PRR as the validation criterion (PRR-tuned variant),
+following the LM-Polygraph protocol.
 
-\paragraph{Evaluation Measure.} As the primary metric in both tables
-we report the Prediction Rejection Ratio
-\citep{malinin2021uncertainty},
+\paragraph{Evaluation Measure.}
+We report AUROC as the primary metric in
+Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim}, and
+the Prediction Rejection Ratio
+\citep{malinin2021uncertainty} for
+Table~\ref{tab:polygraph}:
 \begin{equation}
     \mathrm{PRR} = \frac{\mathrm{AUC}_{\mathrm{unc}} - \mathrm{AUC}_{\mathrm{rnd}}}{\mathrm{AUC}_{\mathrm{oracle}} - \mathrm{AUC}_{\mathrm{rnd}}},
     \label{eq:prr}
 \end{equation}
 which measures how well an uncertainty score ranks predictions by
-quality relative to an oracle that perfectly ranks them. We compute
-PRR up to a rejection threshold of 50\% to prevent degenerate inflation
-at near-empty retained sets. AUROC, ECE, and Brier scores under the
-same setup are reported in Appendix~\ref{app:extended} as an extended
-view of Table~\ref{tab:main}.
+quality relative to an oracle. We compute PRR up to a rejection
+threshold of 50\%. AUROC, ECE, and Brier scores under the same
+setup are reported in Appendix~\ref{app:extended}.
 
-\paragraph{Generation setup.} For both tables we report results under
-greedy decoding. Stochastic-sampling and best-sample variants follow
-the LM-Polygraph defaults and are reported in
+\paragraph{Generation setup.} All numbers are reported under
+greedy decoding. Stochastic-sampling and best-sample variants
+follow the LM-Polygraph defaults and are reported in
 Appendix~\ref{app:extended}.
-
-Next we present the main results, with extended experimental details
-in Appendix~\ref{app:extended}.

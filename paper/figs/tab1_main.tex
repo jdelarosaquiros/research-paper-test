@@ -8,12 +8,13 @@ Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets: RAGTruth
 \citep{wei2024}. Methods are grouped by category: \emph{Confidence}
 (sequence-level probability / entropy baselines), \emph{Mechanistic}
 (model-internal signal baselines), and \emph{Ours}. Per-token gold
-mask built from claims via longer-span-wins on containment,
-earlier-span-wins on partial overlap; uncovered tokens dropped. Best
-score per column in \textbf{bold}, second-best \underline{underlined}.
-$^\dagger$ marks cells whose data comes from a closely related model
-version (Mistral-7B-Instruct-v0.1 for RAGTruth). Cells with ``---''
-indicate experiments not yet run.}
+mask built from claim spans via the overlap-resolution rule of
+Appendix~\ref{ablation:overlap_rule} (longer-span-wins on
+containment, earlier-span-wins on partial overlap; uncovered tokens
+dropped). Best score per column in \textbf{bold}, second-best
+\underline{underlined}. $^\dagger$ marks cells whose data comes from
+a closely related model version (Mistral-7B-Instruct-v0.1 for
+RAGTruth). Cells with ``---'' indicate experiments not yet run.}
 \label{tab:main}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
@@ -27,28 +28,28 @@ Method & RAGTruth & FactScore & LongFact & RAGTruth & FactScore & LongFact & RAG
 \midrule
 \multicolumn{10}{l}{\textit{Confidence}} \\
 \cmidrule(l){1-10}
-MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
-Perplexity                       & 0.572$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
-MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.525 & 0.520 & --- & --- & --- & --- & --- & --- \\
-SelfCertainty                    & 0.423$^{\dagger}$ & 0.482 & 0.490 & --- & --- & --- & --- & --- & --- \\
-TokenSAR                         & 0.569$^{\dagger}$ & 0.524 & 0.506 & --- & --- & --- & --- & --- & --- \\
-MeanPointwiseMutualInformation   & \underline{0.600}$^{\dagger}$ & 0.500 & 0.532 & --- & --- & --- & --- & --- & --- \\
-BoostedProbSequence              & 0.571$^{\dagger}$ & 0.524 & 0.518 & --- & --- & --- & --- & --- & --- \\
+MaximumSequenceProbability       & 0.572$^{\dagger}$ & 0.524 & 0.518 & 0.536 & 0.511 & 0.512 & --- & --- & --- \\
+Perplexity                       & 0.572$^{\dagger}$ & 0.524 & 0.518 & 0.536 & 0.511 & 0.512 & --- & --- & --- \\
+MeanTokenEntropy                 & 0.573$^{\dagger}$ & 0.525 & 0.520 & 0.542 & 0.511 & 0.513 & --- & --- & --- \\
+SelfCertainty                    & 0.423$^{\dagger}$ & 0.482 & 0.490 & 0.442 & 0.500 & 0.489 & --- & --- & --- \\
+TokenSAR                         & 0.569$^{\dagger}$ & 0.524 & 0.506 & 0.531 & 0.512 & 0.512 & --- & --- & --- \\
+MeanPointwiseMutualInformation   & 0.600$^{\dagger}$ & 0.500 & 0.532 & 0.593 & 0.507 & 0.525 & --- & --- & --- \\
+BoostedProbSequence              & 0.571$^{\dagger}$ & 0.524 & 0.518 & 0.536 & 0.511 & 0.512 & --- & --- & --- \\
 \midrule
 \multicolumn{10}{l}{\textit{Mechanistic}} \\
 \cmidrule(l){1-10}
-CSL                              & 0.567$^{\dagger}$ & 0.523 & 0.501 & --- & --- & --- & --- & --- & --- \\
-AttentionScore                   & 0.479$^{\dagger}$ & 0.491 & 0.524 & --- & --- & --- & --- & --- & --- \\
-RAUQ                             & 0.578$^{\dagger}$ & 0.524 & 0.522 & --- & --- & --- & --- & --- & --- \\
+CSL                              & 0.567$^{\dagger}$ & 0.523 & 0.501 & 0.530 & 0.511 & 0.510 & --- & --- & --- \\
+AttentionScore                   & 0.479$^{\dagger}$ & 0.491 & 0.524 & 0.508 & 0.496 & 0.510 & --- & --- & --- \\
+RAUQ                             & 0.578$^{\dagger}$ & 0.524 & 0.522 & 0.541 & 0.513 & 0.515 & --- & --- & --- \\
 FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-                                 & 0.570$^{\dagger}$ & \underline{0.676} & \underline{0.638} & \underline{0.615} & --- & --- & --- & --- & --- \\
+                                 & 0.570$^{\dagger}$ & \textbf{0.676} & 0.638 & 0.615 & --- & --- & --- & --- & --- \\
 \midrule
 \multicolumn{10}{l}{\textit{Ours}} \\
 \cmidrule(l){1-10}
-Temp-ViT (Encoder Only)          & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
-Temp-ViT                         & \textbf{0.865}$^{\dagger}$ & \textbf{0.696} & \textbf{0.692} & \textbf{0.814} & --- & --- & --- & --- & --- \\
+Encoder Only + PRR               & \textbf{0.888}$^{\dagger}$ & \underline{0.671} & \textbf{0.674} & \underline{0.846} & \textbf{0.582} & \textbf{0.615} & --- & --- & --- \\
+Temp-ViT + PRR                   & \underline{0.863}$^{\dagger}$ & 0.668 & \underline{0.667} & \textbf{0.863} & \underline{0.576} & \underline{0.555} & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
