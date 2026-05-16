@@ -78,6 +78,6 @@ inference.
 Stage 3 trains the head across spans in the full sequence
 rather than on isolated claim segments: fine-tuning on whole passages
 with per-claim auxiliary labels teaches it how the uncertainty
-activation signal changes across claim spans, in particular on
+activation signal changes across claims, in particular on
 mixed-content windows whose receptive field contains both hallucinated
 and supported tokens (which Stages~1 and 2 never see). We describe each stage in the next section.

@@ -14,7 +14,7 @@ top-$k$ MIL into a claim-level score.
 refined on whole passages with noisy per-claim labels $\tilde{y}_m$
 from atomic-fact verification; per-token logits are smoothed by a
 soft-topk window (temperature $\tau_w$) and aggregated within each
-claim span $(\ell_m, r_m)$ by a soft-max-in-spans (temperature
+claim $(\ell_m, r_m)$ by a soft-max-in-spans (temperature
 $\tau_\text{seg}$) to yield per-claim probabilities $p_m$, trained
 with $\sum_m \mathrm{BCE}(p_m, \tilde{y}_m)$. Both temperatures
 anneal $1.0 \to 0.1$ over training.}

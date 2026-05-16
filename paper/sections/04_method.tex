@@ -24,7 +24,9 @@ $A$ over $W$ consecutive tokens centered at $t$. Training data
 comes with a sequence-level label $y \in \{0,1\}$ (hallucinated
 vs.\ not), and on long-form corpora with noisy per-claim auxiliary
 labels $\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from atomic-fact
-verification. Given $A$, our goal is to predict both a
+verification, where each claim $m$ is identified with its token
+span $(\ell_m, r_m)$ so we refer to a claim and its span
+interchangeably. Given $A$, our goal is to predict both a
 sequence-level uncertainty score $\hat{p} \in [0,1]$ and per-window
 scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ under this weak supervision;
 the full notation, dataset construction, white-box assumptions, and
@@ -86,18 +88,17 @@ each span without window-level labels.
 \label{sec:stage3}
 
 Stages 1 and 2 see one claim segment at a time and never observe how the
-uncertainty activation signal changes across a claim span. In
+uncertainty activation signal changes across a claim. In
 particular, mixed-content windows (windows whose receptive field
 straddles both hallucinated and supported tokens) combine two signal
 regimes that single-claim training cannot disentangle. Stage 3 fixes
 this by training the head across spans in the full sequence rather
 than on isolated claim segments: with the encoder frozen, the head is
 fine-tuned on whole passages with per-claim auxiliary labels so it
-learns the spatial profile of the signal within and across claim
-spans.
+learns the spatial profile of the signal within and across claims.
 
 Stage 3 takes as input a passage tensor
-$A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ claim spans
+$A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ claims
 $\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
 $\tilde{y}_m \in \{0,1\}$ from atomic-fact verification.
 
@@ -110,7 +111,7 @@ window,
 \end{equation}
 where $\tau \to 0$ recovers max and $\tau \to \infty$ recovers mean.
 The per-claim logit is a top-$k$ mean over the smoothed logits in the
-claim span,
+claim,
 \begin{equation}
 \hat{z}_m = \frac{1}{k_m}\!\!\!\sum_{t \in \mathrm{Top}_{k_m}(\mathcal{S}_m)}\!\!\! \bar{z}^{(t)},
 \end{equation}
@@ -120,7 +121,7 @@ $k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
 $\kappa \in (0, 1]$. The Stage-3 loss is a per-claim BCE,
 $\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$,
 which forces the head to learn how the per-token signal varies within
-and across claim spans, including on mixed-content windows, rather
+and across claims, including on mixed-content windows, rather
 than score each claim in isolation.
 
 At inference time, a single forward through the Stage-3 detector
@@ -128,5 +129,5 @@ yields the per-token logits over the whole passage, from which we
 read off (i) the per-token / per-window scores
 $\{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ for localization; (ii) a
 sequence-level score by reusing the Stage-2 top-$k$ MIL aggregation;
-and (iii) per-claim scores $\{\sigma(\hat{z}_m)\}_m$ when claim spans
+and (iii) per-claim scores $\{\sigma(\hat{z}_m)\}_m$ when claims
 are available.
