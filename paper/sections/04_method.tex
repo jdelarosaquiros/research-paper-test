@@ -1,4 +1,4 @@
-\section{Model Architecture}
+\section{Method}
 \label{sec:model}
 
 Figure~\ref{fig:overview} illustrates the three-stage pipeline.
@@ -10,6 +10,26 @@ a Mamba-2 temporal head \citep{albertgu2024} that emits one
 logit $\hat{z}^{(t)}$ per window. Stage~3 keeps the encoder frozen,
 initializes the head from Stage~2, and refines it on whole passages
 under per-atom auxiliary supervision.
+
+\subsection{Problem setup and notation}
+\label{sec:notation}
+
+Given an LLM $M$ and its generated response of length $T$, we
+collect the activation tensor
+$A \in \mathbb{R}^{L \times T \times D}$
+($L$ transformer layers, $D$ hidden dimension). For temporal
+localization we additionally use the windowed view
+$A^{(t)} \in \mathbb{R}^{L \times W \times D}$ obtained by slicing
+$A$ over $W$ consecutive tokens centered at $t$. Training data
+comes with a sequence-level label $y \in \{0,1\}$ (hallucinated
+vs.\ not), and on long-form corpora with noisy per-atom auxiliary
+labels $\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from atomic-fact
+verification. Given $A$, our goal is to predict both a
+sequence-level uncertainty score $\hat{p} \in [0,1]$ and per-window
+scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ under this weak supervision;
+the full notation, dataset construction, white-box assumptions, and
+off-domain generalization scenarios are deferred to
+Appendix~\ref{app:extended}.
 
 \subsection{Stage 1: Encoder}
 \label{sec:act_vit_subsec}
@@ -33,7 +53,7 @@ $\mathcal{L}_{1} = \mathrm{BCE}(\sigma(z), y)$ where $y$ is the
 sequence label. The features before the linear head form the
 per-sequence embedding that Stages 2 and 3 reuse.
 
-\subsection{Stage 2: Mamba-2 Temporal Head with Top-$k$ MIL}
+\subsection{Stage 2: Temporal Localization with Top-$k$ MIL}
 \label{sec:temporal_head}
 
 For each generated position $t$, we extract the windowed activation
@@ -62,7 +82,7 @@ or full mean (dilutes signal in mostly-correct responses), and lets
 the model localize the uncertainty signal to a few windows inside
 each span without window-level labels.
 
-\subsection{Stage 3: Passage-level Refinement with Per-atom Supervision}
+\subsection{Stage 3: Passage-level Refinement}
 \label{sec:stage3}
 
 Stages 1 and 2 see one atom segment at a time and never observe how the
