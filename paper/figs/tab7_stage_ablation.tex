@@ -1,16 +1,5 @@
 \begin{table}[t]
 \centering
-\caption{\textbf{Stage ablation} on RAGTruth (token level). AUROC and
-PRR for the three training stages of Temp-ViT, evaluated on two
-RAGTruth model cells where stage-by-stage activation caches were
-available. Stage 1 is the encoder pre-trained on per-claim segments
-with sequence-level labels; Stage 2 adds the Mamba-2 head with
-top-$k$ MIL aggregation; Stage 3 fine-tunes the head on full passages
-under per-claim auxiliary labels. The headline takeaway: AUROC and PRR
-both improve monotonically from Stage 1 to Stage 3, with Stage 3
-delivering the largest jump on Llama-2-13b. Mis-7B-Inst-v0.2 stage
-sweeps are pending; cells with ``---'' are not yet populated.}
-\label{tab:stage}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -27,4 +16,15 @@ Stage 3 & \textbf{0.886} & \textbf{0.804} & \textbf{0.856} & \textbf{0.745} & --
 \bottomrule
 \end{tabular}%
 }
+\caption{\textbf{Stage ablation} on RAGTruth (token level). AUROC and
+PRR for the three training stages of Temp-ViT, evaluated on two
+RAGTruth model cells where stage-by-stage activation caches were
+available. Stage 1 is the encoder pre-trained on per-claim segments
+with sequence-level labels; Stage 2 adds the Mamba-2 head with
+top-$k$ MIL aggregation; Stage 3 fine-tunes the head on full passages
+under per-claim auxiliary labels. The headline takeaway: AUROC and PRR
+both improve monotonically from Stage 1 to Stage 3, with Stage 3
+delivering the largest jump on Llama-2-13b. Mis-7B-Inst-v0.2 stage
+sweeps are pending; cells with ``---'' are not yet populated.}
+\label{tab:stage}
 \end{table}

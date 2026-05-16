@@ -1,14 +1,5 @@
 \begin{table}[t]
 \centering
-\caption{\textbf{Window ablation} on RAGTruth (token level). Compares
-the full Temp-ViT pipeline against an MLP-encoder baseline and an
-encoder-only variant (no Mamba-2 head), across the three training
-stages. The encoder-only Stage-3 variant matches or surpasses the full
-pipeline on AUROC for both LLMs, indicating that the windowed pooling
-in the encoder absorbs most of the local-context signal that the
-temporal head adds; the head's benefit comes from sequence-level
-aggregation. Cells with ``---'' are not yet populated.}
-\label{tab:window_ablation}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -34,4 +25,13 @@ Act-ViT (N\textsubscript{eff}=6, F-v2)  & 0.570 & $-0.568$ & 0.615 & $-0.049$ \\
 \bottomrule
 \end{tabular}%
 }
+\caption{\textbf{Window ablation} on RAGTruth (token level). Compares
+the full Temp-ViT pipeline against an MLP-encoder baseline and an
+encoder-only variant (no Mamba-2 head), across the three training
+stages. The encoder-only Stage-3 variant matches or surpasses the full
+pipeline on AUROC for both LLMs, indicating that the windowed pooling
+in the encoder absorbs most of the local-context signal that the
+temporal head adds; the head's benefit comes from sequence-level
+aggregation. Cells with ``---'' are not yet populated.}
+\label{tab:window_ablation}
 \end{table}

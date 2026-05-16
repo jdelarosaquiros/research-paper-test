@@ -1,13 +1,5 @@
 \begin{table}[t]
 \centering
-\caption{\textbf{Stride ablation.} Effect of the window stride on
-sentence-level AUROC and PRR across the three long-form datasets,
-Mistral-7B-Instruct-v0.2. Stride 1 (the default) emits one window per
-generated token; larger strides skip tokens and reduce per-token
-inference cost at the price of resolution. ``No overlap'' uses a
-stride equal to the window size. Cells with ``---'' are not yet
-populated.}
-\label{tab:stride}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -25,4 +17,12 @@ No overlap  & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
+\caption{\textbf{Stride ablation.} Effect of the window stride on
+sentence-level AUROC and PRR across the three long-form datasets,
+Mistral-7B-Instruct-v0.2. Stride 1 (the default) emits one window per
+generated token; larger strides skip tokens and reduce per-token
+inference cost at the price of resolution. ``No overlap'' uses a
+stride equal to the window size. Cells with ``---'' are not yet
+populated.}
+\label{tab:stride}
 \end{table}

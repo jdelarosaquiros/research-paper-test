@@ -1,16 +1,5 @@
 \begin{table*}[t]
 \centering
-\caption{\textbf{Long-form hallucination detection --- sentence level.}
-Same models, datasets, and metric (AUROC) as Table~\ref{tab:main}.
-Sentence label uses AND-on-supported: any unsupported claim flips the
-sentence to hallucinated; sentence score is the max per-token
-uncertainty in the span. Methods are grouped by category: \emph{Confidence},
-\emph{Mechanistic}, and \emph{Ours}. Best score per column in
-\textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
-cells whose data comes from a closely related model version
-(Mistral-7B-Instruct-v0.1 for RAGTruth). Cells with ``---'' indicate
-experiments not yet run.}
-\label{tab:sentence}
 \setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -48,4 +37,15 @@ Temp-ViT + PRR                   & \underline{0.893}$^{\dagger}$ & \underline{0.
 \bottomrule
 \end{tabular}%
 }
+\caption{\textbf{Long-form hallucination detection --- sentence level.}
+Same models, datasets, and metric (AUROC) as Table~\ref{tab:main}.
+Sentence label uses AND-on-supported: any unsupported claim flips the
+sentence to hallucinated; sentence score is the max per-token
+uncertainty in the span. Methods are grouped by category: \emph{Confidence},
+\emph{Mechanistic}, and \emph{Ours}. Best score per column in
+\textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
+cells whose data comes from a closely related model version
+(Mistral-7B-Instruct-v0.1 for RAGTruth). Cells with ``---'' indicate
+experiments not yet run.}
+\label{tab:sentence}
 \end{table*}

@@ -1,16 +1,5 @@
 \begin{table}[t]
 \centering
-\caption{\textbf{LLM-labeler agreement with human annotations.}
-Gemma 4 31B is the atomic-fact verifier we use to produce the
-auxiliary span labels $\tilde{y}_m$ on FactScore \citep{min2023} and
-LongFact \citep{wei2024}. We report agreement of the labeler against
-human annotations on a held-out subset of each corpus. Accuracy is
-the share of claims where the labeler's verdict matches the human's;
-Precision / Recall / F1 are computed against ``unsupported'' as the
-positive class (the polarity used for Stage~3 supervision). Cohen's
-$\kappa$ measures chance-corrected agreement. Cells with ``---'' are
-not yet populated.}
-\label{tab:labeler}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -24,4 +13,15 @@ LongFact   & ---      & ---       & ---    & ---& ---              & --- \\
 \bottomrule
 \end{tabular}%
 }
+\caption{\textbf{LLM-labeler agreement with human annotations.}
+Gemma 4 31B is the atomic-fact verifier we use to produce the
+auxiliary span labels $\tilde{y}_m$ on FactScore \citep{min2023} and
+LongFact \citep{wei2024}. We report agreement of the labeler against
+human annotations on a held-out subset of each corpus. Accuracy is
+the share of claims where the labeler's verdict matches the human's;
+Precision / Recall / F1 are computed against ``unsupported'' as the
+positive class (the polarity used for Stage~3 supervision). Cohen's
+$\kappa$ measures chance-corrected agreement. Cells with ``---'' are
+not yet populated.}
+\label{tab:labeler}
 \end{table}

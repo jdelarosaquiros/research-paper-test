@@ -1,17 +1,5 @@
 \begin{table*}[t]
 \centering
-\caption{Short-form uncertainty on the {\bf LM-Polygraph benchmark}
-\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}. We report
-AUROC per dataset over three task families: QA (TriviaQA, CoQA, MMLU,
-GSM8k; binary accuracy), NMT (WMT14 Fr--En, WMT19 De--En; COMET
-binarised at the training-set median), and summarization (XSUM;
-AlignScore binarised at the training-set median). All methods are
-evaluated under greedy decoding with the same generations and the
-same gold quality measure. Methods are grouped by category:
-\emph{Confidence}, \emph{Mechanistic}, and \emph{Ours}. Best score
-per column in \textbf{bold}; second-best \underline{underlined}.
-Cells with ``---'' indicate experiments not yet run.}
-\label{tab:polygraph}
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
@@ -96,4 +84,16 @@ Temp-ViT + PRR
 \bottomrule
 \end{tabular}%
 }
+\caption{Short-form uncertainty on the {\bf LM-Polygraph benchmark}
+\citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph}. We report
+AUROC per dataset over three task families: QA (TriviaQA, CoQA, MMLU,
+GSM8k; binary accuracy), NMT (WMT14 Fr--En, WMT19 De--En; COMET
+binarised at the training-set median), and summarization (XSUM;
+AlignScore binarised at the training-set median). All methods are
+evaluated under greedy decoding with the same generations and the
+same gold quality measure. Methods are grouped by category:
+\emph{Confidence}, \emph{Mechanistic}, and \emph{Ours}. Best score
+per column in \textbf{bold}; second-best \underline{underlined}.
+Cells with ``---'' indicate experiments not yet run.}
+\label{tab:polygraph}
 \end{table*}
