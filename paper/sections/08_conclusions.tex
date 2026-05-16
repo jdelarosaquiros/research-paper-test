@@ -4,9 +4,9 @@ We introduce Temp-ViT, a three-stage temporal uncertainty localization
 framework that closes the long-form / real-time gap for mechanistic
 hallucination detection. The encoder reads the full activation tensor;
 the Mamba-2 temporal head produces per-token logits under weakly
-supervised top-$k$ MIL on per-atom segments; the passage-level
-refinement step turns those logits into per-atom scores that
-discriminate uncertain atoms from confident ones within the same
+supervised top-$k$ MIL on per-claim segments; the passage-level
+refinement step turns those logits into per-claim scores that
+discriminate uncertain claims from confident ones within the same
 response. On RAGTruth, FactScore, and LongFact across three
 instruction-tuned LLMs, the per-token output reaches sentence- and
 claim-level AUROC competitive with pooled tensor baselines while

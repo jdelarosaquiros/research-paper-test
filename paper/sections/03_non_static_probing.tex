@@ -28,7 +28,7 @@ image, Temp-ViT scores local token windows and models their temporal
 evolution.
 
 \paragraph{Why windows instead of isolated tokens?} Hallucination
-labels are usually available at the response, sentence, or atom level,
+labels are usually available at the response, sentence, or claim level,
 not at the exact token-window level. Moreover, the activation signal
 is not confined to the hallucinated token itself.
 Figure~\ref{fig:signal_propagation} measures this directly: on
@@ -76,8 +76,8 @@ to a few windows inside each span without per-window supervision; we
 use Mamba \citep{albertgu2024} for its linear-time long-sequence
 inference.
 Stage 3 trains the head across spans in the full sequence
-rather than on isolated atom segments: fine-tuning on whole passages
-with per-atom auxiliary labels teaches it how the uncertainty
+rather than on isolated claim segments: fine-tuning on whole passages
+with per-claim auxiliary labels teaches it how the uncertainty
 activation signal changes across claim spans, in particular on
 mixed-content windows whose receptive field contains both hallucinated
 and supported tokens (which Stages~1 and 2 never see). We describe each stage in the next section.

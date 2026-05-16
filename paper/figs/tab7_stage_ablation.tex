@@ -3,10 +3,10 @@
 \caption{\textbf{Stage ablation} on RAGTruth (token level). AUROC and
 PRR for the three training stages of Temp-ViT, evaluated on two
 RAGTruth model cells where stage-by-stage activation caches were
-available. Stage 1 is the encoder pre-trained on per-atom segments
+available. Stage 1 is the encoder pre-trained on per-claim segments
 with sequence-level labels; Stage 2 adds the Mamba-2 head with
 top-$k$ MIL aggregation; Stage 3 fine-tunes the head on full passages
-under per-atom auxiliary labels. The headline takeaway: AUROC and PRR
+under per-claim auxiliary labels. The headline takeaway: AUROC and PRR
 both improve monotonically from Stage 1 to Stage 3, with Stage 3
 delivering the largest jump on Llama-2-13b. Mis-7B-Inst-v0.2 stage
 sweeps are pending; cells with ``---'' are not yet populated.}

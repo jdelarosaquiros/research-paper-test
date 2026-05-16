@@ -8,18 +8,18 @@ The long-form setting is reported at three granularities on RAGTruth
 \citep{wei2024}. Table~\ref{tab:main} reports the headline
 token-level numbers; Table~\ref{tab:sentence} reports
 sentence-level verdicts under AND-on-supported aggregation
-(any unsupported atom in a sentence flips the sentence to
+(any unsupported claim in a sentence flips the sentence to
 hallucinated, score is the max per-token uncertainty in the span);
 Table~\ref{tab:claim} reports claim-level verdicts (one row per
-atomic fact). Temp-ViT denotes the full three-stage pipeline; at each
+claim). Temp-ViT denotes the full three-stage pipeline; at each
 granularity the score is the per-token sigmoid of the Stage-3
 detector aggregated over the relevant span. The patterns answer
 (Q\textsubscript{1}): the gap to the Act-ViT pooled tensor baseline
 widens as the granularity narrows (claims), where the head must rank
-atoms against each other within the same passage.
-Table~\ref{tab:long_form_stats} reports the passage- and atom-length
+claims against each other within the same passage.
+Table~\ref{tab:long_form_stats} reports the passage- and claim-length
 distributions that determine which granularity is feasible to
-supervise; LongFact and FactScore atoms are typically much shorter
+supervise; LongFact and FactScore claims are typically much shorter
 than RAGTruth's, which the per-token head benefits from.
 
 \paragraph{Run-time and performance trade-offs.} Temp-ViT scores
@@ -32,7 +32,7 @@ magnitude wall-clock advantage over sequence-level activation-tensor
 baselines that must be re-invoked per claim. Training the
 passage-level refinement stage takes under three hours on a single
 H200 across all three LLMs. Aggressive pooling
-($(L_p, N_p) = (4, 20)$) preserves most of the per-atom AUROC while
+($(L_p, N_p) = (4, 20)$) preserves most of the per-claim AUROC while
 shrinking training to a few minutes.
 
 \input{figs/fig_inference_time}
