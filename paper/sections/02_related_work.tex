@@ -1,32 +1,63 @@
 \section{Related Work}
 
-\paragraph{Uncertainty estimation for LLMs.}
-Output-based estimators score uncertainty from a single sequence via
-token-level probability and predictive entropy
-\citep{malinin2021uncertainty} or from semantic agreement across
-multiple samples \citep{kuhn2023semantic,jiang2024}. Both families
-exhibit systematic length bias even after normalization
-\citep{vashurin2025line} and decouple uncertainty from the model's
-internal state, which motivates mechanistic estimators that
-read hidden representations directly. A first wave of probes treats a
-single layer-token slice as input and separates truth from error in
-the residual stream \citep{kadavath2022,azaria2023}. Subsequent work
-extends this slice along complementary axes that we use as direct
-baselines: ACT-ViT \citep{barshalom2025} pools the full layer-token
-plane as an activation image through a Vision Transformer; fact-probe
-pushes detection to claim-level granularity \citep{han2025factprobe};
-attention-based variants exploit cross-token focus patterns
-\citep{sriramanan2024attention,vazhentsev2025rauq}; and feature-gap
-methods compare representations across contexts to expose epistemic
-uncertainty \citep{bakman2025featuregaps}. The common limitation is
-one score per response (or one forward per claim,
-Figure~\ref{fig:inference_time}), which dilutes the signal as
-responses grow long (Figure~\ref{fig:perf_by_length});
-Figure~\ref{fig:signal_propagation} shows that the relevant activation
-signal extends across tokens on both sides of a hallucinated span,
-the structural fact that motivates our windowed formulation.
+\subsection{Uncertainty estimation for LLMs}
 
-\paragraph{Uncertainty in long-form generation.}
+Confidence-based methods derive uncertainty from token-level
+probabilities of a single generated sequence: sequence probability,
+predictive entropy, mean token entropy
+\citep{malinin2021uncertainty}, and SAR \citep{duan2024shifting},
+which reweights tokens by their relevance.
+\citet{schweighofer2025rethinking} show that the negative
+log-likelihood of the greedy output is a theoretically grounded
+uncertainty measure under the zero-one rule, matching multi-sample
+methods without sampling. A persistent weakness is length bias:
+even nominally length-normalized measures show statistically
+significant linear trends with output length
+\citep{vashurin2025line,santilli2025lengthbias}. Probing-based
+methods inspect hidden representations where truth and error signals
+may appear before they surface in output logits, decoupling
+uncertainty from decoder calibration.
+
+Consistency-based methods generate multiple samples and measure
+semantic agreement. Semantic entropy clusters samples by NLI and
+computes entropy over clusters \citep{kuhn2023semantic}; graph-based
+variants compute degree, eccentricity, or spectral features over
+pairwise similarity matrices \citep{lin2024generating,jiang2024}.
+\citet{nguyen2025snne} use nearest-neighbour entropy that holds up
+on long outputs. The bottleneck is sampling cost: 5 to 20
+generations per query. Recent work cuts this with importance-sampled
+or diversity-penalized proposals
+\citep{aichberger2025sdlg,park2025diversity} and beam-search
+estimators with variance guarantees \citep{fadeeva2026beams}. A
+complementary failure mode is confident incorrectness: when the LLM
+is wrong with high agreement, self-consistency mis-rates it as
+confident, so \citet{hamidieh2026crossmodel} fold in cross-model
+disagreement.
+
+\subsection{Mechanistic hallucination detection}
+
+Hidden states encode signal about factuality
+\citep{marks2023,azaria2023,liu2024,ji2024} and many probes consume
+a single layer-token slice
+\citep{kadavath2022,snyder2024,zou2023,li2024}. ACT-ViT
+\citep{barshalom2025} extends this by reading the full layer-token
+plane as an activation image and pooling it through a Vision
+Transformer; this widens the receptive field but commits to one
+score per response, which dilutes the signal as responses grow long
+(Figure~\ref{fig:perf_by_length}) and forces one forward per token
+when used streaming (Figure~\ref{fig:inference_time}). Fact-probe
+\citep{snyder2024,he2024} pushes detection to claim-level granularity
+but at the cost of one forward per claim. A second axis of work
+probes attention for hallucination patterns
+\citep{li2025uqac,duan2024shifting,he2024}; the cross-axis signal it
+captures is complementary to the layer-token plane that we operate
+on. Figure~\ref{fig:signal_propagation} shows that the relevant
+activation signal extends across tokens on both sides of a
+hallucinated span, the structural fact that motivates our windowed
+formulation.
+
+\subsection{Uncertainty in long-form generation}
+
 Long responses interleave correct and uncertain content, which
 single-score detectors cannot localize. Decomposition is the standard
 remedy: at the claim level via atomic-fact extraction
@@ -41,17 +72,6 @@ when read in isolation. We make the token level usable in practice by
 sharing computation across a window of tokens rather than scoring each
 in isolation, and by training under weakly supervised temporal
 localization.
-
-\paragraph{Weakly-supervised temporal localization.}
-Our localization mechanism follows WTAL in video understanding, where
-only video-level labels are available and per-frame relevance must be
-inferred. \citet{pilhyeonlee2021} cast WTAL as uncertainty modelling,
-treating background frames as out-of-distribution and aggregating
-per-frame scores with multiple-instance learning. The analogy with
-hallucination detection is direct: only response-level labels are
-available, yet per-window uncertainty must be inferred. We treat
-generated tokens as the temporal axis and aggregate per-window logits
-with top-$k$ MIL.
 
 \input{figs/fig_perf_by_length}
 \input{figs/fig_inference_time}
