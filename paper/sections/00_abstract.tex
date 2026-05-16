@@ -3,7 +3,7 @@ Detecting hallucinations in long-form LLM outputs requires uncertainty
 estimates that are both fine-grained and efficient. Existing
 sampling-based methods capture uncertainty but are too expensive for
 long generations, while recent mechanistic methods use hidden states
-efficiently but often probe isolated layer--token positions or pool
+efficiently but often probe isolated layer-token positions or pool
 over long sequences, losing token-level signals. We introduce a temporal uncertainty localization framework
 that predicts token-level hallucination uncertainty from hidden-state
 activations. Our method analyzes activation patterns across all

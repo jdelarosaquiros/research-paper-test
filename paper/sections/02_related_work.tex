@@ -7,12 +7,12 @@ token-level probability and predictive entropy
 multiple samples \citep{kuhn2023semantic,jiang2024}. Both families
 exhibit systematic length bias even after normalization
 \citep{vashurin2025line} and decouple uncertainty from the model's
-internal state, which motivates \emph{mechanistic} estimators that
+internal state, which motivates mechanistic estimators that
 read hidden representations directly. A first wave of probes treats a
-single layer--token slice as input and separates truth from error in
+single layer-token slice as input and separates truth from error in
 the residual stream \citep{kadavath2022,azaria2023}. Subsequent work
 extends this slice along complementary axes that we use as direct
-baselines: ACT-ViT \citep{barshalom2025} pools the full layer--token
+baselines: ACT-ViT \citep{barshalom2025} pools the full layer-token
 plane as an activation image through a Vision Transformer; fact-probe
 pushes detection to claim-level granularity \citep{han2025factprobe};
 attention-based variants exploit cross-token focus patterns
@@ -23,7 +23,7 @@ one score per response (or one forward per claim,
 Figure~\ref{fig:inference_time}), which dilutes the signal as
 responses grow long (Figure~\ref{fig:perf_by_length});
 Figure~\ref{fig:signal_propagation} shows that the relevant activation
-signal extends across tokens on both sides of a hallucinated span --
+signal extends across tokens on both sides of a hallucinated span,
 the structural fact that motivates our windowed formulation.
 
 \paragraph{Uncertainty in long-form generation.}
@@ -36,7 +36,7 @@ self-consistency per sentence \citep{manakul2023,band2024}; and at
 the token level via per-token probes \citep{he2024,su2024}. The
 trade-off is real: claim and sentence pipelines depend on an external
 extractor and one model call per unit, while token-level methods are
-the only ones compatible with real-time generation -- though noisier
+the only ones compatible with real-time generation, though noisier
 when read in isolation. We make the token level usable in practice by
 sharing computation across a window of tokens rather than scoring each
 in isolation, and by training under weakly supervised temporal

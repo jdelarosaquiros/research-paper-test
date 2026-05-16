@@ -4,11 +4,11 @@
 The long-form setting is reported at three granularities on RAGTruth
 \citep{niu2024ragtruth}, FactScore \citep{min2023}, and LongFact
 \citep{wei2024}. Table~\ref{tab:main} reports the headline
-\emph{token-level} numbers; Table~\ref{tab:sentence} reports
-\emph{sentence-level} verdicts under AND-on-supported aggregation
+token-level numbers; Table~\ref{tab:sentence} reports
+sentence-level verdicts under AND-on-supported aggregation
 (any unsupported atom in a sentence flips the sentence to
 hallucinated, score is the max per-token uncertainty in the span);
-Table~\ref{tab:claim} reports \emph{claim-level} verdicts (one row per
+Table~\ref{tab:claim} reports claim-level verdicts (one row per
 atomic fact). Temp-ViT denotes the full three-stage pipeline; at each
 granularity the score is the per-token sigmoid of the Stage-3
 detector aggregated over the relevant span. The patterns answer

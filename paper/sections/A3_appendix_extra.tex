@@ -6,16 +6,16 @@ Our pooling algorithm is presented in Algorithm~1 below.
 \begin{figure}[h]
 \centering
 \fbox{\begin{minipage}{0.92\linewidth}
-\textbf{Algorithm 1: Pooling}\\[2pt]
-\textbf{Require:} Tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, target sizes $L_p, N_p$\\
-\textbf{Ensure:} Tensor $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
+Algorithm 1: Pooling\\[2pt]
+Require: Tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, target sizes $L_p, N_p$\\
+Ensure: Tensor $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
 1: $A \leftarrow \mathrm{permute}(A, [D_M, L_M, N])$\\
 2: Pad $A$ so that $L_M$ and $N$ are divisible by $L_p$ and $N_p$\\
 3: Compute patch sizes: $f_L = \frac{L_{\text{pad}}}{L_p}$, $f_N = \frac{N_{\text{pad}}}{N_p}$\\
 4: Apply pooling:\\
 \hspace*{2em} $A \leftarrow \mathrm{F.max\_pool2d}(A, \text{kernel\_size} = (f_L, f_N))$\\
 5: $A \leftarrow \mathrm{permute}(A, [L_p, N_p, D_M])$\\
-6: \textbf{return} $A$
+6: return $A$
 \end{minipage}}
 \end{figure}
 
@@ -58,15 +58,15 @@ where $\sigma$ is the permutation induced by $P$.
 This illustrative example remarks the relevance of resorting to LLM-specific LA modules, as opposed to using a single shared linear adapter. Although padding can side-step the dimensionality
 problem, such a single adapter would be required to implicitly learn (to be invariant to) all feature
 permutations that may potentially arise ($D!$). While we note that principled approaches for handling
-such symmetries exist -- such as designing layers that are invariant to feature permutations by design
--- we consider these less relevant to us given the limited number of considered LLMs. Exploring
+such symmetries exist (such as designing layers that are invariant to feature permutations by design),
+we consider these less relevant to us given the limited number of considered LLMs. Exploring
 symmetry-aware architectures still remains a promising direction we envision to explore in future
 endeavors.
 
 \paragraph{Extended Analysis to Standard Transformers Activations.} The implications extend naturally
 to a standard transformer that includes residual connections and batch normalization. Residual
 connections do not affect the analysis, since in our analysis the permutation symmetry is applies
-uniformly across layers---the same permutation is used for all weight matrices, so the residual
+uniformly across layers: the same permutation is used for all weight matrices, so the residual
 addition remains consistent with our analysis. Batch normalization also preserves this symmetry, as
 it is a permutation-equivariant operation: applying a permutation to the input features results in a
 correspondingly permuted output.

@@ -1,20 +1,22 @@
 \section{Introduction}
 
 \paragraph{Why this matters.}
-LLMs hallucinate -- they generate plausible but unsupported claims --
-and silently injecting these errors into long-form outputs blocks
-high-stakes deployment. A useful detector must say not only
-\emph{whether} a response contains hallucinations but \emph{where},
-so a downstream system can correct, abstain, or verify the suspicious
-spans. Existing detectors miss this on at least one of cost,
-granularity, and supervision.
+Despite the significant improvements on reducing hallucinations of LLMs, they still 
+are subceptible to it, especially on long-form answers where they prioritize fluency
+over expressing uncertainty. These hallucinations reduce their reliability
+because the LLM may sound confident when it isn't. We can detect these type of
+hallucinations using uncertianty quantification methods. Some of these methods include
+prediciting its uncertain based on the token probablities, sampling multiple responses
+and verifying their consistensy, asking itself, and analyzing the internals
+of the LLM to correlate them with uncertain behavior. Existing detectors miss this on at least one of cost,
+granularity, and performace over long answers.
 
 \paragraph{What current methods leave open.}
-External-tool detectors -- judging with another LLM, sampling many
-responses, or retrieving evidence -- are accurate but slow and
-expensive. \emph{Mechanistic} methods avoid extra LLM calls by
+External-tool detectors (judging with another LLM, sampling many
+responses, or retrieving evidence) are accurate but slow and
+expensive. Mechanistic methods avoid extra LLM calls by
 inspecting the hidden states of the generating model, but each family
-hits a different wall. Probes trained on a fixed layer--token
+hits a different wall. Probes trained on a fixed layer-token
 position are cheap (one forward pass) yet miss signal that moves
 across layers, tokens, tasks, and models. Activation-tensor methods
 like ACT-ViT consume the full hidden tensor
@@ -22,11 +24,11 @@ $A \in \mathbb{R}^{L \times T \times D}$ ($L$ layers, $T$ generated
 tokens, $D$ hidden dimensions) and capture distributed signal, but
 their fixed pooled shape dilutes information as $T$ grows; methods
 that avoid this loss pay prohibitive inference cost. None of these
-output \emph{where} in the response the uncertainty lives. The
-natural workaround -- extract atomic claims, verify each, and
-broadcast the verdict to every token of the span -- yields doubly
+output where in the response the uncertainty lives. The
+natural workaround, extracting atomic claims, verifying each, and
+broadcasting the verdict to every token of the span, yields doubly
 noisy supervision: spans contain non-hallucinated tokens, and the
-predictive activation signal often appears \emph{before} the false
+predictive activation signal often appears before the false
 claim is generated.
 
 \input{figs/fig1_overview}
@@ -36,11 +38,11 @@ We recast mechanistic hallucination detection as weakly supervised
 temporal localization (WSTL), borrowing from video understanding
 \citep{pilhyeonlee2021}: a video model localizes an action from
 clip-level labels without per-frame supervision. We treat the
-activation tensor $A$ as a \emph{video} over the token axis -- each
+activation tensor $A$ as a video over the token axis, with each
 token a frame whose height is the layer axis and whose channels are
-the hidden dimension, and a length-$W$ \emph{window} the local
+the hidden dimension, and a length-$W$ window the local
 context the model scores. On this representation we build
-\textbf{Temp-ViT}: a ViT encoder over the layer--token plane paired
+Temp-ViT: a ViT encoder over the layer-token plane paired
 with a Mamba-2 temporal head \citep{albertgu2024}, whose linear-time
 inference makes the method viable for real-time long-form generation.
 Concretely we contribute:
@@ -52,7 +54,9 @@ Concretely we contribute:
 
     \item We propose Temp-ViT, a windowed uncertainty quantification model
     that captures uncertainty signals from the hidden-state activations across layers and tokens
-    with a ViT encoder and a temporal head. To train this model, we introduce a
+    with a ViT encoder and a temporal head. 
+    
+    \item To train this model, we introduce a
     weakly supervised training framework with three stages. Stage~1 pretrains the encoder
     on detecting uncertainty signals of labeled atom spans. Stage~2 uses weakly supervised
     training to teach Temp-ViT to localize the uncertainty signal to a few windows of tokens

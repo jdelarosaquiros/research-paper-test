@@ -6,7 +6,7 @@ Stage~1 trains a sequence encoder $E_\theta$ that maps a full
 activation tensor $A \in \mathbb{R}^{L \times T \times D}$ to a
 sequence-level logit. Stage~2 freezes $E_\theta$, applies it to
 centered length-$W$ token windows $\{A^{(t)}\}_{t=1}^{T}$, and trains
-a \emph{Mamba-2 temporal head} \citep{albertgu2024} that emits one
+a Mamba-2 temporal head \citep{albertgu2024} that emits one
 logit $\hat{z}^{(t)}$ per window. Stage~3 keeps the encoder frozen,
 initializes the head from Stage~2, and refines it on whole passages
 under per-atom auxiliary supervision.
@@ -14,9 +14,9 @@ under per-atom auxiliary supervision.
 \subsection{Stage 1: Encoder}
 \label{sec:act_vit_subsec}
 
-The encoder has three components. \textbf{Pool} applies adaptive
+The encoder has three components. Pool applies adaptive
 max-pooling over $(L, T)$ to a target spatial size $(L_p, T_p)$,
-yielding $A_p \in \mathbb{R}^{L_p \times T_p \times D}$. \textbf{LA}
+yielding $A_p \in \mathbb{R}^{L_p \times T_p \times D}$. LA
 is a per-LLM linear adapter $LA_M : \mathbb{R}^D \to \mathbb{R}^{D'}$
 that aligns hidden dimensions across models in $\mathcal{M}$:
 \begin{equation}
@@ -24,7 +24,7 @@ that aligns hidden dimensions across models in $\mathcal{M}$:
 \end{equation}
 motivated by recent evidence that LLM representations can be put in
 approximate correspondence by linear maps
-\citep{huh2024,moschella2022,kornblith2019}. \textbf{ViT-B} treats the
+\citep{huh2024,moschella2022,kornblith2019}. ViT-B treats the
 $(L_p \times T_p)$ plane as an image, splits it into non-overlapping
 $(p_H, p_W)$ patches, adds learnable intra-patch positional encodings,
 and processes the patch sequence with a Transformer. A linear head
@@ -49,7 +49,7 @@ Mamba-2's linear-time selective state-space recurrence makes Stage 2
 viable for real-time streaming, where each new token requires only a
 constant-memory update.
 
-\textbf{Top-$k$ MIL.} Because only sequence-level labels are
+Because only sequence-level labels are
 available, we train via top-$k$ MIL: after masking padded positions,
 take the $k$ largest per-window logits and average them into one
 sequence-level logit:
@@ -65,10 +65,10 @@ each span without window-level labels.
 \subsection{Stage 3: Passage-level Refinement with Per-atom Supervision}
 \label{sec:stage3}
 
-Stages 1--2 see one atom segment at a time and never observe how the
-uncertainty activation signal changes \emph{across} a claim span. In
-particular, mixed-content windows -- windows whose receptive field
-straddles both hallucinated and supported tokens -- combine two signal
+Stages 1 and 2 see one atom segment at a time and never observe how the
+uncertainty activation signal changes across a claim span. In
+particular, mixed-content windows (windows whose receptive field
+straddles both hallucinated and supported tokens) combine two signal
 regimes that single-atom training cannot disentangle. Stage 3 fixes
 this by training the head across spans in the full sequence rather
 than on isolated atom segments: with the encoder frozen, the head is
@@ -76,12 +76,12 @@ fine-tuned on whole passages with per-atom auxiliary labels so it
 learns the spatial profile of the signal within and across claim
 spans.
 
-\textbf{Inputs.} A passage tensor
+Stage 3 takes as input a passage tensor
 $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom spans
 $\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
 $\tilde{y}_m \in \{0,1\}$ from atomic-fact verification.
 
-\textbf{Per-atom score.} The Stage-2 detector emits per-token logits
+The Stage-2 detector emits per-token logits
 $\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We smooth
 them along the token axis with a centered length-$W$ softmax-weighted
 window,
@@ -100,10 +100,10 @@ $k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
 $\kappa \in (0, 1]$. The Stage-3 loss is a per-atom BCE,
 $\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$,
 which forces the head to learn how the per-token signal varies within
-and across claim spans -- including on mixed-content windows -- rather
+and across claim spans, including on mixed-content windows, rather
 than score each atom in isolation.
 
-\textbf{Inference.} A single forward through the Stage-3 detector
+At inference time, a single forward through the Stage-3 detector
 yields the per-token logits over the whole passage, from which we
 read off (i) the per-token / per-window scores
 $\{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ for localization; (ii) a

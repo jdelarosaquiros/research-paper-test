@@ -2,20 +2,20 @@
 \label{sec:experiments}
 
 \paragraph{Setup.} We evaluate Temp-ViT in two complementary settings
-that the literature treats separately. \textbf{(a) Sentence-level
-hallucination detection.} Given a long-form response decomposed into
+that the literature treats separately. The first setting is sentence-level
+hallucination detection: given a long-form response decomposed into
 claim- or sentence-level units, the task is to assign an uncertainty
 score to each unit that aligns with a per-unit hallucination label
 obtained from atomic-fact verification. Table~\ref{tab:main} reports
-results on the three corpora that anchor this task in recent work --
+results on the three corpora that anchor this task in recent work:
 RAGTruth \citep{niu2024ragtruth}, FactScore \citep{min2023}, and
-LongFact \citep{wei2024}. \textbf{(b) Sequence-level uncertainty on
-LM-Polygraph.} Given a whole response, the task is to assign a single
+LongFact \citep{wei2024}. The second setting is sequence-level uncertainty on
+LM-Polygraph: given a whole response, the task is to assign a single
 uncertainty score whose ranking of responses aligns with response-level
 quality. Table~\ref{tab:polygraph} reports results on the LM-Polygraph
 benchmark \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph},
 covering question answering (QA: TriviaQA, CoQA, MMLU, GSM8k),
-neural machine translation (NMT: WMT14 Fr--En, WMT19 De--En), and
+neural machine translation (NMT: WMT14 Fr-En, WMT19 De-En), and
 summarization (SUM: XSUM). Both setups are run on the LM-Polygraph
 infrastructure so that the baselines below share an identical
 generation, sampling, and scoring pipeline.
@@ -40,11 +40,11 @@ $A \in \mathbb{R}^{L \times T \times D}$ that drives our method
 
 \paragraph{Datasets.} For sentence-level hallucination detection
 (Table~\ref{tab:main}) we use the standard splits of
-\textbf{RAGTruth} \citep{niu2024ragtruth} -- a retrieval-augmented
+RAGTruth \citep{niu2024ragtruth}, a retrieval-augmented
 generation corpus with span-level hallucination annotations across
 QA, summarization, and data-to-text prompts;
-\textbf{FactScore} \citep{min2023} -- atomic-fact-verified biography
-generations; and \textbf{LongFact} \citep{wei2024} -- long-form
+FactScore \citep{min2023}, atomic-fact-verified biography
+generations; and LongFact \citep{wei2024}, long-form
 factuality prompts paired with the SAFE atomic-fact verifier of the
 same paper. For each corpus we follow the original protocol to obtain
 per-claim or per-sentence support labels, and use them as the
@@ -56,42 +56,42 @@ are accuracy for short-form QA, AlignScore for long-form QA and
 summarization, and COMET for translation, exactly as in the reference.
 
 \paragraph{Baselines.} We organize baselines into three groups that
-mirror the row bands of Tables~\ref{tab:main}--\ref{tab:claim} and
+mirror the row bands of Tables~\ref{tab:main} and \ref{tab:claim} and
 Table~\ref{tab:polygraph}. All baselines are run through the
 LM-Polygraph evaluation infrastructure
 \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} on identical
 generations and gold quality measures; sequence-level scores are
 re-applied per claim, per sentence, or per token when needed.
 
-\emph{Confidence} baselines score uncertainty from the model's
+Confidence baselines score uncertainty from the model's
 next-token distribution over generated tokens:
-\textbf{Maximum Sequence Probability} (the LM-Polygraph default),
-\textbf{Perplexity} \citep{fomicheva2020unsupervised},
-\textbf{Mean Token Entropy} \citep{fomicheva2020unsupervised},
-\textbf{Self-Certainty} \citep{kang2025selfcertainty},
-\textbf{TokenSAR} \citep{duan2023},
-\textbf{Mean Pointwise Mutual Information} \citep{takayama2019pmi},
-and \textbf{BoostedProbSequence} \citep{dinh2025boostedprob}.
+Maximum Sequence Probability (the LM-Polygraph default),
+Perplexity \citep{fomicheva2020unsupervised},
+Mean Token Entropy \citep{fomicheva2020unsupervised},
+Self-Certainty \citep{kang2025selfcertainty},
+TokenSAR \citep{duan2023},
+Mean Pointwise Mutual Information \citep{takayama2019pmi},
+and BoostedProbSequence \citep{dinh2025boostedprob}.
 
-\emph{Mechanistic} baselines read model internals (hidden states or
+Mechanistic baselines read model internals (hidden states or
 attention patterns) instead of relying solely on the output
-distribution: \textbf{Contextualized Sequence Likelihood (CSL)}
+distribution: Contextualized Sequence Likelihood (CSL)
 \citep{lin2024csl},
-\textbf{Attention Score} \citep{sriramanan2024attention},
-\textbf{Recurrent Attention-based Uncertainty Quantification (RAUQ)}
+Attention Score \citep{sriramanan2024attention},
+Recurrent Attention-based Uncertainty Quantification (RAUQ)
 \citep{vazhentsev2025rauq},
-\textbf{Fact-Probe} \citep{han2025factprobe},
-\textbf{Feature-Gaps} \citep{bakman2025featuregaps}, and
-\textbf{Act-ViT} \citep{barshalom2025}, the pooled-tensor sequence
+Fact-Probe \citep{han2025factprobe},
+Feature-Gaps \citep{bakman2025featuregaps}, and
+Act-ViT \citep{barshalom2025}, the pooled-tensor sequence
 encoder our architecture builds on.
 
-\emph{Ours} reports Temp-ViT in two variants:
-\textbf{Temp-ViT~(Encoder~Only)} -- the Stage-2 detector
+Ours reports Temp-ViT in two variants:
+Temp-ViT~(Encoder~Only), the Stage-2 detector
 (Section~\ref{sec:temporal_head}) used as a stand-alone per-window
 scorer aggregated by top-$k$ MIL, which is the natural comparison for
-Table~\ref{tab:polygraph}; and \textbf{Temp-ViT} -- the full
+Table~\ref{tab:polygraph}; and Temp-ViT, the full
 three-stage pipeline (Section~\ref{sec:stage3}) whose per-atom output
-is reported in Tables~\ref{tab:main}--\ref{tab:claim}.
+is reported in Tables~\ref{tab:main} and \ref{tab:claim}.
 
 \paragraph{Evaluation Measure.} As the primary metric in both tables
 we report the Prediction Rejection Ratio

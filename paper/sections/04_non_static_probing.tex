@@ -3,7 +3,7 @@
 
 Mechanistic detectors face a tension between coverage and scalability.
 Static probing classifiers \citep{azaria2023,orgad2024} operate on a
-single layer--token position and ignore signal elsewhere in $A$; the
+single layer-token position and ignore signal elsewhere in $A$; the
 optimal position varies across samples, datasets, and LLMs, often
 requiring an external search \citep{orgad2024}. Methods that process
 the whole tensor capture distributed signal but are ill-suited to
@@ -11,13 +11,13 @@ real-time long-form generation: some pool the token axis into a fixed
 size, diluting signal as responses grow; others remain accurate at
 long context but require one forward per token. Even when a
 full-tensor method does scale, a single sequence-level score does not
-say \emph{where} the suspicious activations lie -- a poor fit for
+say where the suspicious activations lie, a poor fit for
 responses where most tokens are correct and only a few are
 problematic.
 
 \paragraph{Signals are distributed and LLM-specific.} Following
 \citet{orgad2024} on Mis-7B \citep{albertqjiang2023}, we train per
-layer--token logistic regression classifiers and visualize ROC-AUC
+layer-token logistic regression classifiers and visualize ROC-AUC
 heatmaps. Tokens are restricted to
 $\mathcal{N} = \{0, 1, 2, -3, -2, -1\}$ (first/last three positions).
 Figure~\ref{fig:heatmaps} shows the heatmap on Movies
@@ -26,7 +26,7 @@ Predictive signals spread across many $(L, T)$ cells, but the most
 informative positions shift across LLMs: middle layers for Mis-7B and
 LlaMa-8B, late layers for Qwen-7B. The best position for Mis-7B,
 $(14, 0)$, transfers to LlaMa-8B and Qwen-7B with $\approx 7\%$ AUC
-loss -- no fixed slice suffices.
+loss; no fixed slice suffices.
 
 \input{figs/fig2_heatmaps}
 
@@ -56,7 +56,7 @@ regions whose activations most contribute to the prediction.
 typically available only at the response level. Extracting atomic
 claims and broadcasting their verification result to every token of
 the span yields noisy token labels: spans contain non-hallucinated
-tokens, and the relevant activation signal may appear \emph{before}
+tokens, and the relevant activation signal may appear before
 the false claim is even generated.
 Figure~\ref{fig:signal_propagation} measures this directly: on
 RAGTruth, a linear probe's ROC-AUC ramps from chance at offset $-24$
@@ -68,11 +68,11 @@ supervision and rely on weak supervision to localize within.
 \paragraph{Weakly supervised temporal localization.} ACT-ViT shows
 that the $(L,T)$ plane has spatial structure amenable to visual
 encoders, but a single fixed-size image fits poorly when $T$ ranges
-from a handful to thousands of tokens. We frame $A$ as a \emph{video}
+from a handful to thousands of tokens. We frame $A$ as a video
 over the token axis and borrow WSTL from video understanding
 \citep{pilhyeonlee2021}. Each token is a frame whose height is the
 layer axis and whose channels are the hidden dimension; a
-\emph{window} aggregates $W$ consecutive tokens. The neighbourhood
+window aggregates $W$ consecutive tokens. The neighbourhood
 structure of Figure~\ref{fig:signal_propagation} is exactly what a
 window exploits: surrounding tokens emit usable signal about whether
 a target token is hallucinated, so the model can localize spans of
@@ -81,16 +81,16 @@ uncertainty without window-level labels.
 \paragraph{Three-stage training.} Learning sequence-level uncertainty
 and window-level localization jointly under weak supervision is a
 hard optimization. We decompose training into three stages.
-\textbf{Stage 1} trains the encoder on full activation tensors with
-sequence-level labels. \textbf{Stage 2} freezes the encoder and trains a Mamba-2 temporal
+Stage 1 trains the encoder on full activation tensors with
+sequence-level labels. Stage 2 freezes the encoder and trains a Mamba-2 temporal
 head over per-window encodings via top-$k$ MIL against the same
 sequence label, so the head learns to localize the uncertainty signal
 to a few windows inside each span without per-window supervision; we
 use Mamba \citep{albertgu2024} for its linear-time long-sequence
 inference.
-\textbf{Stage 3} trains the head across spans in the full sequence
+Stage 3 trains the head across spans in the full sequence
 rather than on isolated atom segments: fine-tuning on whole passages
 with per-atom auxiliary labels teaches it how the uncertainty
 activation signal changes across claim spans, in particular on
 mixed-content windows whose receptive field contains both hallucinated
-and supported tokens (which Stages~1--2 never see). We describe each stage in the next section.
+and supported tokens (which Stages~1 and 2 never see). We describe each stage in the next section.
