@@ -64,10 +64,15 @@ the model discover suspicious spans without window-level labels.
 \subsection{Stage 3: Passage-level Refinement with Per-atom Supervision}
 \label{sec:stage3}
 
-Stages 1--2 see one atom segment at a time and never learn to
-discriminate uncertain atoms from confident ones that co-occur in a
-passage. Stage 3 fixes this by fine-tuning the head on whole passages
-with per-atom auxiliary labels, while the encoder stays frozen.
+Stages 1--2 see one atom segment at a time and never observe how the
+uncertainty activation signal changes \emph{across} a claim span. In
+particular, mixed-content windows -- windows whose receptive field
+straddles both hallucinated and supported tokens -- combine two signal
+regimes that single-atom training cannot disentangle. Stage 3 fixes
+this by fine-tuning the head on whole passages with per-atom auxiliary
+labels (the encoder stays frozen), so the head learns the spatial
+profile of the signal within and across claim spans rather than a
+single response-level summary.
 
 \textbf{Inputs.} A passage tensor
 $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ atom spans
@@ -92,8 +97,9 @@ in-span smoothed logits and
 $k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
 $\kappa \in (0, 1]$. The Stage-3 loss is a per-atom BCE,
 $\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$,
-which forces the head to rank atoms against each other under the same
-encoder rather than score each in isolation.
+which forces the head to learn how the per-token signal varies within
+and across claim spans -- including on mixed-content windows -- rather
+than score each atom in isolation.
 
 \textbf{Inference.} A single forward through the Stage-3 detector
 yields the per-token logits over the whole passage, from which we

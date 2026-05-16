@@ -53,11 +53,14 @@ length-$W$ token windows, and trains a Mamba-based temporal head
 \citep{albertgu2024} via top-$k$ multiple-instance learning: the
 $k$ most uncertain window logits are averaged into a sequence-level
 prediction and supervised against the atom-level label. Stages 1--2
-see one atom at a time and never have to separate uncertain atoms
-from confident neighbours in a passage. \textbf{Stage 3} closes this
-gap: with the encoder frozen, the head is fine-tuned on whole
-passages, smoothing the per-token logits along the token axis and
-aggregating them within each atom span into a per-atom score
+see one atom segment at a time and never observe how the uncertainty
+activation signal changes \emph{across} a claim span -- in particular,
+windows whose receptive field straddles both hallucinated and
+supported tokens. \textbf{Stage 3} closes this gap: with the encoder
+frozen, the head is fine-tuned on whole passages so it learns the
+temporal profile of the activation signal within and across claim
+spans, by smoothing per-token logits along the token axis and
+aggregating them inside each atom span into a per-atom score
 supervised by per-atom binary cross-entropy. Mamba is used for its
 linear-time inference, making the method viable for real-time
 long-form generation.
