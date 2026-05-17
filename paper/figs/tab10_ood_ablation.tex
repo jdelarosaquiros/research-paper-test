@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\linewidth}{%
+\begin{tabular}{l cc cc cc}
+\toprule
+ & \multicolumn{2}{c}{Mis-7B-Inst} & \multicolumn{2}{c}{LlaMa-2-13B} & \multicolumn{2}{c}{LlaMa-70B-Inst} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Training data & AUROC$\uparrow$ & PRR$\uparrow$ & AUROC$\uparrow$ & PRR$\uparrow$ & AUROC$\uparrow$ & PRR$\uparrow$ \\
+\midrule
+Baseline (all RAGTruth task types) & --- & --- & --- & --- & --- & --- \\
+OOD (QA + summarization)           & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{In-distribution vs out-of-distribution ablation.}
+Both rows are evaluated on the data-to-text subset of RAGTruth (token
+level). \emph{Baseline} trains Temp-ViT on all three RAGTruth task
+types (QA, summarization, data-to-text); \emph{OOD} holds the
+data-to-text subset out at training time and trains only on QA and
+summarization. ``---'' = not yet run.}
+\label{tab:ood}
+\end{table}
