@@ -44,8 +44,8 @@ a single layer-token slice
 plane as an activation image and pooling it through a Vision
 Transformer; this widens the receptive field but commits to one
 score per response, which dilutes the signal as responses grow long
-(Figure~\ref{fig:perf_by_length}) and forces one forward per token
-when used streaming (Figure~\ref{fig:inference_time}). Fact-probe
+(Appendix Figure~\ref{fig:perf_by_length}) and forces one forward per
+token when used streaming (Figure~\ref{fig:inference_time}). Fact-probe
 \citep{snyder2024,he2024} pushes detection to claim-level granularity
 but at the cost of one forward per claim. A second axis of work
 probes attention for hallucination patterns
@@ -75,5 +75,3 @@ when read in isolation. We make the token level usable in practice by
 sharing computation across a window of tokens rather than scoring each
 in isolation, and by training under weakly supervised temporal
 localization.
-
-\input{figs/fig_perf_by_length}

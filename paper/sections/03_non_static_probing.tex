@@ -16,8 +16,9 @@ responses where most tokens are correct and only a few are
 problematic.
 
 \paragraph{Tensor methods degrade with response length.}
-Figure~\ref{fig:perf_by_length} reports per-token AUROC on LongFact as
-the input prefix length $T$ grows. ACT-ViT with a short pooled token
+Appendix Figure~\ref{fig:perf_by_length} reports per-token AUROC on
+LongFact as the input prefix length $T$ grows. ACT-ViT with a short
+pooled token
 axis performs well only for short prefixes, but its performance drops
 as more generated tokens are compressed into the same fixed-size
 representation; widening the pooled axis partially reduces this
@@ -41,6 +42,7 @@ labels as weak supervision and learn to localize uncertainty through
 window-level temporal modeling.
 
 \input{figs/fig_signal_propagation}
+\input{figs/fig1_overview}
 
 \paragraph{Additional probe evidence.} Per layer-token probes also
 show that the most informative hidden-state positions are distributed
