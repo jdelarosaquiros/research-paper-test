@@ -37,20 +37,15 @@ Temp-ViT + PRR                   & \underline{0.863}$^{\dagger}$ & 0.668 & \unde
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{Long-form hallucination detection --- token level.} We
-report AUROC per (LLM, dataset) cell. Models: Mistral-7B-Instruct-v0.2
-(Mis-7B-Inst), Llama-2-13B-chat-hf (LlaMa-13B-Inst),
-Llama-3.1-70B-Instruct (LlaMa-70B-Inst). Datasets: RAGTruth
-\citep{niu2024ragtruth}, FactScore \citep{min2023}, LongFact
-\citep{wei2024}. Methods are grouped by category: \emph{Confidence}
-(sequence-level probability / entropy baselines), \emph{Mechanistic}
-(model-internal signal baselines), and \emph{Ours}. Per-token gold
-mask built from claim spans via the overlap-resolution rule of
-Appendix~\ref{ablation:overlap_rule} (longer-span-wins on
-containment, earlier-span-wins on partial overlap; uncovered tokens
-dropped). Best score per column in \textbf{bold}, second-best
-\underline{underlined}. $^\dagger$ marks cells whose data comes from
-a closely related model version (Mistral-7B-Instruct-v0.1 for
-RAGTruth). Cells with ``---'' indicate experiments not yet run.}
+\caption{\textbf{Long-form hallucination detection --- token level.}
+AUROC per (LLM, dataset) cell on RAGTruth \citep{niu2024ragtruth},
+FactScore \citep{min2023}, and LongFact \citep{wei2024}. Method
+groupings (\emph{Confidence}, \emph{Mechanistic}, \emph{Ours}) follow
+Section~\ref{sec:baselines}; the per-token gold-mask
+overlap-resolution rule is described in
+Appendix~\ref{ablation:overlap_rule}. Best score per column in
+\textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
+cells whose data comes from Mistral-7B-Instruct-v0.1 (RAGTruth).
+``---'' = not yet run.}
 \label{tab:main}
 \end{table*}

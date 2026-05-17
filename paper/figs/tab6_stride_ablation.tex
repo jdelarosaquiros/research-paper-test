@@ -26,14 +26,11 @@ No overlap  & \textbf{0.915} & 0.790 & 0.663 & 0.426 & \textbf{0.806} & 0.418 \\
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{Stride ablation.} Sentence-level AUROC and PRR on the
-three long-form datasets with Llama-2-13B-chat-hf, sweeping the window
-stride. Stride 1 (the default) emits one window per generated token;
-larger strides skip tokens and reduce per-token inference cost at the
-price of resolution. ``No overlap'' uses stride $=$ window size
-($=12$), so adjacent windows are disjoint. Stage 1 encoder is
-stride-agnostic and reused; Stage 2 and Stage 3 are retrained per
-stride with PRR-based ckpt selection. Best stride per (method,
-dataset, metric) in \textbf{bold}.}
+\caption{\textbf{Stride ablation.} Sentence-level AUROC and PRR on
+the three long-form datasets with Llama-2-13B-chat-hf, sweeping the
+window stride (see Section~\ref{sec:ablations}). The Stage~1
+encoder is stride-agnostic and reused; Stages~2 and 3 are retrained
+per stride with PRR-based checkpoint selection. Best stride per
+(method, dataset, metric) in \textbf{bold}.}
 \label{tab:stride}
 \end{table}

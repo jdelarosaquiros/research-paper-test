@@ -37,15 +37,12 @@ Temp-ViT + PRR                   & \underline{0.881}$^{\dagger}$ & \underline{0.
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{Long-form hallucination detection --- claim level.}
-Same models, datasets, and metric (AUROC) as Table~\ref{tab:main}.
-Each row scores one claim from the sidecar; the claim score is
-the max per-token uncertainty over the claim's token span (no
-AND-aggregation across same-sentence claims). Methods are grouped by
-category: \emph{Confidence}, \emph{Mechanistic}, and \emph{Ours}.
-Best score per column in \textbf{bold}, second-best
-\underline{underlined}. $^\dagger$ marks cells whose data comes from
-a closely related model version (Mistral-7B-Instruct-v0.1 for
-RAGTruth). Cells with ``---'' indicate experiments not yet run.}
+\caption{\textbf{Long-form hallucination detection --- claim
+level.} Same setup as Table~\ref{tab:main}; each row scores one
+sidecar claim with no AND-aggregation across same-sentence claims
+(Section~\ref{sec:results_aggregated}). Groupings follow
+Section~\ref{sec:baselines}. Best in \textbf{bold}, second-best
+\underline{underlined}. $^\dagger$ marks Mistral-7B-Instruct-v0.1
+cells. ``---'' = not yet run.}
 \label{tab:claim}
 \end{table*}
