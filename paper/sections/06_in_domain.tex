@@ -28,8 +28,6 @@ window encoder is what lets the score localize within a passage.
 \subsection{Gains persist at the sentence level}
 \label{sec:results_aggregated}
 
-\input{figs/tab3_sentence}
-
 Per-token scores aggregate upward without retraining.
 Table~\ref{tab:sentence} reports sentence-level verdicts under
 AND-on-supported aggregation (any unsupported claim in a sentence
@@ -46,3 +44,5 @@ that determine which granularity is feasible to supervise are
 reported in Table~\ref{tab:long_form_stats}; LongFact and
 FactScore claims are typically much shorter than RAGTruth's,
 which the per-token head benefits from at the sentence level.
+
+\input{figs/tab3_sentence}

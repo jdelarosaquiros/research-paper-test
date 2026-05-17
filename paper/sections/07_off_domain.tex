@@ -2,8 +2,6 @@
 quantification}
 \label{sec:results_polygraph}
 
-\input{figs/tab2_ood}
-
 The LM-Polygraph benchmark
 \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} stresses
 the sequence-level use case: each test item is a short- or long-form
@@ -29,10 +27,10 @@ but the per-token detector remains competitive as a sequence-level
 ranker. Per-dataset sequence-length distributions are in
 Table~\ref{tab:polygraph_stats}.
 
+\input{figs/tab2_ood}
+
 \subsection{Efficiency analysis}
 \label{sec:results_efficiency}
-
-\input{figs/fig_inference_time}
 
 Temp-ViT scores every generated token in a single forward through
 the frozen encoder and the temporal head, so the cost of obtaining
@@ -46,3 +44,5 @@ refinement stage takes under three hours on a single H200 across
 all three LLMs. Aggressive pooling
 ($(L_p, N_p) = (4, 20)$) preserves most of the downstream AUROC
 while shrinking training to a few minutes.
+
+\input{figs/fig_inference_time}
