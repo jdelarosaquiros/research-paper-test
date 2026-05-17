@@ -3,7 +3,7 @@
 
 \paragraph{Architecture variants (Table~\ref{tab:window_ablation}).}
 We compare the full Temp-ViT pipeline against an MLP-encoder baseline
-(no windowing) and an encoder-only variant (no Mamba-2 head), across
+(no windowing) and an encoder-only variant (no temporal head), across
 the three stages. The encoder-only Stage~3 variant matches or beats
 the full pipeline on AUROC on both RAGTruth cells, indicating that
 the encoder's windowed pooling absorbs most of the local-context
@@ -36,14 +36,14 @@ longer-claim labels under the natural overlap.
 
 \paragraph{Token-level overlap resolution.}
 \label{ablation:overlap_rule}
-The token-level eval (Table~\ref{tab:main}) labels each generated
-token from per-claim spans $(\ell_m, r_m, \tilde{y}_m)$ using the
-\texttt{atom\_spans} rule. Spans are sorted by
+The token-level eval (Table~\ref{tab:main}) derives each generated
+token's label from the per-claim span labels
+$(\ell_m, r_m, \tilde{y}_m)$. Spans are sorted by
 $(\ell_m\!\uparrow, r_m\!\downarrow)$ -- earlier start first, longer
 span first on a tie -- and walked in order; each span writes its
 label $1-\tilde{y}_m$ to every still-uncovered token in
-$[\ell_m, r_m\!+\!1)$. Uncovered tokens are then dropped from the
-eval pool. Concretely: on partial overlap the earlier-starting
+$[\ell_m, r_m\!+\!1)$. Tokens that no span covers are then dropped
+from the eval pool. Concretely: on partial overlap the earlier-starting
 span wins; on containment with a common start the longer (outer)
 span wins; on containment with a later inner start the outer span
 still wins, because it claims the shared tokens first. The inner

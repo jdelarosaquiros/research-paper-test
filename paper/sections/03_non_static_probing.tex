@@ -7,25 +7,27 @@ single layer-token position and ignore signal elsewhere in $A$; the
 optimal position varies across samples, datasets, and LLMs, often
 requiring an external search \citep{orgad2024}. Methods that process
 the whole tensor capture distributed signal but are ill-suited to
-real-time long-form generation: some pool the token axis into a fixed
-size, diluting signal as responses grow; others remain accurate at
-long context but require one forward per token. Even when a
+real-time long-form generation: full-tensor probes face a
+speed--accuracy tradeoff, where keeping a small pooled tensor loses
+accuracy as responses grow long, while scaling the tensor up
+sacrifices inference speed by requiring one forward per token. Even when a
 full-tensor method does scale, a single sequence-level score does not
 say where the suspicious activations lie, a poor fit for
 responses where most tokens are correct and only a few are
 problematic.
 
-\paragraph{Tensor methods degrade with response length.}
+\paragraph{Full-tensor probes do not scale to long responses.}
 Appendix Figure~\ref{fig:perf_by_length} reports per-token AUROC on
-LongFact as the input prefix length $T$ grows. ACT-ViT with a short
-pooled token
-axis performs well only for short prefixes, but its performance drops
-as more generated tokens are compressed into the same fixed-size
-representation; widening the pooled axis partially reduces this
-collapse, but it still does not recover Temp-ViT's flatter performance
-across response lengths. This supports our central design choice:
-instead of compressing the whole response into one fixed activation
-image, Temp-ViT scores local token windows and models their temporal
+LongFact as the input prefix length $T$ grows, and makes the
+speed--accuracy tradeoff concrete. ACT-ViT with a short pooled
+token axis is cheap but performs well only on short prefixes; its
+accuracy drops as more generated tokens are compressed into the
+same fixed-size representation. Widening the pooled axis partially
+reduces this collapse at the cost of inference speed, but still
+does not recover Temp-ViT's flatter performance across response
+lengths. This supports our central design choice: instead of
+compressing the whole response into one fixed activation image,
+Temp-ViT scores local token windows and models their temporal
 evolution.
 
 \paragraph{Why windows instead of isolated tokens?} Hallucination
@@ -71,15 +73,14 @@ uncertainty without window-level labels.
 and window-level localization jointly under weak supervision is a
 hard optimization. We decompose training into three stages.
 Stage 1 trains the encoder on full activation tensors with
-sequence-level labels. Stage 2 fine-tunes the encoder jointly with a Mamba-2 temporal
-head over per-window encodings via top-$k$ MIL against the same
-sequence label, so the head learns to localize the uncertainty signal
-to a few windows inside each span without per-window supervision; we
-use Mamba \citep{albertgu2024} for its linear-time long-sequence
-inference.
-Stage 3 trains the head across spans in the full sequence
-rather than on isolated claim segments: fine-tuning on whole passages
-with per-claim auxiliary labels teaches it how the uncertainty
-activation signal changes across claims, in particular on
-mixed-content windows whose receptive field contains both hallucinated
-and supported tokens (which Stages~1 and 2 never see). We describe each stage in the next section.
+sequence-level labels. Stage 2 fine-tunes the encoder jointly with
+a temporal head \citep{albertgu2024} over per-window encodings via
+top-$k$ MIL against the same sequence label, so the head learns to
+localize the uncertainty signal to a few windows inside each claim
+without per-window supervision.
+Stage 3 trains the head across claims in the full sequence:
+fine-tuning on whole passages with per-claim auxiliary labels
+teaches it how the uncertainty activation signal changes across
+claims, in particular on mixed-content windows whose receptive
+field contains both hallucinated and supported tokens (which
+Stages~1 and 2 never see). We describe each stage in the next section.

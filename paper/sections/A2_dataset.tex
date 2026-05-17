@@ -24,7 +24,7 @@ artefacts.
 
 \paragraph{LLM-labeler accuracy on FactScore and LongFact.} The
 auxiliary span labels $\tilde{y}_m$ that Stage 3 trains on are
-produced by an atomic-fact verifier rather than human annotators.
+produced by a claim-level verifier rather than human annotators.
 We use Gemma 4 31B as the verifier on FactScore \citep{min2023} and
 LongFact \citep{wei2024}, and we measure how closely its verdicts
 match the human gold on a held-out subset of each corpus

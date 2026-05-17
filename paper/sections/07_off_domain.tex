@@ -35,13 +35,13 @@ Table~\ref{tab:polygraph_stats}.
 \input{figs/fig_inference_time}
 
 Temp-ViT scores every generated token in a single forward through
-the frozen encoder and the Mamba-2 head, so the cost of obtaining
+the frozen encoder and the temporal head, so the cost of obtaining
 sentence- or claim-level scores is amortized across the passage
 rather than scaling with the number of claims.
 Figure~\ref{fig:inference_time} quantifies this on a $T = 384$
-LongFact passage: roughly an order of magnitude wall-clock
-advantage over sequence-level activation-tensor baselines that
-must be re-invoked per claim. Training the passage-level
+LongFact passage: roughly $25\times$ wall-clock advantage over
+sequence-level activation-tensor baselines that must be re-invoked
+per claim. Training the passage-level
 refinement stage takes under three hours on a single H200 across
 all three LLMs. Aggressive pooling
 ($(L_p, N_p) = (4, 20)$) preserves most of the per-claim AUROC

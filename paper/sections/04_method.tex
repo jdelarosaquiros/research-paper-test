@@ -23,7 +23,7 @@ $A^{(t)} \in \mathbb{R}^{L \times W \times D}$ obtained by slicing
 $A$ over $W$ consecutive tokens centered at $t$. Training data
 comes with a sequence-level label $y \in \{0,1\}$ (hallucinated
 vs.\ not), and on long-form corpora with noisy per-claim auxiliary
-labels $\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from atomic-fact
+labels $\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from claim-level
 verification, where each claim $m$ is identified with its token
 span $(\ell_m, r_m)$ so we refer to a claim and its span
 interchangeably. Given $A$, our goal is to predict both a
@@ -100,7 +100,7 @@ learns the spatial profile of the signal within and across claims.
 Stage 3 takes as input a passage tensor
 $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ claims
 $\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
-$\tilde{y}_m \in \{0,1\}$ from atomic-fact verification.
+$\tilde{y}_m \in \{0,1\}$ from claim-level verification.
 
 The Stage-2 detector emits per-token logits
 $\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We smooth
@@ -127,7 +127,9 @@ than score each claim in isolation.
 At inference time, a single forward through the Stage-3 detector
 yields the per-token logits over the whole passage, from which we
 read off (i) the per-token / per-window scores
-$\{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ for localization; (ii) a
-sequence-level score by reusing the Stage-2 top-$k$ MIL aggregation;
-and (iii) per-claim scores $\{\sigma(\hat{z}_m)\}_m$ when claims
-are available.
+$\{\sigma(\hat{z}^{(t)})\}_{t=1}^{T}$ for token-level localization;
+(ii) per-sentence scores obtained by aggregating the smoothed
+per-token logits within each sentence span with the same top-$k$
+mean; (iii) per-claim scores $\{\sigma(\hat{z}_m)\}_m$ when claims
+are available; and (iv) a sequence-level score by reusing the
+Stage-2 top-$k$ MIL aggregation.

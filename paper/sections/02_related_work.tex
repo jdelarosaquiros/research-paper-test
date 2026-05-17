@@ -43,9 +43,12 @@ a single layer-token slice
 \citep{barshalom2025} extends this by reading the full layer-token
 plane as an activation image and pooling it through a Vision
 Transformer; this widens the receptive field but commits to one
-score per response, which dilutes the signal as responses grow long
-(Appendix Figure~\ref{fig:perf_by_length}) and forces one forward per
-token when used streaming (Figure~\ref{fig:inference_time}). Fact-probe
+score per response, exposing the speed--accuracy tradeoff inherent
+to full-tensor probes: either keep the pooled tensor small and lose
+accuracy on long responses
+(Appendix Figure~\ref{fig:perf_by_length}), or scale it up and pay
+one forward per token when used streaming
+(Figure~\ref{fig:inference_time}). Fact-probe
 \citep{snyder2024,he2024} pushes detection to claim-level granularity
 but at the cost of one forward per claim. A second axis of work
 probes attention for hallucination patterns
@@ -63,7 +66,7 @@ formulation.
 
 Long responses interleave correct and uncertain content, which
 single-score detectors cannot localize. Decomposition is the standard
-remedy: at the claim level via atomic-fact extraction
+remedy: at the claim level via claim extraction
 \citep{min2023,wei2024,zhao2024} or conformal claim-level prediction
 \citep{mohri2024}; at the sentence level by re-applying
 self-consistency per sentence \citep{manakul2023,band2024}; and at
