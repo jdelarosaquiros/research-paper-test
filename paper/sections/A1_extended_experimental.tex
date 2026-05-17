@@ -38,16 +38,16 @@ To diagnose where in the activation tensor the hallucination signal
 lives, we follow \citet{orgad2024} on Mis-7B-Inst \citep{albertqjiang2023}
 and train per layer-token logistic regression classifiers, restricting
 tokens to $\mathcal{N} = \{0, 1, 2, -3, -2, -1\}$ (first and last three
-positions). Figure~\ref{fig:appendix_heatmaps} reports ROC-AUC
-heatmaps for three LLMs across five datasets. Two patterns recur.
-First, predictive signal spreads across many $(L, T)$ cells rather
-than concentrating at a single position, so a probe that consumes
-only one cell discards most of the available information. Second,
-the most informative position shifts across LLMs: middle layers for
-Mis-7B-Inst and LlaMa-8B, late layers for Qwen-7B. The best Mis-7B-Inst
-position, $(14, 0)$, transfers to LlaMa-8B and Qwen-7B with
-$\approx 7\%$ AUC loss; no fixed slice suffices across models. This
-motivates using an encoder over the full layer-token plane rather
-than a single fixed hidden-state slice.
+positions). Figure~\ref{fig:heatmaps} reports ROC-AUC
+heatmaps for three LLMs, with the best layer-token cell per LLM
+boxed. Two patterns recur. First, predictive signal spreads across
+many $(L, T)$ cells rather than concentrating at a single position,
+so a probe that consumes only one cell discards most of the available
+information. Second, the most informative position shifts across LLMs:
+middle layers for Mis-7B-Inst and LlaMa-8B, late layers for Qwen-7B.
+The best Mis-7B-Inst position, $(14, 0)$, transfers to LlaMa-8B and
+Qwen-7B with $\approx 7\%$ AUC loss; no fixed slice suffices across
+models. This motivates using an encoder over the full layer-token
+plane rather than a single fixed hidden-state slice.
 
-\input{figs/fig_appendix_heatmaps}
+\input{figs/fig2_heatmaps}
