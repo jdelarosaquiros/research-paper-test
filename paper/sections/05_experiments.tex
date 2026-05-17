@@ -10,7 +10,7 @@ We answer three questions:
 mechanistic baselines for token-level hallucination
 localization on long-form text?
 (Q\textsubscript{2}) Do those localization gains carry over to
-sentence- and claim-level verdicts under standard aggregation?
+sentence-level verdicts under standard aggregation?
 (Q\textsubscript{3}) Does the same per-token detector remain
 competitive as a sequence-level uncertainty estimator on the
 heterogeneous LM-Polygraph benchmark?
@@ -19,7 +19,7 @@ heterogeneous LM-Polygraph benchmark?
 \label{sec:datasets}
 
 \paragraph{Hallucination detection.} For long-form hallucination
-detection (Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim})
+detection (Tables~\ref{tab:main},~\ref{tab:sentence})
 we evaluate on three corpora that anchor this task in recent work:
 RAGTruth \citep{niu2024ragtruth}, a retrieval-augmented
 generation corpus with span-level hallucination annotations across
@@ -58,12 +58,12 @@ $A \in \mathbb{R}^{L \times T \times D}$ that drives our method
 \subsection{Baselines}
 \label{sec:baselines}
 We organize baselines into three row bands that match
-Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim},
+Tables~\ref{tab:main},~\ref{tab:sentence},
 and~\ref{tab:polygraph}. All baselines are run through the
 LM-Polygraph evaluation infrastructure
 \citep{fadeeva2023lmpolygraph,vashurin2025lmpolygraph} on identical
 generations and gold quality measures; sequence-level scores are
-re-applied per claim, per sentence, or per token when needed.
+re-applied per sentence or per token when needed.
 
 \paragraph{Confidence.} Score uncertainty from the model's
 next-token distribution over generated tokens:
@@ -96,7 +96,7 @@ following the LM-Polygraph protocol.
 
 \paragraph{Evaluation Measure.}
 We report AUROC as the primary metric in
-Tables~\ref{tab:main},~\ref{tab:sentence},~\ref{tab:claim}, and
+Tables~\ref{tab:main},~\ref{tab:sentence}, and
 the Prediction Rejection Ratio
 \citep{malinin2021uncertainty} for
 Table~\ref{tab:polygraph}:

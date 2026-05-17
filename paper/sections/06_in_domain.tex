@@ -25,29 +25,24 @@ the LlaMa-13B-Inst RAGTruth cell. The pattern answers
 near chance at the token level on these corpora; the supervised
 window encoder is what lets the score localize within a passage.
 
-\subsection{Gains persist at sentence and claim level}
+\subsection{Gains persist at the sentence level}
 \label{sec:results_aggregated}
 
 \input{figs/tab3_sentence}
-\input{figs/tab4_claim}
 
 Per-token scores aggregate upward without retraining.
 Table~\ref{tab:sentence} reports sentence-level verdicts under
 AND-on-supported aggregation (any unsupported claim in a sentence
 flips the sentence to hallucinated; score is the max per-token
-uncertainty in the span). Table~\ref{tab:claim} reports claim-level
-verdicts (one row per claim from the sidecar).
+uncertainty in the span).
 
-At both granularities the Ours rows dominate every populated cell
+At the sentence level the Ours rows dominate every populated cell
 except FactScore / LongFact for LlaMa-13B-Inst, where MeanTokenEntropy
 edges out by 1--3 AUROC points. RAGTruth shows the cleanest
 separation: Temp-ViT + PRR reaches $0.929$ sentence AUROC on
-LlaMa-13B-Inst against the next-best baseline at $0.657$. The
-gap widens as granularity narrows from sentence to claim, which
-is the regime where the per-token head must rank claims against
-each other within the same passage. Sentence-length distributions
+LlaMa-13B-Inst against the next-best baseline at $0.657$.
+Sentence-length distributions
 that determine which granularity is feasible to supervise are
 reported in Table~\ref{tab:long_form_stats}; LongFact and
 FactScore claims are typically much shorter than RAGTruth's,
-which the per-token head benefits from at sentence and claim
-levels.
+which the per-token head benefits from at the sentence level.
