@@ -43,7 +43,7 @@ long-form generation. Concretely we contribute:
 \begin{enumerate}
     \item We recast mechanistic hallucination detection as weakly supervised
     temporal localization over LLM hidden-state activations, enabling uncertainty
-    scores to be assigned to local regions of a long-form response rather
+    scores to be assigned to tokens or segments of a long-form response rather
     than only to the full sequence.
 
     \item We propose Temp-ViT, a windowed uncertainty quantification model
@@ -55,12 +55,10 @@ long-form generation. Concretely we contribute:
     on detecting uncertainty signals of labeled claims. Stage~2 uses weakly supervised
     training to teach Temp-ViT to localize the uncertainty signal to a few windows of tokens
     inside each span. Stage~3 trains the model to handle windows that contain tokens from
-    both correct and hallucinated spans, by training across spans in the full sequence
-    rather than on isolated claim segments.
+    both correct and hallucinated spans, by training across spans in their full sequence
+    rather than on isolated claims.
 
-    \item We demonstrate efficient fine-grained detection on long-form
-    hallucination benchmarks, evaluating token-, sentence-, and claim-level
-    localization, while also showing that the localized scores can be
-    aggregated into competitive sequence-level uncertainty estimates on
-    LM-Polygraph.
+    \item We demonstrate efficient and granular detection on long-form benchmarks: FactScore, Longfact, and RAGTruth
+    Specifically, we evaluate localization of hallucinations at the token, claim, and sentence level. 
+    We also show that the localized scores outperform SOTA uncertianty quantification approaches on LM-Polygraph.
 \end{enumerate}
