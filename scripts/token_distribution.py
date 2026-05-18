@@ -1,12 +1,12 @@
 """Compute per-dataset output-token length statistics (min / median / max).
 
-Writes three CSVs:
-- .artifacts/token-distribution-long-form/table8_long_form.csv             (Mistral-7B)
-- .artifacts/token-distribution-long-form/table8_long_form_llama2_70b.csv  (Llama-2-70B-chat)
+Writes two CSVs:
+- .artifacts/token-distribution-long-form/table8_long_form.csv  (all generators, Model column)
 - .artifacts/token-distribution-polygraph/table9_polygraph.csv
 
-See research-repo-template/.claude/plans/token-distribution-tables.md and
-research-repo-template/.claude/plans/token-distribution-tables-extend.md.
+See research-repo-template/.claude/plans/token-distribution-tables-multi-model.md
+(current schema). Prior plans (token-distribution-tables.md,
+token-distribution-tables-extend.md) are superseded for the long-form half.
 """
 
 from __future__ import annotations
@@ -20,48 +20,71 @@ WORKSPACE = Path("/workspace/storage/claude_code_test")
 ARTIFACTS = WORKSPACE / "research-repo-template" / ".artifacts"
 
 LONG_FORM_OUT = ARTIFACTS / "token-distribution-long-form" / "table8_long_form.csv"
-LONG_FORM_OUT_70B = (
-    ARTIFACTS / "token-distribution-long-form" / "table8_long_form_llama2_70b.csv"
-)
 POLYGRAPH_OUT = ARTIFACTS / "token-distribution-polygraph" / "table9_polygraph.csv"
 
-LONG_FORM_SOURCES: list[tuple[str, Path]] = [
-    (
-        "Factscore",
-        WORKSPACE
-        / "papers/repos/temp-vit/data/raw_data/mistralai/Mistral-7B-Instruct-v0.2"
-        / "factscore_full_l8_all/passage_atom_spans_all.jsonl",
-    ),
-    (
-        "Longscore",
-        WORKSPACE
-        / "papers/repos/temp-vit/data/raw_data/mistralai/Mistral-7B-Instruct-v0.2"
-        / "longfact_objects_full_l8_all/passage_atom_spans_all.jsonl",
-    ),
-    (
-        "RAGTruth",
-        # Sentence sidecar: each "atom" is a claim/sentence span.
-        # The non-sentence file has token-granularity spans (every atom = 1 token).
-        WORKSPACE
-        / "papers/repos/temp-vit/data/raw_data/mistralai/Mistral-7B-Instruct-v0.1"
-        / "ragtruth_mistral-7B-instruct_full_all/passage_atom_spans_all_sentence.jsonl",
-    ),
-]
+RAW_ROOT = WORKSPACE / "papers/repos/temp-vit/data/raw_data"
 
-# Llama-2-70B-chat parallel long-form sources. RAGTruth omitted: no 70B RAGTruth
-# raw_data on disk.
-LONG_FORM_SOURCES_70B: list[tuple[str, Path]] = [
+# (model_label, dataset_label, jsonl_path). Order = paper's model-axis order.
+# RAGTruth uses the sentence sidecar (atoms = claim spans); the non-sentence file
+# has token-granularity spans.
+LONG_FORM_SOURCES: list[tuple[str, str, Path]] = [
     (
+        "Mistral-7B-Instruct",
         "Factscore",
-        WORKSPACE
-        / "papers/repos/temp-vit/data/raw_data/meta-llama/Llama-2-70b-chat-hf"
-        / "factscore_full_l8_all/passage_atom_spans_all.jsonl",
+        RAW_ROOT
+        / "mistralai/Mistral-7B-Instruct-v0.2/factscore_full_l8_all/passage_atom_spans_all.jsonl",
     ),
     (
+        "Mistral-7B-Instruct",
         "Longscore",
+        RAW_ROOT
+        / "mistralai/Mistral-7B-Instruct-v0.2/longfact_objects_full_l8_all/passage_atom_spans_all.jsonl",
+    ),
+    (
+        "Mistral-7B-Instruct",
+        "RAGTruth",
+        RAW_ROOT
+        / "mistralai/Mistral-7B-Instruct-v0.1/ragtruth_mistral-7B-instruct_full_all/passage_atom_spans_all_sentence.jsonl",
+    ),
+    (
+        "Llama-2-13b-chat",
+        "Factscore",
+        RAW_ROOT
+        / "meta-llama/Llama-2-13b-chat-hf/factscore_full_l8_all/passage_atom_spans_all.jsonl",
+    ),
+    (
+        "Llama-2-13b-chat",
+        "Longscore",
+        RAW_ROOT
+        / "meta-llama/Llama-2-13b-chat-hf/longfact_objects_full_l8_all/passage_atom_spans_all.jsonl",
+    ),
+    (
+        "Llama-2-13b-chat",
+        "RAGTruth",
+        RAW_ROOT
+        / "meta-llama/Llama-2-13b-chat-hf/ragtruth_llama-2-13b-chat_full_all/passage_atom_spans_all_sentence.jsonl",
+    ),
+    (
+        "Llama-2-70b-chat",
+        "Factscore",
+        RAW_ROOT
+        / "meta-llama/Llama-2-70b-chat-hf/factscore_full_l8_all/passage_atom_spans_all.jsonl",
+    ),
+    (
+        "Llama-2-70b-chat",
+        "Longscore",
+        RAW_ROOT
+        / "meta-llama/Llama-2-70b-chat-hf/longfact_objects_full_l8_all/passage_atom_spans_all.jsonl",
+    ),
+    (
+        # 70B RAGTruth has no `raw_data/.../ragtruth_*` subfolder; the equivalent
+        # passage_atom_spans sidecar lives under data/full_layer_cells/ instead.
+        # Schema parity with the raw_data sentence sidecars (verified 2026-05-18).
+        "Llama-2-70b-chat",
+        "RAGTruth",
         WORKSPACE
-        / "papers/repos/temp-vit/data/raw_data/meta-llama/Llama-2-70b-chat-hf"
-        / "longfact_objects_full_l8_all/passage_atom_spans_all.jsonl",
+        / "papers/repos/temp-vit/data/full_layer_cells/ragtruth"
+        / "meta-llama__Llama-2-70b-chat-hf/passage_atom_spans_all_sentence.jsonl",
     ),
 ]
 
@@ -162,18 +185,27 @@ def _write_csv(out_path: Path, header: list[str], rows: list[list[str]]) -> None
     print(f"wrote {out_path}", file=sys.stderr)
 
 
-def _build_long_form_rows(
-    label: str, sources: list[tuple[str, Path]]
-) -> list[list[str]]:
+def build_long_form_table() -> None:
+    header = [
+        "Dataset",
+        "Model",
+        "NumSamples",
+        "Min",
+        "Medium",
+        "Max",
+        "ClaimMin",
+        "ClaimMedium",
+        "ClaimMax",
+    ]
     rows: list[list[str]] = []
-    print(f"== Table 8 (long-form: {label}) ==", file=sys.stderr)
-    for name, path in sources:
+    print("== Table 8 (long-form, all models) ==", file=sys.stderr)
+    for model, dataset, path in LONG_FORM_SOURCES:
         resp_tokens, atom_lens = _read_long_form_jsonl(path)
         lo, med, hi = _summary(resp_tokens)
         c_lo, c_med, c_hi = _summary(atom_lens)
         n_samples = len(resp_tokens)
         print(
-            f"  {name}: n_samples={n_samples}"
+            f"  {model} / {dataset}: n_samples={n_samples}"
             f" passage_min={lo} passage_med={med} passage_max={hi}"
             f" | n_claims={len(atom_lens)}"
             f" claim_min={c_lo} claim_med={c_med} claim_max={c_hi}",
@@ -181,7 +213,8 @@ def _build_long_form_rows(
         )
         rows.append(
             [
-                name,
+                dataset,
+                model,
                 str(n_samples),
                 str(lo),
                 str(med),
@@ -191,26 +224,7 @@ def _build_long_form_rows(
                 str(c_hi),
             ]
         )
-    return rows
-
-
-def build_long_form_table() -> None:
-    header = [
-        "Dataset",
-        "NumSamples",
-        "Min",
-        "Medium",
-        "Max",
-        "ClaimMin",
-        "ClaimMedium",
-        "ClaimMax",
-    ]
-    _write_csv(LONG_FORM_OUT, header, _build_long_form_rows("Mistral-7B", LONG_FORM_SOURCES))
-    _write_csv(
-        LONG_FORM_OUT_70B,
-        header,
-        _build_long_form_rows("Llama-2-70B-chat", LONG_FORM_SOURCES_70B),
-    )
+    _write_csv(LONG_FORM_OUT, header, rows)
 
 
 def build_polygraph_table() -> None:
