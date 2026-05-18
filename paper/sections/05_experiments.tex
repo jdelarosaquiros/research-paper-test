@@ -75,14 +75,20 @@ TokenSAR \citep{duan2023},
 Mean Pointwise Mutual Information \citep{takayama2019pmi}, and
 BoostedProbSequence \citep{dinh2025boostedprob}.
 
-\paragraph{Mechanistic.} Read model internals (hidden states or
-attention patterns) rather than the output distribution alone:
+\paragraph{Hybrid.} Combine next-token confidence with
+attention-based mechanistic features:
 Contextualized Sequence Likelihood (CSL) \citep{lin2024csl},
-Attention Score \citep{sriramanan2024attention},
+Attention Score \citep{sriramanan2024attention}, and
 Recurrent Attention-based Uncertainty Quantification (RAUQ)
-\citep{vazhentsev2025rauq},
+\citep{vazhentsev2025rauq}.
+
+\paragraph{Mechanistic.} Read model internals (hidden states or
+activation maps) rather than the output distribution alone:
 Fact-Probe \citep{han2025factprobe},
-Feature-Gaps \citep{bakman2025featuregaps}, and
+Feature-Gaps \citep{bakman2025featuregaps},
+HaMI \citep{niu2025hami}, an MIL-based detector with
+adaptive top-$k$ token selection and uncertainty-augmented
+representations, and
 Act-ViT \citep{barshalom2025}, the pooled-activation sequence
 encoder our architecture builds on.
 

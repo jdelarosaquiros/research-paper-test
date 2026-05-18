@@ -21,7 +21,7 @@ expensive. Mechanistic methods avoid extra LLM calls by
 inspecting the hidden states of the generating model, but each family
 hits a different wall. Probes trained on a fixed layer and token
 position are cheap but miss uncertianty signals that reside in different layers and tokens
-depending on the task and model. Probes that analyze hidden states across all tokens and layers
+depending on the task and model. Probes that analyze hidden state activations across all tokens and layers
 capture distributed signal, but they don't scale well with long sequences. They must either
 scale their model and sacrifice inference speed or keep the same scale and sacrifice accuracy. Additially,
 probes are often designed for full-sequence predictions rather than localized predictions at the token or segment level. 

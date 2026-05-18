@@ -28,6 +28,30 @@ granularities are feasible to supervise: LongFact and FactScore claims
 are typically much shorter than RAGTruth's, which the per-token head
 benefits from at the sentence level.
 
+\paragraph{Per-dataset LM-Polygraph results (Table~\ref{tab:polygraph_extended}).}
+The main-paper Table~\ref{tab:polygraph} reports per-category PRR
+aggregates (\emph{QA}, \emph{CoT}, \emph{NMT}).
+Table~\ref{tab:polygraph_extended} disaggregates those aggregates back
+to one column per dataset, so the contribution of each dataset to its
+category mean is recoverable directly. Today only MMLU (QA), GSM8k
+(CoT), and WMT19 (NMT) are populated on Mis-7B-Inst, so each
+per-category aggregate is identical to its single underlying
+per-dataset value; the extended table will become informative once
+TriviaQA / CoQA / WMT14 cells are filled.
+
+\paragraph{Calibration on LM-Polygraph (Table~\ref{tab:polygraph_ece}).}
+Table~\ref{tab:polygraph} compares uncertainty scores by ranking quality
+(PRR); Table~\ref{tab:polygraph_ece} reports calibration via Expected
+Calibration Error on the same three Mis-7B-Inst cells. Lower ECE is
+better. Act-ViT and Encoder~Only are the best-calibrated detectors on
+MMLU (ECE $\leq 0.064$, vs. $> 0.5$ for most Confidence baselines);
+Temp-ViT wins the calibration race on GSM8k ($0.066$). The picture on
+WMT19 differs: short, well-conditioned Confidence baselines
+(TokenSAR, MeanTokenEntropy, Perplexity) are already well-calibrated on
+NMT outputs, so the supervised detectors trail them on ECE while still
+winning the PRR ranking comparison. Ranking quality and calibration are
+orthogonal --- this table makes that explicit.
+
 \paragraph{In-distribution vs out-of-distribution (Table~\ref{tab:ood}).}
 RAGTruth contains three task types: QA, summarization, and data-to-text.
 We train two versions of Temp-ViT and evaluate both on the data-to-text
@@ -64,3 +88,5 @@ $\geq$ as long.
 \input{figs/tab8_long_form_dataset_stats}
 \input{figs/tab9_polygraph_dataset_stats}
 \input{figs/tab10_ood_ablation}
+\input{figs/tab12_polygraph_ece}
+\input{figs/tab13_polygraph_extended}

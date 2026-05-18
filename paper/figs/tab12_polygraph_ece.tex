@@ -1,0 +1,59 @@
+\begin{table*}[!t]
+\centering
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{l *{3}{c} *{3}{c} *{3}{c}}
+\toprule
+ & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-13B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+Method
+  & QA & CoT & NMT
+  & QA & CoT & NMT
+  & QA & CoT & NMT \\
+\midrule
+\multicolumn{10}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-10}
+MaximumSequenceProbability       & 0.910 & 0.355 & 0.190 & --- & --- & --- & --- & --- & --- \\
+Perplexity                       & 0.910 & 0.258 & 0.095 & --- & --- & --- & --- & --- & --- \\
+MeanTokenEntropy                 & 0.834 & 0.301 & \underline{0.090} & --- & --- & --- & --- & --- & --- \\
+SelfCertainty                    & 0.530 & 0.142 & 0.177 & --- & --- & --- & --- & --- & --- \\
+TokenSAR                         & 0.858 & 0.257 & \textbf{0.081} & --- & --- & --- & --- & --- & --- \\
+MeanPointwiseMutualInformation   & \underline{0.225} & 0.149 & 0.328 & --- & --- & --- & --- & --- & --- \\
+BoostedProbSequence              & 0.912 & 0.457 & 0.200 & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Hybrid}} \\
+\cmidrule(l){1-10}
+CSL                              & 0.908 & 0.414 & 0.162 & --- & --- & --- & --- & --- & --- \\
+AttentionScore                   & 0.344 & 0.145 & 0.304 & --- & --- & --- & --- & --- & --- \\
+RAUQ                             & 0.743 & 0.144 & 0.325 & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-10}
+FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+HaMI                             & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Act-ViT (F-v2, N\textsubscript{eff}=6)
+                                 & \textbf{0.061} & \underline{0.111} & 0.170 & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Ours}} \\
+\cmidrule(l){1-10}
+Encoder Only                     & 0.064 & ---   & 0.154 & --- & --- & --- & --- & --- & --- \\
+Temp-ViT                         & 0.448 & \textbf{0.066} & 0.178 & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textcolor{red}{\textbf{LM-Polygraph calibration ablation.}
+Per-category Expected Calibration Error (ECE, 15 bins, \emph{lower is
+better}) aggregated across LM-Polygraph datasets: \emph{QA} = mean over
+TriviaQA / CoQA / MMLU; \emph{CoT} = GSM8k; \emph{NMT} = mean over WMT14 /
+WMT19. Means are taken over the datasets currently present in each category
+(skip-NaN). ECE is computed on
+$p_{\mathrm{high\,quality}} = 1 - \mathrm{minmax}(\text{scores})$ against
+the binary high-quality label (Accuracy $=1$ for QA / CoT; COMET $\geq$
+training median for NMT). Method groupings follow
+Section~\ref{sec:baselines}. Lowest ECE per column in \textbf{bold};
+second-lowest \underline{underlined}. ``---'' = not yet run.}}
+\label{tab:polygraph_ece}
+\end{table*}

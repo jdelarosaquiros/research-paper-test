@@ -1,0 +1,100 @@
+\begin{table*}[!t]
+\centering
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{l *{6}{c} *{6}{c} *{6}{c}}
+\toprule
+ & \multicolumn{6}{c}{Mis-7B-Inst} & \multicolumn{6}{c}{LlaMa-13B-Inst} & \multicolumn{6}{c}{LlaMa-70B-Inst} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
+Method
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 \\
+\midrule
+\multicolumn{19}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-19}
+MaximumSequenceProbability
+  & --- & --- & 0.065 & 0.499 & --- & 0.806
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+Perplexity
+  & --- & --- & 0.065 & 0.486 & --- & 0.806
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+MeanTokenEntropy
+  & --- & --- & 0.065 & 0.488 & --- & 0.810
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+SelfCertainty
+  & --- & --- & 0.072 & 0.472 & --- & \underline{0.816}
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+TokenSAR
+  & --- & --- & 0.082 & 0.486 & --- & 0.805
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+MeanPointwiseMutualInformation
+  & --- & --- & 0.113 & 0.401 & --- & 0.791
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+BoostedProbSequence
+  & --- & --- & 0.073 & 0.488 & --- & 0.812
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+\midrule
+\multicolumn{19}{l}{\textit{Hybrid}} \\
+\cmidrule(l){1-19}
+CSL
+  & --- & --- & 0.062 & 0.485 & --- & 0.805
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+AttentionScore
+  & --- & --- & 0.084 & 0.410 & --- & 0.788
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+RAUQ
+  & --- & --- & 0.072 & 0.488 & --- & 0.805
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+\midrule
+\multicolumn{19}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-19}
+FactProbe
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+Feature-Gaps
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+HaMI
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+Act-ViT (F-v2, N\textsubscript{eff}=6)
+  & --- & --- & \underline{0.113} & \textbf{0.539} & --- & 0.815
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+\midrule
+\multicolumn{19}{l}{\textit{Ours}} \\
+\cmidrule(l){1-19}
+Encoder Only  & --- & --- & \textbf{0.114} & ---   & --- & \textbf{0.816}
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+Temp-ViT  & --- & --- & 0.111 & \underline{0.530} & --- & 0.813
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textcolor{red}{\textbf{LM-Polygraph per-dataset extended view
+(Table~\ref{tab:polygraph} disaggregated).} Per-dataset PRR for every cell
+that aggregates into Table~\ref{tab:polygraph}; columns are grouped by LLM
+and ordered within an LLM as: TriviaQA, CoQA, MMLU (\emph{QA}); GSM8k
+(\emph{CoT}); WMT14, WMT19 (\emph{NMT}). PRR convention, normalisation, and
+groupings follow Section~\ref{sec:baselines}. Best per column in
+\textbf{bold}; second-best \underline{underlined}. ``---'' = not yet run.}}
+\label{tab:polygraph_extended}
+\end{table*}

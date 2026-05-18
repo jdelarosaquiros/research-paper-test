@@ -9,17 +9,21 @@ The LM-Polygraph benchmark
 the sequence-level use case: each test item is a short- or long-form
 response and the goal is to rank responses by likely hallucination,
 not to localize within them. Table~\ref{tab:polygraph} reports
-per-dataset AUROC on three cells from Mis-7B-Inst:
-MMLU (QA, binary accuracy), GSM8k (math CoT, binary accuracy),
-and WMT19 De--En (NMT, COMET binarised at the training median).
-The Encoder Only row aggregates per-window logits to a
-single number per response via top-$k$ MIL, matching the
-training-time aggregator (Section~\ref{sec:temporal_head}); the
-full Temp-ViT row uses the Stage~3 passage-level head.
+per-category PRR on three capability categories of LM-Polygraph,
+aggregated across the datasets present in each category for
+Mis-7B-Inst: \emph{QA} (TriviaQA, CoQA, MMLU; today only MMLU
+is filled), \emph{CoT} (GSM8k), and \emph{NMT} (WMT14, WMT19;
+today only WMT19 is filled). The disaggregated per-dataset values
+are reported in the ablation
+Table~\ref{tab:polygraph_extended}. The Encoder Only row
+aggregates per-window logits to a single number per response via
+top-$k$ MIL, matching the training-time aggregator
+(Section~\ref{sec:temporal_head}); the full Temp-ViT row uses the
+Stage~3 passage-level head.
 
-Encoder Only wins WMT19 ($0.790$) and lands within $0.006$
-of the Act-ViT mechanistic baseline on MMLU. The full Temp-ViT
-row loses some accuracy on the short-form QA cells: its Stage~3
+Encoder Only wins NMT ($0.816$) and slightly edges the Act-ViT
+mechanistic baseline on QA ($0.114$ vs $0.113$). The full Temp-ViT
+row loses some accuracy on the QA category: its Stage~3
 objective is trained on long-form passages with many claims, and
 the per-claim loss does not transfer back to single-claim
 sequences as cleanly as the Stage~2 MIL objective. This is the
@@ -37,7 +41,7 @@ the frozen encoder and the temporal head, so the cost of obtaining
 sentence-level scores is amortized across the passage
 rather than scaling with the number of claims.
 Figure~\ref{fig:inference_time} quantifies this on a $T = 384$
-LongFact passage: roughly $25\times$ wall-clock advantage over
+LongFact passage: $25\times$ wall-clock advantage over
 sequence-level pooled-activation baselines that must be re-invoked
 per claim. Training the passage-level
 refinement stage takes under three hours on a single H200 across

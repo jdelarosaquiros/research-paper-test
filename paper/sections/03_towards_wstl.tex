@@ -46,15 +46,18 @@ window-level temporal modeling.
 \input{figs/fig_signal_propagation}
 \input{figs/fig1_overview}
 
-\paragraph{Additional probe evidence.} Per layer-token probes also
-show that the most informative hidden-state positions are distributed
-across many $(L, T)$ cells and that the best position varies across
-LLMs (middle layers for Mis-7B and LlaMa-8B, late layers for Qwen-7B);
-the best Mis-7B position transfers to LlaMa-8B and Qwen-7B with
-$\approx 7\%$ AUC loss, so no fixed slice suffices. Full heatmaps are
-provided in Appendix~\ref{app:heatmaps}. This motivates an encoder
-over the layer-token plane rather than a single fixed hidden-state
-slice.
+\paragraph{Why encode activations as 2D images?}
+Per layer and token probes show that the useful hidden state signal is not concentrated
+in one fixed position. Instead, informative regions appear across both the layer direction 
+and the token direction, and the most predictive regions change from one LLM to another, 
+as shown by the heatmaps in Appendix~\ref{app:heatmaps}. This means that layers and tokens 
+form a connected spatial pattern, rather than two independent axes that can be reduced separately. 
+A probe that reads only one layer and token or splices them can discard part of this pattern.
+ACT ViT \citep{barshalom2025actvit} supports this view by treating the layer by token activation plane
+as an image and showing that a vision encoder over this plane performs better than the strongest single
+position probe across models and datasets. This suggests that joint image style processing preserves predictive
+signal that would otherwise be lost, motivating an encoder that reads the full layer and token plane
+instead of relying on a single fixed hidden state slice.
 
 \paragraph{Weakly supervised temporal localization.} ACT-ViT shows
 that the $(L,T)$ plane has spatial structure amenable to visual

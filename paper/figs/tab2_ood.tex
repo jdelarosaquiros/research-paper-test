@@ -1,92 +1,58 @@
 \begin{table*}[!t]
 \centering
-\setlength{\tabcolsep}{2pt}
+\setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
 \adjustbox{max width=\textwidth}{%
-\begin{tabular}{l *{6}{c} *{6}{c} *{6}{c}}
+\begin{tabular}{l *{3}{c} *{3}{c} *{3}{c}}
 \toprule
- & \multicolumn{6}{c}{Mis-7B-Inst} & \multicolumn{6}{c}{LlaMa-13B-Inst} & \multicolumn{6}{c}{LlaMa-70B-Inst} \\
-\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
+ & \multicolumn{3}{c}{Mis-7B-Inst} & \multicolumn{3}{c}{LlaMa-13B-Inst} & \multicolumn{3}{c}{LlaMa-70B-Inst} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
 Method
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 \\
+  & QA & CoT & NMT
+  & QA & CoT & NMT
+  & QA & CoT & NMT \\
 \midrule
-\multicolumn{19}{l}{\textit{Confidence}} \\
-\cmidrule(l){1-19}
-MaximumSequenceProbability
-  & --- & --- & 0.356 & 0.740 & --- & 0.680
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-Perplexity
-  & --- & --- & 0.356 & 0.698 & --- & 0.703
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-MeanTokenEntropy
-  & --- & --- & 0.355 & 0.702 & --- & 0.733
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-SelfCertainty
-  & --- & --- & 0.353 & 0.661 & --- & \underline{0.777}
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-TokenSAR
-  & --- & --- & 0.524 & 0.696 & --- & 0.701
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-MeanPointwiseMutualInformation
-  & --- & --- & 0.807 & 0.453 & --- & 0.547
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-BoostedProbSequence
-  & --- & --- & 0.407 & 0.701 & --- & 0.746
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
+\multicolumn{10}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-10}
+MaximumSequenceProbability       & 0.065 & 0.499 & 0.806 & --- & --- & --- & --- & --- & --- \\
+Perplexity                       & 0.065 & 0.486 & 0.806 & --- & --- & --- & --- & --- & --- \\
+MeanTokenEntropy                 & 0.065 & 0.488 & 0.810 & --- & --- & --- & --- & --- & --- \\
+SelfCertainty                    & 0.072 & 0.472 & \underline{0.816} & --- & --- & --- & --- & --- & --- \\
+TokenSAR                         & 0.082 & 0.486 & 0.805 & --- & --- & --- & --- & --- & --- \\
+MeanPointwiseMutualInformation   & 0.113 & 0.401 & 0.791 & --- & --- & --- & --- & --- & --- \\
+BoostedProbSequence              & 0.073 & 0.488 & 0.812 & --- & --- & --- & --- & --- & --- \\
 \midrule
-\multicolumn{19}{l}{\textit{Mechanistic}} \\
-\cmidrule(l){1-19}
-CSL
-  & --- & --- & 0.335 & 0.702 & --- & 0.693
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-AttentionScore
-  & --- & --- & 0.495 & 0.492 & --- & 0.510
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-RAUQ
-  & --- & --- & 0.407 & 0.713 & --- & 0.656
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-FactProbe
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-Feature-Gaps
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
+\multicolumn{10}{l}{\textit{Hybrid}} \\
+\cmidrule(l){1-10}
+CSL                              & 0.062 & 0.485 & 0.805 & --- & --- & --- & --- & --- & --- \\
+AttentionScore                   & 0.084 & 0.410 & 0.788 & --- & --- & --- & --- & --- & --- \\
+RAUQ                             & 0.072 & 0.488 & 0.805 & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multicolumn{10}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-10}
+FactProbe                        & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+Feature-Gaps                     & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+HaMI                             & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-  & --- & --- & \textbf{0.917} & \textbf{0.864} & --- & \underline{0.778}
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
+                                 & \underline{0.113} & \textbf{0.539} & 0.815 & --- & --- & --- & --- & --- & --- \\
 \midrule
-\multicolumn{19}{l}{\textit{Ours}} \\
-\cmidrule(l){1-19}
-Encoder Only  & --- & --- & \underline{0.911} & ---   & --- & \textbf{0.790}
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
-Temp-ViT  & --- & --- & 0.822 & \underline{0.860} & --- & 0.747
-  & --- & --- & ---   & ---   & --- & ---
-  & --- & --- & ---   & ---   & --- & --- \\
+\multicolumn{10}{l}{\textit{Ours}} \\
+\cmidrule(l){1-10}
+Encoder Only                     & \textbf{0.114} & ---   & \textbf{0.816} & --- & --- & --- & --- & --- & --- \\
+Temp-ViT                         & 0.111 & \underline{0.530} & 0.813 & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
 \caption{\textcolor{red}{\textbf{Short-form uncertainty on the LM-Polygraph benchmark.}
-AUROC per dataset across QA and NMT corpora; COMET (NMT) and
-AlignScore (long-form QA) quality scores are binarised at the
-training-set median. Method groupings follow
-Section~\ref{sec:baselines}. Best score per column in \textbf{bold};
-second-best \underline{underlined}. ``---'' = not yet run.}}
+Per-category Prediction Rejection Ratio (PRR; Eq.~\ref{eq:prr}) aggregated
+across LM-Polygraph datasets: \emph{QA} = mean over TriviaQA / CoQA / MMLU;
+\emph{CoT} = GSM8k; \emph{NMT} = mean over WMT14 / WMT19. Means are taken
+over the datasets currently present in each category (skip-NaN). PRR is
+computed up to a 50\% rejection threshold against the continuous-quality
+target (binary accuracy for QA / CoT; raw COMET for NMT). Method groupings
+follow Section~\ref{sec:baselines}. Best score per column in \textbf{bold};
+second-best \underline{underlined}. The disaggregated per-dataset values are
+in Table~\ref{tab:polygraph_extended}. ``---'' = not yet run.}}
 \label{tab:polygraph}
 \end{table*}

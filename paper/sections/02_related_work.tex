@@ -50,8 +50,16 @@ accuracy on long responses
 one forward per token when used streaming
 (Figure~\ref{fig:inference_time}). Fact-probe
 \citep{snyder2024,he2024} pushes detection to claim-level granularity
-but at the cost of one forward per claim. A second axis of work
-probes attention for hallucination patterns
+but at the cost of one forward per claim. HaMI
+\citep{niu2025hami} pushes in the opposite direction, casting
+sequence-level detection as multiple-instance learning over raw
+token hidden states with an adaptive top-$k$ selector, and folds
+predictive uncertainty into the representation; it shares our top-$k$
+MIL machinery but operates on individual token states rather than the
+window-pooled activation slices we encode, so it inherits the
+length-sensitivity of per-token features that our windowed formulation
+is designed to absorb. A second axis of work probes attention
+for hallucination patterns
 \citep{li2025uqac,duan2024shifting,he2024}; the cross-axis signal it
 captures is complementary to the layer-token plane that we operate
 on. A third line of work compares hidden representations across
