@@ -4,23 +4,22 @@
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
 \adjustbox{max width=\linewidth}{%
-\begin{tabular}{l ccc}
+\begin{tabular}{l l r ccc}
 \toprule
-Dataset & Min & Median & Max \\
+Dataset & Model & N & Min & Median & Max \\
 \midrule
-WMT14 Fr--En &   4 &  28 & 107 \\
-WMT19 De--En &   4 &  26 & 107 \\
-CoQA         & --- & --- & --- \\
-TriviaQA     &   3 &   4 &  20 \\
-MMLU         &   3 &   3 &   3 \\
-GSM8k        &  25 & 136 & 256 \\
-XSUM         & --- & --- & --- \\
+WMT14 Fr--En & Mis-7B-Inst-v0.2  &  3003 &   4 &  28 & 107 \\
+WMT19 De--En & Mis-7B-Inst-v0.2  &  2998 &   4 &  26 & 107 \\
+TriviaQA     & LlaMa-3.1-8B-Inst & 10000 &   3 &   4 &  20 \\
+MMLU         & Mis-7B-Inst-v0.2  &  1461 &   3 &   3 &   3 \\
+GSM8k        & Mis-7B-Inst-v0.2  &  1319 &  25 & 136 & 256 \\
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{LM-Polygraph dataset statistics.} Range and median
-token length of generated sequences across the LM-Polygraph benchmark
-datasets used in Table~\ref{tab:polygraph}. Reported on the test
-split. Cells with ``---'' are not yet populated.}
+\caption{\textbf{LM-Polygraph dataset statistics.} Number of test
+examples ($N$) and per-example generated-sequence token-length
+statistics across the LM-Polygraph benchmark datasets used in
+Table~\ref{tab:polygraph}, broken down by generator LLM. Cells with
+``---'' are not yet populated.}
 \label{tab:polygraph_stats}
 \end{table}

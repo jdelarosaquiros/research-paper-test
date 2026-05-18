@@ -4,90 +4,90 @@
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
 \adjustbox{max width=\textwidth}{%
-\begin{tabular}{l *{7}{c} *{7}{c} *{7}{c}}
+\begin{tabular}{l *{6}{c} *{6}{c} *{6}{c}}
 \toprule
- & \multicolumn{7}{c}{Mis-7B-Inst} & \multicolumn{7}{c}{LlaMa-13B-Inst} & \multicolumn{7}{c}{LlaMa-70B-Inst} \\
-\cmidrule(lr){2-8} \cmidrule(lr){9-15} \cmidrule(lr){16-22}
+ & \multicolumn{6}{c}{Mis-7B-Inst} & \multicolumn{6}{c}{LlaMa-13B-Inst} & \multicolumn{6}{c}{LlaMa-70B-Inst} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
 Method
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 & XSUM
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 & XSUM
-  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 & XSUM \\
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19
+  & TriviaQA & CoQA & MMLU & GSM8k & WMT14 & WMT19 \\
 \midrule
-\multicolumn{22}{l}{\textit{Confidence}} \\
-\cmidrule(l){1-22}
+\multicolumn{19}{l}{\textit{Confidence}} \\
+\cmidrule(l){1-19}
 MaximumSequenceProbability
-  & --- & --- & 0.356 & 0.740 & --- & 0.680 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.356 & 0.740 & --- & 0.680
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 Perplexity
-  & --- & --- & 0.356 & 0.698 & --- & 0.703 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.356 & 0.698 & --- & 0.703
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 MeanTokenEntropy
-  & --- & --- & 0.355 & 0.702 & --- & 0.733 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.355 & 0.702 & --- & 0.733
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 SelfCertainty
-  & --- & --- & 0.353 & 0.661 & --- & \underline{0.777} & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.353 & 0.661 & --- & \underline{0.777}
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 TokenSAR
-  & --- & --- & 0.524 & 0.696 & --- & 0.701 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.524 & 0.696 & --- & 0.701
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 MeanPointwiseMutualInformation
-  & --- & --- & 0.807 & 0.453 & --- & 0.547 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.807 & 0.453 & --- & 0.547
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 BoostedProbSequence
-  & --- & --- & 0.407 & 0.701 & --- & 0.746 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.407 & 0.701 & --- & 0.746
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 \midrule
-\multicolumn{22}{l}{\textit{Mechanistic}} \\
-\cmidrule(l){1-22}
+\multicolumn{19}{l}{\textit{Mechanistic}} \\
+\cmidrule(l){1-19}
 CSL
-  & --- & --- & 0.335 & 0.702 & --- & 0.693 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.335 & 0.702 & --- & 0.693
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 AttentionScore
-  & --- & --- & 0.495 & 0.492 & --- & 0.510 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.495 & 0.492 & --- & 0.510
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 RAUQ
-  & --- & --- & 0.407 & 0.713 & --- & 0.656 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.407 & 0.713 & --- & 0.656
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 FactProbe
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 Feature-Gaps
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 Act-ViT (F-v2, N\textsubscript{eff}=6)
-  & --- & --- & \textbf{0.917} & \textbf{0.864} & --- & \underline{0.778} & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & \textbf{0.917} & \textbf{0.864} & --- & \underline{0.778}
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 \midrule
-\multicolumn{22}{l}{\textit{Ours}} \\
-\cmidrule(l){1-22}
+\multicolumn{19}{l}{\textit{Ours}} \\
+\cmidrule(l){1-19}
 Encoder Only + PRR
-  & --- & --- & \underline{0.911} & ---   & --- & \textbf{0.790} & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & \underline{0.911} & ---   & --- & \textbf{0.790}
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 Temp-ViT + PRR
-  & --- & --- & 0.822 & ---   & --- & 0.747 & ---
-  & --- & --- & ---   & ---   & --- & ---   & ---
-  & --- & --- & ---   & ---   & --- & ---   & --- \\
+  & --- & --- & 0.822 & \underline{0.860} & --- & 0.747
+  & --- & --- & ---   & ---   & --- & ---
+  & --- & --- & ---   & ---   & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
 \caption{\textbf{Short-form uncertainty on the LM-Polygraph benchmark.}
-AUROC per dataset across QA, NMT, and summarization corpora; quality
-scores for NMT (COMET) and summarization (AlignScore) are binarised at
-the training-set median. Method groupings follow
+AUROC per dataset across QA and NMT corpora; COMET (NMT) and
+AlignScore (long-form QA) quality scores are binarised at the
+training-set median. Method groupings follow
 Section~\ref{sec:baselines}. Best score per column in \textbf{bold};
 second-best \underline{underlined}. ``---'' = not yet run.}
 \label{tab:polygraph}
