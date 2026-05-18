@@ -12,12 +12,12 @@ not to localize within them. Table~\ref{tab:polygraph} reports
 per-dataset AUROC on three cells from Mis-7B-Inst:
 MMLU (QA, binary accuracy), GSM8k (math CoT, binary accuracy),
 and WMT19 De--En (NMT, COMET binarised at the training median).
-The Encoder Only + PRR row aggregates per-window logits to a
+The Encoder Only row aggregates per-window logits to a
 single number per response via top-$k$ MIL, matching the
 training-time aggregator (Section~\ref{sec:temporal_head}); the
-full Temp-ViT + PRR row uses the Stage~3 passage-level head.
+full Temp-ViT row uses the Stage~3 passage-level head.
 
-Encoder Only + PRR wins WMT19 ($0.790$) and lands within $0.006$
+Encoder Only wins WMT19 ($0.790$) and lands within $0.006$
 of the Act-ViT mechanistic baseline on MMLU. The full Temp-ViT
 row loses some accuracy on the short-form QA cells: its Stage~3
 objective is trained on long-form passages with many claims, and
