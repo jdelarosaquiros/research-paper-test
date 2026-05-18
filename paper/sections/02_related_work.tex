@@ -44,7 +44,7 @@ a single layer-token slice
 plane as an activation image and pooling it through a Vision
 Transformer; this widens the receptive field but commits to one
 score per response, exposing the speed--accuracy tradeoff inherent
-to full-tensor probes: either keep the pooled tensor small and lose
+to full-activation probes: either keep the pooled representation small and lose
 accuracy on long responses
 (Appendix Figure~\ref{fig:perf_by_length}), or scale it up and pay
 one forward per token when used streaming

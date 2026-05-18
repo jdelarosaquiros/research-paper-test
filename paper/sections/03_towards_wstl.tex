@@ -5,18 +5,18 @@ Mechanistic detectors face a tension between coverage and scalability.
 Static probing classifiers \citep{azaria2023,orgad2024} operate on a
 single layer-token position and ignore signal elsewhere in $A$; the
 optimal position varies across samples, datasets, and LLMs, often
-requiring an external search \citep{orgad2024}. Methods that process
-the whole tensor capture distributed signal but are ill-suited to
-real-time long-form generation: full-tensor probes face a
-speed--accuracy tradeoff, where keeping a small pooled tensor loses
-accuracy as responses grow long, while scaling the tensor up
-sacrifices inference speed by requiring one forward per token. Even when a
-full-tensor method does scale, a single sequence-level score does not
-say where the suspicious activations lie, a poor fit for
-responses where most tokens are correct and only a few are
-problematic.
+requiring an external search \citep{orgad2024}. Methods that consume
+the full hidden-state activations capture distributed signal but are
+ill-suited to real-time long-form generation: full-activation probes
+face a speed--accuracy tradeoff, where keeping the activations small
+and pooled loses accuracy as responses grow long, while scaling the
+representation up sacrifices inference speed by requiring one forward
+per token. Even when a full-activation method does scale, a single
+sequence-level score does not say where the suspicious activations
+lie, a poor fit for responses where most tokens are correct and only
+a few are problematic.
 
-\paragraph{Full-tensor probes do not scale to long responses.}
+\paragraph{Full-activation probes do not scale to long responses.}
 Appendix Figure~\ref{fig:perf_by_length} reports per-token AUROC on
 LongFact as the input prefix length $T$ grows, and makes the
 speed--accuracy tradeoff concrete. ACT-ViT with a short pooled
@@ -72,7 +72,7 @@ uncertainty without window-level labels.
 \paragraph{Three-stage training.} Learning sequence-level uncertainty
 and window-level localization jointly under weak supervision is a
 hard optimization. We decompose training into three stages.
-Stage 1 trains the encoder on full activation tensors with
+Stage 1 trains the encoder on full hidden-state activations with
 sequence-level labels. Stage 2 fine-tunes the encoder jointly with
 a temporal head \citep{albertgu2024} over per-window encodings via
 top-$k$ MIL against the same sequence label, so the head learns to

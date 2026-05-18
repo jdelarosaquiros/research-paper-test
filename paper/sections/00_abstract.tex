@@ -4,6 +4,6 @@ Existing uncertainty methods either struggle with semantic similarity, require e
 We introduce a temporal uncertainty localization model that predicts token-level hallucination uncertainty from hidden-state activations.
 Our model analyzes activation patterns across layers within local token windows and propagates window-level uncertainty evidence across the generated text.
 We train it with a three-stage framework that progresses from claim-level hallucination detection to localized token-window supervision.
-Across long-form hallucination benchmarks (RAGTruth, FActScore, LongFact) and the LM-Polygraph uncertainty benchmark, our method improves token-level AUROC by up to $30\%$ over pooled activation-tensor and confidence-based baselines, remains competitive on short-form tasks, and runs $25\times$ faster on long passages.
+Across long-form hallucination benchmarks (RAGTruth, FActScore, LongFact) and the LM-Polygraph uncertainty benchmark, our method improves token-level AUROC by up to $30\%$ over pooled-activation and confidence-based baselines, remains competitive on short-form tasks, and runs $25\times$ faster on long passages.
 These results show that windowed hidden-state localization enables scalable token-level hallucination detection for long-form generation.
 \end{abstract}

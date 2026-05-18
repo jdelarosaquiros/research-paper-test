@@ -7,8 +7,8 @@ Our pooling algorithm is presented in Algorithm~1 below.
 \centering
 \fbox{\begin{minipage}{0.92\linewidth}
 Algorithm 1: Pooling\\[2pt]
-Require: Tensor $A \in \mathbb{R}^{L_M \times N \times D_M}$, target sizes $L_p, N_p$\\
-Ensure: Tensor $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
+Require: Hidden-state activations $A \in \mathbb{R}^{L_M \times N \times D_M}$, target sizes $L_p, N_p$\\
+Ensure: Pooled activations $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
 1: $A \leftarrow \mathrm{permute}(A, [D_M, L_M, N])$\\
 2: Pad $A$ so that $L_M$ and $N$ are divisible by $L_p$ and $N_p$\\
 3: Compute patch sizes: $f_L = \frac{L_{\text{pad}}}{L_p}$, $f_N = \frac{N_{\text{pad}}}{N_p}$\\
@@ -23,12 +23,12 @@ Ensure: Tensor $A \in \mathbb{R}^{L_p \times N_p \times D_M}$\\
 \label{app:permutation}
 
 Given the same number of layers and hidden dimensions, two LLMs can compute the exact same
-function and yet produce entirely different activation tensors. This discrepancy stems from internal
+function and yet produce entirely different hidden-state activations. This discrepancy stems from internal
 symmetries in the model's weight space. To illustrate this, we consider a simplified transformer
 architecture with $L$ layers, omitting residual connections and batch normalization for clarity (though
 the analysis extends to those cases as well).
 
-Recall that $A_l$ is the activation tensor at layer $l \in [L]$. Let $(Q_l, K_l, V_l)$ denote the query, key, and
+Recall that $A_l$ denotes the activations at layer $l \in [L]$. Let $(Q_l, K_l, V_l)$ denote the query, key, and
 value matrices at layer $l$, computed as:
 \begin{equation}
 (Q_l, K_l, V_l) = (A_{l-1} W_l^{Q}, A_{l-1} W_l^{K}, A_{l-1} W_l^{V}).
@@ -48,7 +48,7 @@ W_{l+1}^{X} &\to P\, W_{l+1}^{X} \quad \text{for } X \in \{Q, K, V\}.
 \end{align}
 Although the new weights (the right hand side) are very different, it is straightforward to verify that
 the permutation matrices cancel out, leaving the underlying function unchanged. However, recalling
-Equation~\eqref{eq:ffn}, the activation tensors differ significantly, as the transformation permutes the feature
+Equation~\eqref{eq:ffn}, the hidden-state activations differ significantly, as the transformation permutes the feature
 dimension as follows:
 \begin{equation}
 A[l, n, d] \to A[l, n, \sigma(d)],

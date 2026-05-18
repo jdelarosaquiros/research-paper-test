@@ -38,7 +38,7 @@ sentence-level scores is amortized across the passage
 rather than scaling with the number of claims.
 Figure~\ref{fig:inference_time} quantifies this on a $T = 384$
 LongFact passage: roughly $25\times$ wall-clock advantage over
-sequence-level activation-tensor baselines that must be re-invoked
+sequence-level pooled-activation baselines that must be re-invoked
 per claim. Training the passage-level
 refinement stage takes under three hours on a single H200 across
 all three LLMs. Aggressive pooling

@@ -2,9 +2,9 @@
 \label{sec:model}
 
 Figure~\ref{fig:overview} illustrates the three-stage pipeline.
-Stage~1 trains a sequence encoder $E_\theta$ that maps a full
-activation tensor $A \in \mathbb{R}^{L \times T \times D}$ to a
-sequence-level logit. Stage~2 fine-tunes $E_\theta$ jointly with a
+Stage~1 trains a sequence encoder $E_\theta$ that maps the full
+hidden-state activations $A \in \mathbb{R}^{L \times T \times D}$ to
+a sequence-level logit. Stage~2 fine-tunes $E_\theta$ jointly with a
 Mamba-2 temporal head \citep{albertgu2024} on centered length-$W$
 token windows $\{A^{(t)}\}_{t=1}^{T}$; the head emits one logit
 $\hat{z}^{(t)}$ per window. Stage~3 freezes the encoder,
@@ -15,7 +15,7 @@ under per-claim auxiliary supervision.
 \label{sec:notation}
 
 Given an LLM $M$ and its generated response of length $T$, we
-collect the activation tensor
+collect the hidden-state activations
 $A \in \mathbb{R}^{L \times T \times D}$
 ($L$ transformer layers, $D$ hidden dimension). For temporal
 localization we additionally use the windowed view
@@ -58,8 +58,8 @@ per-sequence embedding that Stages 2 and 3 reuse.
 \subsection{Stage 2: Temporal Localization with Top-$k$ MIL}
 \label{sec:temporal_head}
 
-For each generated position $t$, we extract the windowed activation
-tensor $A^{(t)} \in \mathbb{R}^{L \times W \times D}$ as $W$ token
+For each generated position $t$, we extract the windowed activations
+$A^{(t)} \in \mathbb{R}^{L \times W \times D}$ as $W$ token
 columns of $A$ centered at $t$ (edge-padded near response boundaries).
 The same Pool is reused with a smaller token target
 $(L_p, W_p)$ and $E_\theta$ produces a per-window embedding
@@ -97,7 +97,7 @@ than on isolated claim segments: with the encoder frozen, the head is
 fine-tuned on whole passages with per-claim auxiliary labels so it
 learns the spatial profile of the signal within and across claims.
 
-Stage 3 takes as input a passage tensor
+Stage 3 takes as input passage-level activations
 $A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ claims
 $\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
 $\tilde{y}_m \in \{0,1\}$ from claim-level verification.

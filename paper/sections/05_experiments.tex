@@ -51,8 +51,8 @@ Llama-2-13B-chat-hf \citep{touvron2023} (LlaMa-13B-Inst), and
 Llama-3.1-70B-Instruct \citep{touvron2023} (LlaMa-70B-Inst). For
 each LLM we collect post-residual hidden states across all
 transformer layers and all generated tokens, yielding the
-activation tensor
-$A \in \mathbb{R}^{L \times T \times D}$ that drives our method
+hidden-state activations
+$A \in \mathbb{R}^{L \times T \times D}$ that drive our method
 (Section~\ref{sec:notation}).
 
 \subsection{Baselines}
@@ -83,7 +83,7 @@ Recurrent Attention-based Uncertainty Quantification (RAUQ)
 \citep{vazhentsev2025rauq},
 Fact-Probe \citep{han2025factprobe},
 Feature-Gaps \citep{bakman2025featuregaps}, and
-Act-ViT \citep{barshalom2025}, the pooled-tensor sequence
+Act-ViT \citep{barshalom2025}, the pooled-activation sequence
 encoder our architecture builds on.
 
 \paragraph{Ours.} Temp-ViT is reported in two variants:
