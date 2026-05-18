@@ -4,21 +4,23 @@
 \renewcommand{\arraystretch}{1.05}
 \scriptsize
 \adjustbox{max width=\linewidth}{%
-\begin{tabular}{l ccc ccc}
+\begin{tabular}{l l r ccc ccc}
 \toprule
- & \multicolumn{3}{c}{Passage length} & \multicolumn{3}{c}{Claim length} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7}
-Dataset & Min & Median & Max & Min & Median & Max \\
+ & & & \multicolumn{3}{c}{Passage length} & \multicolumn{3}{c}{Claim length} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9}
+Dataset & Model & N & Min & Median & Max & Min & Median & Max \\
 \midrule
-RAGTruth  &   6 & 157 & 512 & --- & --- & --- \\
-FactScore & 113 & 280 & 512 & --- & --- & --- \\
-LongFact  &  50 & 151 & 513 & --- & --- & --- \\
+RAGTruth  & Mis-7B-Inst-v0.1  & 2911 &   6 & 157 & 512 &   1 &  22 & 197 \\
+FactScore & Mis-7B-Inst-v0.2  &  183 & 113 & 280 & 512 &   4 &  33 & 261 \\
+LongFact  & Mis-7B-Inst-v0.2  & 1140 &  50 & 151 & 513 &   4 &  33 & 512 \\
+FactScore & LlaMa-2-70B-chat  &  549 &  60 & 512 & 512 &   3 &  34 & 154 \\
+LongFact  & LlaMa-2-70B-chat  & 1140 &  76 & 512 & 512 &   2 &  35 & 426 \\
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{Long-form dataset statistics.} Range and median token
-length of passages and claims in the three long-form hallucination
-detection corpora. Reported on the training split. Cells with ``---''
-are not yet populated.}
+\caption{\textbf{Long-form dataset statistics.} Number of generated
+passages ($N$) and per-passage / per-claim token-length statistics on
+the three long-form hallucination-detection corpora, broken down by
+generator LLM. Reported on the training split.}
 \label{tab:long_form_stats}
 \end{table}
