@@ -31,8 +31,8 @@ Temp-ViT scores local token windows and models their temporal
 evolution.
 
 \paragraph{Why windows instead of isolated tokens?} Hallucination
-labels are usually available at the response, sentence, or claim level,
-not at the exact token-window level. Moreover, the activation signal
+labels are usually available at the sequence, sentence, or claim level,
+not at the token level. Moreover, the activation signal
 is not confined to the hallucinated token itself.
 Figure~\ref{fig:signal_propagation} measures this directly: on
 RAGTruth, a linear probe's ROC-AUC ramps from chance at offset $-24$
