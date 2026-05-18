@@ -7,16 +7,16 @@ single layer-token position and ignore signal elsewhere in $A$; the
 optimal position varies across samples, datasets, and LLMs, often
 requiring an external search \citep{orgad2024}. Methods that consume
 the full hidden-state activations capture distributed signal but are
-ill-suited to real-time long-form generation: full-activation probes
-face a speed--accuracy tradeoff, where keeping the activations small
-and pooled loses accuracy as responses grow long, while scaling the
-representation up sacrifices inference speed by requiring one forward
-per token. Even when a full-activation method does scale, a single
+ill-suited to real-time long-form generation: activation-map probes
+face a speed--accuracy tradeoff, where keeping the map small and
+pooled loses accuracy as responses grow long, while scaling the map
+up sacrifices inference speed by requiring one forward per token.
+Even when an activation-map method does scale, a single
 sequence-level score does not say where the suspicious activations
 lie, a poor fit for responses where most tokens are correct and only
 a few are problematic.
 
-\paragraph{Full-activation probes do not scale to long responses.}
+\paragraph{Activation-map probes do not scale to long responses.}
 Appendix Figure~\ref{fig:perf_by_length} reports per-token AUROC on
 LongFact as the input prefix length $T$ grows, and makes the
 speed--accuracy tradeoff concrete. ACT-ViT with a short pooled
@@ -26,8 +26,8 @@ same fixed-size representation. Widening the pooled axis partially
 reduces this collapse at the cost of inference speed, but still
 does not recover Temp-ViT's flatter performance across response
 lengths. This supports our central design choice: instead of
-compressing the whole response into one fixed activation image,
-Temp-ViT scores local token windows and models their temporal
+compressing the whole response's activation map into one fixed-size
+representation, Temp-ViT scores local token windows and models their temporal
 evolution.
 
 \paragraph{Why windows instead of isolated tokens?} Hallucination

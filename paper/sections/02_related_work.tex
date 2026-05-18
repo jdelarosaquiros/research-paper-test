@@ -40,11 +40,11 @@ Hidden states encode signal about factuality
 \citep{marks2023,azaria2023,liu2024,ji2024} and many probes consume
 a single layer-token slice
 \citep{kadavath2022,snyder2024,zou2023,li2024}. ACT-ViT
-\citep{barshalom2025} extends this by reading the full layer-token
-plane as an activation image and pooling it through a Vision
-Transformer; this widens the receptive field but commits to one
+\citep{barshalom2025} extends this by treating the full layer-token
+activation map as a 2D image input to a Vision Transformer and pooling
+it down; this widens the receptive field but commits to one
 score per response, exposing the speed--accuracy tradeoff inherent
-to full-activation probes: either keep the pooled representation small and lose
+to activation-map probes: either keep the pooled representation small and lose
 accuracy on long responses
 (Appendix Figure~\ref{fig:perf_by_length}), or scale it up and pay
 one forward per token when used streaming
