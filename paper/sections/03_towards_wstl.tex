@@ -1,89 +1,88 @@
-\section{Towards Weakly Supervised Temporal Uncertainty Localization}
+\section{Why Hallucination Detection Requires Temporal Localization}
 \label{sec:non_static}
 
-Mechanistic detectors face a tension between coverage and scalability.
-Static probing classifiers \citep{azaria2023,orgad2024} operate on a
-single layer-token position and ignore signal elsewhere in $A$; the
-optimal position varies across samples, datasets, and LLMs, often
-requiring an external search \citep{orgad2024}. Methods that consume
-the full hidden-state activations capture distributed signal but are
-ill-suited to real-time long-form generation: activation-map probes
-face a speed--accuracy tradeoff, where keeping the map small and
-pooled loses accuracy as responses grow long, while scaling the map
-up sacrifices inference speed by requiring one forward per token.
-Even when an activation-map method does scale, a single
-sequence-level score does not say where the suspicious activations
-lie, a poor fit for responses where most tokens are correct and only
-a few are problematic.
+Mechanistic detectors face a tension among coverage, localization,
+and scalability. Fixed-position probes \citep{azaria2023,orgad2024} are
+efficient but read only one layer-token slice, so they miss signals
+that appear elsewhere in the activation tensor. Full-response
+activation maps capture broader structure, but they are expensive and
+usually collapse the response into one sequence-level score
+\citep{barshalom2025}. Claim-level detectors provide coarser
+localization, but scoring extracted claims in isolation ignores
+boundary evidence from neighboring supported and hallucinated spans
+\citep{snyder2024,he2024}. Long-form hallucination detection therefore
+requires an inference unit that is local enough to assign span-level
+scores, broad enough to include adjacent context, and cheap enough to
+run across a long response.
 
-\paragraph{Activation-map probes do not scale to long responses.}
-Appendix Figure~\ref{fig:perf_by_length} reports per-token AUROC on
-LongFact as the input prefix length $T$ grows, and makes the
-speed--accuracy tradeoff concrete. ACT-ViT with a short pooled
-token axis is cheap but performs well only on short prefixes; its
-accuracy drops as more generated tokens are compressed into the
-same fixed-size representation. Widening the pooled axis partially
-reduces this collapse at the cost of inference speed, but still
-does not recover Temp-ViT's flatter performance across response
-lengths. This supports our central design choice: instead of
-compressing the whole response's activation map into one fixed-size
-representation, Temp-ViT scores local token windows and models their temporal
-evolution.
+\paragraph{Full-response activation maps do not scale to long-form localization.}
+ACT-ViT shows that layer-token activation structure is predictive, but
+full-response pooling is the wrong inference unit for long-form
+localization. Appendix Figure~\ref{fig:perf_by_length} reports
+per-token AUROC on LongFact as the input prefix length $T$ grows:
+ACT-ViT with a short pooled token axis is fast but loses accuracy as
+more generated tokens are compressed into the same representation.
+Widening the pooled axis partially reduces this collapse at the cost
+of inference speed, and Figure~\ref{fig:inference_time} shows the
+runtime penalty when a full-response activation map is rescored at
+each token. Temp-ViT instead scores local token windows and models
+their temporal evolution, avoiding one pooled representation for the
+whole response.
 
-\paragraph{Why windows instead of isolated tokens?} Hallucination
-labels are usually available at the sequence, sentence, or claim level,
-not at the token level. Moreover, the activation signal
-is not confined to the hallucinated token itself.
-Figure~\ref{fig:signal_propagation} measures this directly: on
-RAGTruth, a linear probe's ROC-AUC ramps from chance at offset $-24$
-to $0.66$ at the token immediately before a hallucinated span, rises
-monotonically through the span ($0.71 \to 0.79$), and decays slowly
-afterward. Adjacent context therefore carries useful uncertainty
-signal, while direct token supervision would be noisy. We treat span
-labels as weak supervision and learn to localize uncertainty through
-window-level temporal modeling.
+\paragraph{Why windows instead of isolated tokens?}
+HaMI \citep{niu2025hami} shows that hallucination evidence can be
+sparse: only a small part of a response may carry the decisive signal.
+Temp-ViT shares this sparsity assumption, but changes the localization
+unit from individual token representations to local activation windows.
+The evidence is not confined to isolated token states; it forms a
+local temporal pattern around the hallucinated span. Figure~\ref{fig:signal_propagation}
+measures this directly on RAGTruth: a linear probe's ROC-AUC ramps
+from chance at offset $-24$ to $0.66$ at the token immediately before
+a hallucinated span, rises through the span ($0.71 \to 0.79$), and
+decays slowly afterward. Unlike HaMI-style token selection, where
+individual token representations are the MIL instances, Temp-ViT uses
+local activation windows as instances because useful evidence appears
+before, during, and after the labeled span.
 
 \input{figs/fig_signal_propagation}
 \input{figs/fig1_overview}
 
 \paragraph{Why encode activations as 2D images?}
-Per layer and token probes show that the useful hidden state signal is not concentrated
-in one fixed position. Instead, informative regions appear across both the layer direction 
-and the token direction, and the most predictive regions change from one LLM to another, 
-as shown by the heatmaps in Appendix~\ref{app:heatmaps}. This means that layers and tokens 
-form a connected spatial pattern, rather than two independent axes that can be reduced separately. 
-A probe that reads only one layer and token or splices them can discard part of this pattern.
-ACT ViT \citep{barshalom2025actvit} supports this view by treating the layer by token activation plane
-as an image and showing that a vision encoder over this plane performs better than the strongest single
-position probe across models and datasets. This suggests that joint image style processing preserves predictive
-signal that would otherwise be lost, motivating an encoder that reads the full layer and token plane
-instead of relying on a single fixed hidden state slice.
+Per-layer and per-token probes show that useful hidden-state signal is
+not concentrated in one fixed position. Informative regions appear
+across both the layer direction and the token direction, and the most
+predictive regions change across LLMs, as shown by the heatmaps in
+Appendix~\ref{app:heatmaps}. A single layer-token slice or one-axis
+pooling can discard cross-axis patterns in this layer-token plane.
+ACT-ViT \citep{barshalom2025actvit} motivates the spatial encoder by
+treating the layer-token activation plane as a 2D image and showing
+that a vision encoder improves over fixed-position probes. Temp-ViT
+keeps this activation-image view, but changes the inference unit from
+one pooled sequence image to a temporal sequence of local activation
+images.
 
 \paragraph{Weakly supervised temporal localization.} ACT-ViT shows
 that the $(L,T)$ plane has spatial structure amenable to visual
 encoders, but a single fixed-size image fits poorly when $T$ ranges
-from a handful to thousands of tokens. We frame $A$ as a video
-over the token axis and borrow WSTL from video understanding
-\citep{pilhyeonlee2021}. Each token is a frame whose height is the
-layer axis and whose channels are the hidden dimension; a
-window aggregates $W$ consecutive tokens. The neighbourhood
-structure of Figure~\ref{fig:signal_propagation} is exactly what a
-window exploits: surrounding tokens emit usable signal about whether
-a target token is hallucinated, so the model can localize spans of
-uncertainty without window-level labels.
+from a handful to thousands of tokens. We frame $A$ as a video over
+the token axis and borrow weakly supervised temporal localization
+from video understanding \citep{pilhyeonlee2021}. Each token is a
+frame whose height is the layer axis and whose channels are the
+hidden dimension; a window aggregates $W$ consecutive frames into a
+local activation image. A claim or response label then provides weak
+supervision over a temporal sequence of windows. We use top-$k$ MIL
+over windows, not over isolated token states, so the model learns
+which local activation windows explain a positive label without
+window-level annotations.
 
 \paragraph{Three-stage training.} Learning sequence-level uncertainty
-and window-level localization jointly under weak supervision is a
-hard optimization. We decompose training into three stages.
-Stage 1 trains the encoder on full hidden-state activations with
-sequence-level labels. Stage 2 fine-tunes the encoder jointly with
-a temporal head \citep{albertgu2024} over per-window encodings via
-top-$k$ MIL against the same sequence label, so the head learns to
-localize the uncertainty signal to a few windows inside each claim
-without per-window supervision.
-Stage 3 trains the head across claims in the full sequence:
-fine-tuning on whole passages with per-claim auxiliary labels
-teaches it how the uncertainty activation signal changes across
-claims, in particular on mixed-content windows whose receptive
-field contains both hallucinated and supported tokens (which
-Stages~1 and 2 never see). We describe each stage in the next section.
+and window-level localization jointly under weak supervision is a hard
+optimization, so we decompose training into three stages. Stage~1
+encoder pretraining learns uncertainty-sensitive activation patterns
+from isolated labeled claims. Stage~2 top-$k$ window localization
+fine-tunes the encoder with a temporal head \citep{albertgu2024},
+using MIL to identify the few local windows that explain a positive
+claim label. Stage~3 cross-claim refinement trains on whole passages
+with neighboring correct and hallucinated claims, exposing the model
+to mixed-content windows and boundary behavior that isolated-claim
+training does not cover. We describe each stage in the next section.

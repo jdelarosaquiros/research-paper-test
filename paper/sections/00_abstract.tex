@@ -1,9 +1,8 @@
 \begin{abstract}
-Detecting hallucinations in long-form LLM outputs requires methods that are both fine-grained and efficient.
-Existing uncertainty methods either struggle with semantic similarity, require expensive consistency sampling, or lose localized signals by probing isolated layer-token positions or pooling over long sequences.
-We introduce a temporal uncertainty localization model that predicts token-level hallucination uncertainty from hidden-state activations.
-Our model analyzes activation patterns across layers within local token windows and propagates window-level uncertainty evidence across the generated text.
-We train it with a three-stage framework that progresses from claim-level hallucination detection to localized token-window supervision.
-Across long-form hallucination benchmarks (RAGTruth, FActScore, LongFact) and the LM-Polygraph uncertainty benchmark, our method improves token-level AUROC by up to $30\%$ over pooled-activation and confidence-based baselines, remains competitive on short-form tasks, and runs $25\times$ faster on long passages.
-These results show that windowed hidden-state localization enables scalable token-level hallucination detection for long-form generation.
+Long-form LLM outputs often mix supported and unsupported claims, requiring detectors that localize unreliable spans rather than assign only a response-level label.
+Internal representations contain useful hallucination signals, but current mechanistic detectors read them from the wrong unit: fixed token positions are too narrow, pooled full-response activation maps are too global, and isolated claim classifiers miss boundary evidence.
+We introduce Temp-ViT, a weakly supervised temporal localization model that encodes local layer-token activation windows and propagates window-level uncertainty evidence across the generated text.
+Temp-ViT is trained with a three-stage framework: claim-level encoder pretraining, top-$k$ MIL window localization, and cross-claim refinement over mixed-content windows.
+Across RAGTruth, FactScore, LongFact, and LM-Polygraph, Temp-ViT improves token-level AUROC by up to $30\%$ over pooled-activation and confidence-based baselines, remains competitive on short-form uncertainty tasks, and runs $25\times$ faster on long passages.
+These results identify local activation windows as the inference unit for scalable token, sentence, and claim-level hallucination localization.
 \end{abstract}
