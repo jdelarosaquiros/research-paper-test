@@ -13,8 +13,8 @@ hidden inside otherwise correct text \citep{niu2024ragtruth,min2023,wei2024}.
 Predictive uncertainty methods estimate confidence from a single generation through
 sequence probability, entropy, or related token-probability statistics
 \citep{malinin2021uncertainty,duan2024shifting,schweighofer2025rethinking}.
-Multiple-generation methods instead sample several answers and measure semantic
-consistency \citep{kuhn2023semantic,lin2024generating,jiang2024}, while verifier
+Multiple-generation methods sample several answers and measure semantic
+consistency \citep{kuhn2023semantic,lin2024generating,jiang2024}. Verifier
 pipelines decompose the response into claims and check them with external systems
 \citep{manakul2023,min2023,zhao2024}. These approaches are useful, but they either
 depend on the final generation output, require extra samples or verifiers, or become
@@ -50,24 +50,23 @@ hidden-state activations. Temp-ViT treats each response as a temporal sequence o
 local layer-token activation windows. Each window is encoded as a 2D activation
 image over the layer-token plane, and a temporal head propagates window-level
 uncertainty evidence across the response \citep{pilhyeonlee2021,albertgu2024}.
-The model is trained from weak claim and sequence labels through three stages:
+The model is trained from weak claim or sequence labels through three stages:
 claim-level encoder pretraining, top-$k$ MIL window localization, and cross-claim
 refinement over mixed-content windows. Concretely, we contribute:
 \begin{enumerate}
     \item We formulate mechanistic hallucination detection as weakly supervised
-    temporal localization over hidden-state activation windows, enabling token,
-    sentence, and claim-level scoring from weak labels.
+    temporal localization over hidden-state activation windows, enabling per-token predictions
+    as granular as token level from weak labels.
 
     \item We propose Temp-ViT, a windowed activation model that encodes local
     layer-token planes with a ViT encoder and propagates uncertainty evidence with
-    a temporal head.
-
-    \item We introduce a three-stage weak-supervision framework that learns
-    uncertainty-sensitive activation patterns, localizes responsible windows with
+    a temporal head. We train it with a three-stage weak-supervision framework that learns
+    hallucination activation patterns with claim labels, localizes responsible windows with
     top-$k$ MIL, and refines boundary behavior across neighboring correct and
     hallucinated claims.
 
     \item We demonstrate granular long-form hallucination localization on
-    RAGTruth, FactScore, and LongFact, and show that the same localized scores
-    remain competitive on LM-Polygraph short-form uncertainty tasks.
+    biographical generation, open-ended factual QA, and retrieval-augmented QA
+    when using claim-level labels for training. We also show it outperforms other methods
+    even when using weaker sequence-level labels.
 \end{enumerate}
