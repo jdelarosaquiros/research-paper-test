@@ -3,7 +3,7 @@
 
 \input{figs/tab3_sentence}
 
-\subsection{Temp-ViT improves token-level hallucination
+\subsection{TPE improves token-level hallucination
 localization}
 \label{sec:results_token}
 
@@ -11,7 +11,7 @@ The headline contribution is per-token localization on long-form
 text. Table~\ref{tab:main} reports token-level AUROC on RAGTruth
 \citep{niu2024ragtruth}, FactScore \citep{min2023}, and LongFact
 \citep{wei2024} for two LLMs. On every populated cell, the
-Temp-ViT family beats both the Confidence baselines (which top out
+TPE family beats both the Confidence baselines (which top out
 near 0.60) and the strongest mechanistic baseline (Act-ViT
 \citep{barshalom2025}, the pooled-activation sequence encoder we build
 on). On RAGTruth the gap is largest -- Encoder Only reaches
@@ -21,7 +21,7 @@ LongFact the gap narrows but the ranking is preserved.
 
 The two Ours variants split the column lead: Encoder Only
 wins token-level on Mis-7B-Inst (all three datasets) and on
-LlaMa-13B-Inst (FactScore, LongFact), while Temp-ViT wins
+LlaMa-13B-Inst (FactScore, LongFact), while TPE wins
 the LlaMa-13B-Inst RAGTruth cell. The pattern answers
 (Q\textsubscript{1}): Confidence and Mechanistic baselines are
 near chance at the token level on these corpora; the supervised
@@ -39,7 +39,7 @@ uncertainty in the span).
 At the sentence level the Ours rows dominate every populated cell
 except FactScore / LongFact for LlaMa-13B-Inst, where MeanTokenEntropy
 edges out by 1--3 AUROC points. RAGTruth shows the cleanest
-separation: Temp-ViT reaches $0.929$ sentence AUROC on
+separation: TPE reaches $0.929$ sentence AUROC on
 LlaMa-13B-Inst against the next-best baseline at $0.657$.
 Sentence-length distributions
 that determine which granularity is feasible to supervise are

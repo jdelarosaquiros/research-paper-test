@@ -2,7 +2,7 @@
 \label{sec:ablations}
 
 \paragraph{Architecture variants (Table~\ref{tab:window_ablation}).}
-We compare the full Temp-ViT pipeline against an MLP-encoder baseline
+We compare the full TPE pipeline against an MLP-encoder baseline
 (no windowing) and an encoder-only variant (no temporal head), across
 the three stages. The encoder-only Stage~3 variant matches or beats
 the full pipeline on AUROC on both RAGTruth cells, indicating that
@@ -45,7 +45,7 @@ Table~\ref{tab:polygraph} compares uncertainty scores by ranking quality
 Calibration Error on the same three Mis-7B-Inst cells. Lower ECE is
 better. Act-ViT and Encoder~Only are the best-calibrated detectors on
 MMLU (ECE $\leq 0.064$, vs. $> 0.5$ for most Confidence baselines);
-Temp-ViT wins the calibration race on GSM8k ($0.066$). The picture on
+TPE wins the calibration race on GSM8k ($0.066$). The picture on
 WMT19 differs: short, well-conditioned Confidence baselines
 (TokenSAR, MeanTokenEntropy, Perplexity) are already well-calibrated on
 NMT outputs, so the supervised detectors trail them on ECE while still
@@ -54,7 +54,7 @@ orthogonal --- this table makes that explicit.
 
 \paragraph{In-distribution vs out-of-distribution (Table~\ref{tab:ood}).}
 RAGTruth contains three task types: QA, summarization, and data-to-text.
-We train two versions of Temp-ViT and evaluate both on the data-to-text
+We train two versions of TPE and evaluate both on the data-to-text
 subset: a \emph{baseline} trained on all three task types, and an
 \emph{OOD} variant trained only on QA and summarization. The gap
 between the two rows measures how much of the per-token detector's

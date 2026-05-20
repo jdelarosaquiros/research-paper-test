@@ -1,6 +1,6 @@
 \section{Introduction}
 
-\input{figs/fig_temp_vit_example}
+\input{figs/fig_tpe_example}
 
 \paragraph{Why long-form localization matters.}
 Long-form LLM outputs can interleave supported statements with localized factual errors.
@@ -36,7 +36,7 @@ generation \citep{snyder2024,he2024}.
 
 \paragraph{Our observation.}
 Hallucination evidence is temporally local rather than token-isolated.
-Figure~\ref{fig:temp_vit_example} illustrates the target behavior: a detector should
+Figure~\ref{fig:tpe_example} illustrates the target behavior: a detector should
 assign high uncertainty to the unsupported span while preserving low scores on the
 surrounding supported text.
 Figure~\ref{fig:signal_propagation} shows why local windows are the right instance
@@ -44,12 +44,13 @@ unit: on RAGTruth, a linear probe signal rises before the hallucinated span, inc
 through it, and decays after it. The evidence is not concentrated in one selected
 token; it forms a local temporal pattern around the hallucinated span.
 
-\paragraph{Temp-ViT.}
-We propose Temp-ViT, a weakly supervised temporal localization model for LLM
-hidden-state activations. Temp-ViT treats each response as a temporal sequence of
-local layer-token activation windows. Each window is encoded as a 2D activation
-image over the layer-token plane, and a temporal head propagates window-level
-uncertainty evidence across the response \citep{pilhyeonlee2021,albertgu2024}.
+\paragraph{Temporal Perception Encoder.}
+We propose Temporal Perception Encoder (TPE), a weakly supervised temporal
+localization model for LLM hidden-state activations. TPE treats each response as
+a temporal sequence of local layer-token activation windows. Each window is
+encoded by a Perception Encoder over the layer-token plane, and a temporal head
+propagates window-level uncertainty evidence across the response
+\citep{bolya2025perceptionencoder,pilhyeonlee2021,albertgu2024}.
 The model is trained from weak claim or sequence labels through three stages:
 claim-level encoder pretraining, top-$k$ MIL window localization, and cross-claim
 refinement over mixed-content windows. Concretely, we contribute:
@@ -58,8 +59,8 @@ refinement over mixed-content windows. Concretely, we contribute:
     temporal localization over hidden-state activation windows, enabling per-token predictions
     as granular as token level from weak labels.
 
-    \item We propose Temp-ViT, a windowed activation model that encodes local
-    layer-token planes with a ViT encoder and propagates uncertainty evidence with
+    \item We propose TPE, a windowed activation model that encodes local
+    layer-token planes with a Perception Encoder and propagates uncertainty evidence with
     a temporal head. We train it with a three-stage weak-supervision framework that learns
     hallucination activation patterns with claim labels, localizes responsible windows with
     top-$k$ MIL, and refines boundary behavior across neighboring correct and

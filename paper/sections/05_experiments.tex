@@ -6,7 +6,7 @@
 \subsection{Research Questions}
 \label{sec:rqs}
 We answer three questions:
-(Q\textsubscript{1}) Does Temp-ViT outperform confidence-based and
+(Q\textsubscript{1}) Does TPE outperform confidence-based and
 mechanistic baselines for token-level hallucination
 localization on long-form text?
 (Q\textsubscript{2}) Do those localization gains carry over to
@@ -90,13 +90,13 @@ HaMI \citep{niu2025hami}, an MIL-based detector with
 adaptive top-$k$ token selection and uncertainty-augmented
 representations, and
 Act-ViT \citep{barshalom2025}, the pooled-activation sequence
-encoder our architecture builds on.
+activation-map baseline.
 
-\paragraph{Ours.} Temp-ViT is reported in two variants:
+\paragraph{Ours.} TPE is reported in two variants:
 \emph{Encoder Only} -- the Stage-2 detector
 (Section~\ref{sec:temporal_head}) used as a stand-alone per-window
 scorer aggregated by top-$k$ MIL; and the full three-stage
-\emph{Temp-ViT} pipeline (Section~\ref{sec:stage3}). Both are
+\emph{TPE} pipeline (Section~\ref{sec:stage3}). Both are
 trained with PRR as the validation criterion, following the
 LM-Polygraph protocol.
 

@@ -46,10 +46,13 @@ that aligns hidden dimensions across models in $\mathcal{M}$:
 \end{equation}
 motivated by recent evidence that LLM representations can be put in
 approximate correspondence by linear maps
-\citep{huh2024,moschella2022,kornblith2019}. ViT-B treats the
-$(L_p \times T_p)$ plane as an image, splits it into non-overlapping
-$(p_H, p_W)$ patches, adds learnable intra-patch positional encodings,
-and processes the patch sequence with a Transformer. A linear head
+\citep{huh2024,moschella2022,kornblith2019}. The Perception Encoder
+processes the pooled $(L_p \times T_p)$ activation image as a visual
+input and returns a dense embedding for the layer-token plane
+\citep{bolya2025perceptionencoder}. We use its intermediate visual
+features rather than training a task-specific visual encoder from
+scratch, following the Perception Encoder observation that useful
+visual embeddings can be hidden in internal layers. A linear head
 emits the Stage-1 logit $z$, trained with
 $\mathcal{L}_{1} = \mathrm{BCE}(\sigma(z), y)$ where $y$ is the
 sequence label. The features before the linear head form the

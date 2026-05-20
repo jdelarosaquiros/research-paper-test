@@ -25,14 +25,14 @@ more generated tokens are compressed into the same representation.
 Widening the pooled axis partially reduces this collapse at the cost
 of inference speed, and Figure~\ref{fig:inference_time} shows the
 runtime penalty when a full-response activation map is rescored at
-each token. Temp-ViT instead scores local token windows and models
+each token. TPE instead scores local token windows and models
 their temporal evolution, avoiding one pooled representation for the
 whole response.
 
 \paragraph{Why windows instead of isolated tokens?}
 HaMI \citep{niu2025hami} shows that hallucination evidence can be
 sparse: only a small part of a response may carry the decisive signal.
-Temp-ViT shares this sparsity assumption, but changes the localization
+TPE shares this sparsity assumption, but changes the localization
 unit from individual token representations to local activation windows.
 The evidence is not confined to isolated token states; it forms a
 local temporal pattern around the hallucinated span. Figure~\ref{fig:signal_propagation}
@@ -40,7 +40,7 @@ measures this directly on RAGTruth: a linear probe's ROC-AUC ramps
 from chance at offset $-24$ to $0.66$ at the token immediately before
 a hallucinated span, rises through the span ($0.71 \to 0.79$), and
 decays slowly afterward. Unlike HaMI-style token selection, where
-individual token representations are the MIL instances, Temp-ViT uses
+individual token representations are the MIL instances, TPE uses
 local activation windows as instances because useful evidence appears
 before, during, and after the labeled span.
 
@@ -54,12 +54,13 @@ across both the layer direction and the token direction, and the most
 predictive regions change across LLMs, as shown by the heatmaps in
 Appendix~\ref{app:heatmaps}. A single layer-token slice or one-axis
 pooling can discard cross-axis patterns in this layer-token plane.
-ACT-ViT \citep{barshalom2025actvit} motivates the spatial encoder by
+ACT-ViT \citep{barshalom2025actvit} motivates activation-image encoding by
 treating the layer-token activation plane as a 2D image and showing
-that a vision encoder improves over fixed-position probes. Temp-ViT
-keeps this activation-image view, but changes the inference unit from
-one pooled sequence image to a temporal sequence of local activation
-images.
+that visual encoders improve over fixed-position probes. TPE
+keeps this activation-image view, uses Perception Encoder features
+\citep{bolya2025perceptionencoder}, and changes the inference unit
+from one pooled sequence image to a temporal sequence of local
+activation images.
 
 \paragraph{Weakly supervised temporal localization.} ACT-ViT shows
 that the $(L,T)$ plane has spatial structure amenable to visual

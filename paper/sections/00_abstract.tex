@@ -1,7 +1,7 @@
 \begin{abstract}
 Long-form LLM outputs often mix supported and unsupported claims, requiring detectors that localize unreliable spans rather than assigning only a response-level label.
 Internal representations contain useful hallucination signals, but current mechanistic detectors read them from the wrong unit: fixed token positions are too narrow, pooled full-response activation maps are too global, and isolated claim classifiers miss boundary evidence.
-We introduce Temp-ViT, a weakly supervised temporal localization model that encodes local layer-token activation windows and propagates window-level uncertainty evidence across the generated text.
+We introduce Temporal Perception Encoder (TPE), a weakly supervised temporal localization model that encodes local layer-token activation windows and propagates window-level uncertainty evidence across the generated text.
 We achieve this localization by formulating hallucination detection as weakly supervised temporal localization over token-centered activation windows, where claim- and sequence-level labels supervise top-$k$ window selection and temporal scoring without token-level annotations.
-Experiments on RAGTruth, FactScore, LongFact, and LM-Polygraph show that Temp-ViT improves token-level AUROC by up to $30\%$ over pooled-activation and confidence-based baselines while running $25\times$ faster on long passages.
+Experiments on RAGTruth, FactScore, LongFact, and LM-Polygraph show that TPE improves token-level AUROC by up to $30\%$ over pooled-activation and confidence-based baselines while running $25\times$ faster on long passages.
 \end{abstract}

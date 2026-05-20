@@ -1,4 +1,4 @@
-\subsection{Temp-ViT outperforms baselines in uncertainty
+\subsection{TPE outperforms baselines in uncertainty
 quantification}
 \label{sec:results_polygraph}
 
@@ -18,11 +18,11 @@ are reported in the ablation
 Table~\ref{tab:polygraph_extended}. The Encoder Only row
 aggregates per-window logits to a single number per response via
 top-$k$ MIL, matching the training-time aggregator
-(Section~\ref{sec:temporal_head}); the full Temp-ViT row uses the
+(Section~\ref{sec:temporal_head}); the full TPE row uses the
 Stage~3 passage-level head.
 
 Encoder Only wins NMT ($0.816$) and slightly edges the Act-ViT
-mechanistic baseline on QA ($0.114$ vs $0.113$). The full Temp-ViT
+mechanistic baseline on QA ($0.114$ vs $0.113$). The full TPE
 row loses some accuracy on the QA category: its Stage~3
 objective is trained on long-form passages with many claims, and
 the per-claim loss does not transfer back to single-claim
@@ -36,7 +36,7 @@ Table~\ref{tab:polygraph_stats}.
 \subsection{Efficiency analysis}
 \label{sec:results_efficiency}
 
-Temp-ViT scores every generated token in a single forward through
+TPE scores every generated token in a single forward through
 the frozen encoder and the temporal head, so the cost of obtaining
 sentence-level scores is amortized across the passage
 rather than scaling with the number of claims.
