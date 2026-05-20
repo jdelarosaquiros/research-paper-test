@@ -2,72 +2,75 @@
 
 \input{figs/fig_tpe_example}
 
-\paragraph{Why long-form localization matters.}
-Long-form LLM outputs can interleave supported statements with localized factual errors.
-A useful detector should therefore identify where unreliable content appears, not only
-whether the full response is wrong. This distinction matters for retrieval-augmented
-answers, biographies, and long explanations, where a single unsupported span can be
-hidden inside otherwise correct text \citep{niu2024ragtruth,min2023,wei2024}.
+\paragraph{Why this matters.}
+Despite improvements in reducing hallucinations, LLMs remain susceptible to
+localized factual errors, especially in long-form answers where fluent text can
+hide unsupported claims. These errors reduce reliability because the model may
+sound confident even when part of the response is not supported. A useful
+uncertainty detector should therefore identify where unreliable content appears,
+not only whether the full response is wrong. This distinction matters for
+retrieval-augmented answers, biographies, and long explanations, where a single
+unsupported span can be hidden inside otherwise correct text
+\citep{niu2024ragtruth,min2023,wei2024}. Existing detectors approach this
+problem through token-probability statistics, multiple-response consistency,
+external verification, or mechanistic analysis of internal activations, but they
+miss at least one of cost, granularity, and performance on long answers
+\citep{malinin2021uncertainty,kuhn2023semantic,manakul2023,azaria2023}.
 
-\paragraph{What current uncertainty methods leave open.}
-Predictive uncertainty methods estimate confidence from a single generation through
-sequence probability, entropy, or related token-probability statistics
+\paragraph{What current methods leave open.}
+Confidence-based methods estimate uncertainty from sequence probabilities,
+entropy, or related token statistics, but they do not directly model semantic
+equivalence and often degrade on long-form generations
 \citep{malinin2021uncertainty,duan2024shifting,schweighofer2025rethinking}.
-Multiple-generation methods sample several answers and measure semantic
-consistency \citep{kuhn2023semantic,lin2024generating,jiang2024}. Verifier
-pipelines decompose the response into claims and check them with external systems
-\citep{manakul2023,min2023,zhao2024}. These approaches are useful, but they either
-depend on the final generation output, require extra samples or verifiers, or become
-slow when applied repeatedly across long passages.
-This motivates using internal representations from the generating model.
+Sampling-based methods compare several generations, and verifier pipelines
+decompose responses into claims and check them with external systems
+\citep{kuhn2023semantic,lin2024generating,jiang2024,manakul2023,min2023,zhao2024}.
+These methods can be accurate, but repeated sampling, retrieval, or LLM-based
+judging is expensive when applied across long passages. Mechanistic methods avoid
+extra LLM calls by inspecting hidden states of the generating model
+\citep{azaria2023,marks2023,liu2024,ji2024}, but each family hits a different
+wall. Fixed layer-token probes are cheap but miss uncertainty signals that move
+across layers, positions, models, and tasks \citep{kadavath2022,orgad2024}.
+Full-response activation-map probes capture more distributed signal, but pooling
+a whole response into one representation produces a sequence-level score and
+forces a tradeoff between speed and accuracy as outputs grow longer
+\citep{barshalom2025}. The common workaround is to extract claims, classify each
+claim, and broadcast the verdict to the claim's text span, but this ignores
+pre-span, post-span, and boundary evidence in the surrounding generation
+\citep{snyder2024,he2024}.
 
-\paragraph{Mechanistic detectors read the wrong unit.}
-Hidden states encode truthfulness and hallucination signals
-\citep{azaria2023,marks2023,liu2024,ji2024}, but existing mechanistic detectors
-choose a unit that is poorly matched to long-form localization.
-Fixed layer-token probes are efficient but too narrow, because the useful signal can
-move across layers, positions, models, and tasks \citep{kadavath2022,orgad2024}.
-Full-response activation-map probes cover more signal, but pooling a whole response
-into one representation produces a sequence-level score and forces a tradeoff between
-speed and accuracy as outputs grow longer \citep{barshalom2025}.
-Claim-level classifiers localize more coarsely, but they score isolated extracted
-claims and can miss pre-span, post-span, and boundary evidence in the surrounding
-generation \citep{snyder2024,he2024}.
-
-\paragraph{Our observation.}
-Hallucination evidence is temporally local rather than token-isolated.
-Figure~\ref{fig:tpe_example} illustrates the target behavior: a detector should
-assign high uncertainty to the unsupported span while preserving low scores on the
-surrounding supported text.
-Figure~\ref{fig:signal_propagation} shows why local windows are the right instance
-unit: on RAGTruth, a linear probe signal rises before the hallucinated span, increases
-through it, and decays after it. The evidence is not concentrated in one selected
-token; it forms a local temporal pattern around the hallucinated span.
-
-\paragraph{Temporal Perception Encoder.}
-We propose Temporal Perception Encoder (TPE), a weakly supervised temporal
-localization model for LLM hidden-state activations. TPE treats each response as
-a temporal sequence of local layer-token activation windows. Each window is
-encoded by a Perception Encoder over the layer-token plane, and a temporal head
-propagates window-level uncertainty evidence across the response
-\citep{bolya2025perceptionencoder,pilhyeonlee2021,albertgu2024}.
-The model is trained from weak claim or sequence labels through three stages:
-claim-level encoder pretraining, top-$k$ MIL window localization, and cross-claim
-refinement over mixed-content windows. Concretely, we contribute:
+\paragraph{Our approach and contributions.}
+We recast mechanistic hallucination detection as weakly supervised temporal
+localization (WSTL), borrowing from video understanding: a video model localizes
+an action from clip-level labels without per-frame supervision
+\citep{pilhyeonlee2021}. We treat hidden-state activations as a temporal sequence
+over the generated token axis. Each instance is a fixed-length activation window
+whose layer-token plane preserves local structure across layers and nearby
+tokens. Figure~\ref{fig:tpe_example} shows the motivation for this windowed view:
+hallucination evidence can appear before the unsupported tokens and influence
+the hallucinated span. Based on this representation, we build Temporal Perception
+Encoder (TPE): a Perception Encoder over local layer-token activation windows
+paired with a temporal head that propagates window-level uncertainty evidence
+across the response \citep{bolya2025perceptionencoder,albertgu2024}. Concretely,
+we contribute:
 \begin{enumerate}
-    \item We formulate mechanistic hallucination detection as weakly supervised
-    temporal localization over hidden-state activation windows, enabling per-token predictions
-    as granular as token level from weak labels.
+    \item We recast mechanistic hallucination detection as weakly supervised
+    temporal localization over LLM hidden-state activations, enabling uncertainty
+    scores to be assigned to tokens or segments of a long-form response rather
+    than only to the full sequence.
 
-    \item We propose TPE, a windowed activation model that encodes local
-    layer-token planes with a Perception Encoder and propagates uncertainty evidence with
-    a temporal head. We train it with a three-stage weak-supervision framework that learns
-    hallucination activation patterns with claim labels, localizes responsible windows with
-    top-$k$ MIL, and refines boundary behavior across neighboring correct and
-    hallucinated claims.
+    \item We propose TPE, a windowed uncertainty localization model that encodes
+    local layer-token activation windows with a Perception Encoder and propagates
+    uncertainty evidence with a temporal head.
 
-    \item We demonstrate granular long-form hallucination localization on
-    biographical generation, open-ended factual QA, and retrieval-augmented QA
-    when using claim-level labels for training. We also show it outperforms other methods
-    even when using weaker sequence-level labels.
+    \item We introduce a three-stage weakly supervised training framework. Stage~1
+    pretrains the encoder on labeled claims, Stage~2 uses top-$k$ MIL to localize
+    uncertainty signal to a few token windows inside each span, and Stage~3 trains
+    across full sequences to handle windows that mix correct and hallucinated
+    spans.
+
+    \item We demonstrate efficient and granular hallucination localization on
+    long-form benchmarks, including FactScore, LongFact, and RAGTruth, with
+    token-, claim-, and sentence-level evaluation. We also show that localized
+    scores outperform uncertainty quantification baselines on LM-Polygraph.
 \end{enumerate}
