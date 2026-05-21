@@ -1,44 +1,38 @@
 \section{Method}
 \label{sec:model}
 
-Figure~\ref{fig:overview} illustrates the three-stage pipeline.
-Stage~1 pretrains a sequence encoder $E_\theta$ on isolated labeled
-segments by mapping hidden-state activations
-$A \in \mathbb{R}^{L \times T \times D}$ to an embedding $e$ and
-sequence logit $z$, supervised by
-$\mathcal{L}_{1}=\mathrm{BCE}(\sigma(z), y)$. Stage~2 converts the
-same activation tensor into centered length-$W$ windows
-$A^{(1)},\ldots,A^{(T)}$, fine-tunes $E_\theta$ with a Mamba-2
-temporal head \citep{albertgu2024}, and trains per-window logits
-$\hat{z}^{(1)},\ldots,\hat{z}^{(T)}$ through a top-$k$ MIL sequence logit
-$\hat{z}$ with loss $\mathcal{L}_{2}$. Stage~3 freezes
-$E_\theta$, initializes the temporal head from Stage~2, and refines
-the head on whole passages using claim spans $(\ell_m,r_m)$ and
-auxiliary labels $\tilde{y}_m$ for $m=1,\ldots,M$: per-token logits
-are smoothed into $\bar{z}^{(t)}$, aggregated into per-claim logits
-$\hat{z}_m$, and trained with the auxiliary claim loss $\mathcal{L}_{3}$.
+\input{figs/fig1_overview}
+
+Figure~\ref{fig:overview} illustrates TPE's three-stage pipeline over
+hidden-state activations $A \in \mathbb{R}^{L \times T \times D}$.
+Stage~1 trains a sequence encoder $E_\theta$ on isolated labeled
+segments, mapping $A$ to an embedding $e$ and sequence logit $z$.
+Stage~2 slices the same activation tensor into centered length-$W$
+windows $A^{(1)},\ldots,A^{(T)}$, adds a Mamba-2 temporal head
+\citep{albertgu2024}, and trains per-window logits
+$\hat{z}^{(1)},\ldots,\hat{z}^{(T)}$ through a top-$k$ MIL sequence
+loss. Stage~3 freezes $E_\theta$ and refines the temporal head on
+whole passages using claim spans $(\ell_m,r_m)$ and auxiliary labels
+$\tilde{y}_m$, so the same token-window scores can be aggregated to
+sentence, claim, and sequence predictions.
 
 \subsection{Problem setup and notation}
 \label{sec:notation}
 
-Given an LLM $M$ and its generated response of length $T$, we
-collect the hidden-state activations
-$A \in \mathbb{R}^{L \times T \times D}$
-($L$ transformer layers, $D$ hidden dimension). For temporal
-localization we additionally use the windowed view
-$A^{(t)} \in \mathbb{R}^{L \times W \times D}$ obtained by slicing
-$A$ over $W$ consecutive tokens centered at $t$. Training data
-comes with a sequence-level label $y \in \{0,1\}$ (hallucinated
-vs.\ not), and on long-form corpora with noisy per-claim auxiliary
-labels $\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from claim-level
-verification, where each claim $m$ is identified with its token
-span $(\ell_m, r_m)$ so we refer to a claim and its span
-interchangeably. Given $A$, our goal is to predict both a
-sequence-level uncertainty score $\hat{p} \in [0,1]$ and per-window
-scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ under this weak supervision;
-the full notation, dataset construction, white-box assumptions, and
-off-domain generalization scenarios are deferred to
-Appendix~\ref{app:extended}.
+Given an LLM $M$ and a generated response of length $T$, we collect
+hidden-state activations $A \in \mathbb{R}^{L \times T \times D}$
+over $L$ layers and hidden dimension $D$. For localization, TPE also
+uses the windowed view
+$A^{(t)} \in \mathbb{R}^{L \times W \times D}$, a length-$W$ slice
+centered at generated position $t$. Training examples provide a
+sequence label $y \in \{0,1\}$, and long-form corpora additionally
+provide noisy claim labels
+$\{(\ell_m, r_m, \tilde{y}_m)\}_{m=1}^{M}$ from claim-level
+verification. The model predicts a sequence uncertainty score
+$\hat{p}$ and per-window scores
+$\{\hat{p}^{(t)}\}_{t=1}^{T}$; extended notation, dataset
+construction, white-box assumptions, and off-domain generalization
+are deferred to Appendix~\ref{app:extended}.
 
 \subsection{Stage 1: Encoder}
 \label{sec:act_vit_subsec}
@@ -46,36 +40,31 @@ Appendix~\ref{app:extended}.
 The encoder has three components. Pool applies adaptive
 max-pooling over $(L, T)$ to a target spatial size $(L_p, T_p)$,
 yielding $A_p \in \mathbb{R}^{L_p \times T_p \times D}$. LA
-is a per-LLM linear adapter $LA_M : \mathbb{R}^D \to \mathbb{R}^{D'}$
-that aligns hidden dimensions across models in $\mathcal{M}$:
-\begin{equation}
-\mathcal{L} = \{ LA_M \mid M \in \mathcal{M},\ W_M \in \mathbb{R}^{D_M \times D'} \},
-\end{equation}
-motivated by recent evidence that LLM representations can be put in
+is a per-LLM linear adapter
+$LA_M : \mathbb{R}^D \to \mathbb{R}^{D'}$ that aligns hidden
+dimensions across models, motivated by recent evidence that LLM
+representations can be put in
 approximate correspondence by linear maps
 \citep{huh2024,moschella2022,kornblith2019}. The Perception Encoder
 processes the pooled $(L_p \times T_p)$ activation image as a visual
 input and returns a dense embedding for the layer-token plane
-\citep{bolya2025perceptionencoder}. We use its intermediate visual
-features rather than training a task-specific visual encoder from
-scratch, following the Perception Encoder observation that useful
-visual embeddings can be hidden in internal layers. A linear head
-emits the Stage-1 logit $z$, trained with
+\citep{bolya2025perceptionencoder}. A linear head emits the Stage-1
+logit $z$, trained with
 $\mathcal{L}_{1} = \mathrm{BCE}(\sigma(z), y)$ where $y$ is the
-sequence label. The features before the linear head form the
-per-sequence embedding that Stages 2 and 3 reuse.
+sequence label; the pre-head features form the embedding reused by
+Stages 2 and 3.
 
 \subsection{Stage 2: Temporal Localization with Top-$k$ MIL}
 \label{sec:temporal_head}
 
 For each generated position $t$, we extract the windowed activations
 $A^{(t)} \in \mathbb{R}^{L \times W \times D}$ as $W$ token
-columns of $A$ centered at $t$ (edge-padded near response boundaries).
-The same Pool is reused with a smaller token target
-$(L_p, W_p)$ and $E_\theta$ produces a per-window embedding
-$e^{(t)} \in \mathbb{R}^{d}$. Stacking the $T$ windows yields
-$E \in \mathbb{R}^{T \times d}$. A residual stack of Mamba-2 blocks
-processes $E$ along the token axis followed by a linear head:
+columns of $A$ centered at $t$. The same Pool is reused with a
+smaller token target $(L_p, W_p)$, and $E_\theta$ produces a
+per-window embedding $e^{(t)} \in \mathbb{R}^{d}$. Stacking the $T$
+windows yields $E \in \mathbb{R}^{T \times d}$. A residual stack of
+Mamba-2 blocks processes $E$ along the token axis followed by a
+linear head:
 $\hat{z}^{(t)} = h(\mathrm{Mamba\text{-}2}(E)_t)$.
 Mamba-2's linear-time selective state-space recurrence makes Stage 2
 viable for real-time streaming, where each new token requires only a
@@ -89,50 +78,26 @@ sequence-level logit:
 \hat{z} = \tfrac{1}{k}\!\!\!\sum_{t \in \mathrm{Top}_k(\{\hat{z}^{(t)}\}_t)}\!\!\!\hat{z}^{(t)}, \qquad \hat{p} = \sigma(\hat{z}),
 \end{equation}
 and supervise with $\mathcal{L}_{2} = \mathrm{BCE}(\hat{p}, y)$.
-Mean-of-top-$k$ is more stable than max (brittle to single outliers)
-or full mean (dilutes signal in mostly-correct responses), and lets
-the model localize the uncertainty signal to a few windows inside
-each span without window-level labels.
+Mean-of-top-$k$ avoids the outlier sensitivity of max and the signal
+dilution of a full mean while keeping the supervision sequence-level.
 
 \subsection{Stage 3: Cross-Claim Refinement}
 \label{sec:stage3}
 
-Stages 1 and 2 see one claim segment at a time and never observe how the
-uncertainty activation signal changes across a claim. In
-particular, mixed-content windows (windows whose receptive field
-straddles both hallucinated and supported tokens) combine two signal
-regimes that single-claim training cannot disentangle. Stage 3 fixes
-this by training the head across spans in the full sequence rather
-than on isolated claim segments: with the encoder frozen, the head is
-fine-tuned on whole passages with per-claim auxiliary labels so it
-learns the spatial profile of the signal within and across claims.
-
-Stage 3 takes as input passage-level activations
-$A \in \mathbb{R}^{L \times T \times D}$ paired with $M$ claims
-$\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
-$\tilde{y}_m \in \{0,1\}$ from claim-level verification.
-
-The Stage-2 detector emits per-token logits
-$\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$ over the passage. We smooth
-them along the token axis with a centered length-$W$ softmax-weighted
-window,
-\begin{equation}
-\bar{z}^{(t)} = \!\!\!\!\!\sum_{u \in \mathcal{W}(t)}\!\!\!\! \alpha_u^{(t)}\, \hat{z}^{(u)},\qquad \alpha_u^{(t)} \propto \exp(\hat{z}^{(u)}/\tau),
-\end{equation}
-where $\tau \to 0$ recovers max and $\tau \to \infty$ recovers mean.
-The per-claim logit is a top-$k$ mean over the smoothed logits in the
-claim,
-\begin{equation}
-\hat{z}_m = \frac{1}{k_m}\!\!\!\sum_{t \in \mathrm{Top}_{k_m}(\mathcal{S}_m)}\!\!\! \bar{z}^{(t)},
-\end{equation}
-where $\mathcal{S}_m = \{\bar{z}^{(t)}\}_{t=\ell_m}^{r_m}$ are the
-in-span smoothed logits and
-$k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
-$\kappa \in (0, 1]$. The Stage-3 loss is a per-claim BCE,
-$\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$,
-which forces the head to learn how the per-token signal varies within
-and across claims, including on mixed-content windows, rather
-than score each claim in isolation.
+Stages 1 and 2 see one claim segment at a time and do not observe
+how the uncertainty activation signal changes across neighboring
+claims. Mixed-content windows, whose receptive field straddles
+hallucinated and supported tokens, combine signal regimes that
+single-claim training cannot disentangle. Stage 3 therefore freezes
+$E_\theta$ and fine-tunes the temporal head on whole passages with
+claim spans $\{(\ell_m, r_m)\}_{m=1}^{M}$ and noisy labels
+$\tilde{y}_m$. The Stage-2 detector emits passage-level per-token
+logits, which are locally smoothed and aggregated within each claim
+by a top-$k$ mean to form $\hat{z}_m$. A per-claim BCE loss
+$\mathcal{L}_{3}$ trains the head to model the signal profile within
+and across claims rather than scoring each claim in isolation; the
+exact smoothing and claim aggregation are given in
+Appendix~\ref{app:extended}.
 
 At inference time, a single forward through the Stage-3 detector
 yields the per-token logits over the whole passage, from which we

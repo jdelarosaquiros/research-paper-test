@@ -2,66 +2,39 @@
 \label{sec:non_static}
 
 Mechanistic detectors face a tension among coverage, localization,
-and scalability. Fixed-position probes \citep{azaria2023,orgad2024} are
-efficient but read only one layer-token slice, so they miss signals
-that appear elsewhere in the activation tensor. Full-response
-activation maps capture broader structure, but they are expensive and
-usually collapse the response into one sequence-level score
-\citep{barshalom2025}. Claim-level detectors provide coarser
-localization, but scoring extracted claims in isolation ignores
-boundary evidence from neighboring supported and hallucinated spans
-\citep{snyder2024,he2024}. Long-form hallucination detection therefore
-requires an inference unit that is local enough to assign span-level
-scores, broad enough to include adjacent context, and cheap enough to
-run across a long response.
-
-\paragraph{Why windows instead of isolated tokens?}
-HaMI \citep{niu2025hami} shows that hallucination evidence can be
-sparse: only a small part of a response may carry the decisive signal.
-TPE shares this sparsity assumption, but changes the localization
-unit from individual token representations to local activation windows.
-Full-response activation maps cover more of the layer-token tensor,
-but Appendix~\ref{app:full_activation_coverage} shows that pooling the
-whole response is a poor inference unit for long-form localization.
-The evidence is not confined to isolated token states; it forms a
-local temporal pattern around the hallucinated span. Appendix
-Figure~\ref{fig:signal_propagation}
-measures this directly on RAGTruth: a linear probe's ROC-AUC ramps
-from chance at offset $-24$ to $0.66$ at the token immediately before
-a hallucinated span, rises through the span ($0.71 \to 0.79$), and
-decays slowly afterward. Unlike HaMI-style token selection, where
-individual token representations are the MIL instances, TPE uses
-local activation windows as instances because useful evidence appears
-before, during, and after the labeled span.
-
-\input{figs/fig1_overview}
+and scalability. Fixed-position probes \citep{azaria2023,orgad2024}
+are efficient but read only one layer-token slice, so they miss
+signals that appear elsewhere in the activation tensor. Full-response
+activation maps cover broader structure, but pooling the whole
+response produces a sequence-level score and scales poorly for
+localization \citep{barshalom2025}. Claim-level detectors provide
+coarser localization, but scoring extracted claims in isolation
+ignores boundary evidence from neighboring supported and hallucinated
+spans \citep{snyder2024,he2024}. TPE therefore uses local activation
+windows as the inference unit: each score is tied to a bounded token
+neighborhood, while still covering evidence before, during, and after
+the labeled span. Appendix Figure~\ref{fig:signal_propagation} shows
+that hallucination signal appears before, within, and after
+hallucinated spans.
 
 \paragraph{Why encode activations as 2D images?}
-Per-layer and per-token probes show that useful hidden-state signal is
-not concentrated in one fixed position. Informative regions appear
-across both the layer direction and the token direction, and the most
-predictive regions change across LLMs, as shown by the heatmaps in
-Appendix~\ref{app:heatmaps}. A single layer-token slice or one-axis
-pooling can discard cross-axis patterns in this layer-token plane.
-ACT-ViT \citep{barshalom2025actvit} motivates activation-image encoding by
-treating the layer-token activation plane as a 2D image and showing
-that visual encoders improve over fixed-position probes. TPE
-keeps this activation-image view, uses Perception Encoder features
-\citep{bolya2025perceptionencoder}, and changes the inference unit
-from one pooled sequence image to a temporal sequence of local
-activation images.
+Per-layer and per-token probes show that useful hidden-state signal
+is not concentrated in one fixed position. Informative regions spread
+across both the layer and token axes, and the most predictive
+layer-token cells shift across LLMs, as shown by the heatmaps in
+Appendix~\ref{app:heatmaps}. TPE preserves this local layer-token
+plane instead of using one fixed slice or one-axis pooling. Following
+the activation-image view of ACT-ViT \citep{barshalom2025actvit}, it
+encodes each local activation window with Perception Encoder features
+\citep{bolya2025perceptionencoder}.
 
-\paragraph{Weakly supervised temporal localization.} ACT-ViT shows
-that the $(L,T)$ plane has spatial structure amenable to visual
-encoders, but a single fixed-size image fits poorly when $T$ ranges
-from a handful to thousands of tokens. We frame $A$ as a video over
-the token axis and borrow weakly supervised temporal localization
-from video understanding \citep{pilhyeonlee2021}. Each token is a
-frame whose height is the layer axis and whose channels are the
-hidden dimension; a window aggregates $W$ consecutive frames into a
-local activation image. A claim or response label then provides weak
-supervision over a temporal sequence of windows. We use top-$k$ MIL
-over windows, not over isolated token states, so the model learns
-which local activation windows explain a positive label without
-window-level annotations.
-
+\paragraph{Weakly supervised temporal localization.}
+This representation turns hallucination detection into weakly
+supervised temporal localization. As in video localization, where
+clip-level labels supervise event discovery over time
+\citep{pilhyeonlee2021}, a response label or claim label supervises
+a sequence of candidate activation windows without window-level
+annotations. Section~\ref{sec:model} formalizes this view: TPE
+encodes local layer-token windows, propagates evidence with a
+temporal head, and uses top-$k$ MIL so sparse hallucination evidence
+can be assigned to a small subset of windows.

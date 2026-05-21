@@ -5,6 +5,24 @@
 
 \paragraph{Token windows.} For temporal localization, we consider local views of $A$ along the token axis. For a window size $W$ and a position $t \in \{1, \dots, T\}$, the windowed activations $A^{(t)} \in \mathbb{R}^{L \times W \times D}$ are obtained by slicing $A$ over $W$ consecutive tokens centered at $t$, with edge padding when $t$ is near a response boundary. The full response is then covered by the sequence $\{A^{(t)}\}_{t=1}^{T}$ of overlapping windows, each providing a local view of the activation patterns associated with a short generated-token region.
 
+\paragraph{Stage-3 claim aggregation.} Given passage-level logits
+$\hat{z}^{(1)}, \ldots, \hat{z}^{(T)}$, Stage 3 first smooths them
+along the token axis with a centered length-$W$ softmax-weighted
+window,
+\begin{equation}
+\bar{z}^{(t)} = \!\!\!\!\!\sum_{u \in \mathcal{W}(t)}\!\!\!\! \alpha_u^{(t)}\, \hat{z}^{(u)},\qquad \alpha_u^{(t)} \propto \exp(\hat{z}^{(u)}/\tau),
+\end{equation}
+where $\tau \to 0$ recovers max and $\tau \to \infty$ recovers mean.
+For claim span $(\ell_m,r_m)$, the per-claim logit is a top-$k$ mean
+over the smoothed in-span logits,
+\begin{equation}
+\hat{z}_m = \frac{1}{k_m}\!\!\!\sum_{t \in \mathrm{Top}_{k_m}(\mathcal{S}_m)}\!\!\! \bar{z}^{(t)},
+\end{equation}
+where $\mathcal{S}_m = \{\bar{z}^{(t)}\}_{t=\ell_m}^{r_m}$ and
+$k_m = \max(k_{\min}, \lceil \kappa\,(r_m - \ell_m + 1) \rceil)$ with
+$\kappa \in (0, 1]$. Stage 3 minimizes
+$\mathcal{L}_{3} = \tfrac{1}{|\mathrm{valid}|}\sum_m \mathrm{BCE}(\sigma(\hat{z}_m), \tilde{y}_m)$.
+
 \paragraph{Dataset construction.} Following \citet{orgad2024}, we consider datasets $\mathcal{D} = \{(\vec{s}_i, \vec{g}_i)\}_{i=1}^m$ of question-answer pairs, e.g., (``Who developed the theory of general relativity?'', ``Albert Einstein''). For each query $\vec{s}_i$, the model produces a response $\vec{\hat{g}}_i$ from which we extract the hidden-state activations $A_i$. We assign a sequence-level binary hallucination label $y_i$ by comparing $\vec{\hat{g}}_i$ with $\vec{g}_i$, setting $y_i = 1$ when the response is incorrect/hallucinated and $y_i = 0$ otherwise. The final activation dataset is $\mathcal{A} = \{(A_i, y_i, M_i)\}_{i=1}^m$, where $M_i$ identifies the LLM that produced $A_i$, and multiple distinct $M_i$'s from a known collection $\mathcal{M}$ are allowed within the same dataset. Crucially, no clean token- or window-level labels are provided: the primary supervision signal is restricted to the sequence level. For long-form responses we additionally have access to a noisy auxiliary signal: a claim-level verification pipeline yields per-claim labels $\{(\ell_m, r_m, \tilde{y}_m)\}$ over $\vec{\hat{g}}_i$, where each claim $m$ is identified with its token span $(\ell_m, r_m)$ and $\tilde{y}_m \in \{0, 1\}$ is broadcast from the fact-level verification result. These per-claim labels are coarse (spans typically contain tokens that are not themselves hallucinated), so we treat them as auxiliary supervision rather than ground-truth window-level labels.
 
 \paragraph{Problem statement and off-domain generalization.} We seek a parametric model that, given $A$, predicts (i) a sequence-level uncertainty score $\hat{p} \in [0, 1]$ and (ii) per-window uncertainty scores $\{\hat{p}^{(t)}\}_{t=1}^{T}$ that localize the generated-token regions whose activations most contribute to the sequence-level prediction. The sequence-level prediction is supervised directly by $y$; per-window scores must be learned under weak supervision from $y$ alone, and (on long-form corpora) from the noisy per-claim auxiliary labels $\tilde{y}_m$. Beyond the in-domain setting, we additionally consider (i) off-domain data generalization (activations are drawn from a known LLM $M \in \mathcal{M}$ but correspond to tasks or domains unseen during training) and (ii) off-domain model generalization (activations are drawn from a previously unseen LLM $M \notin \mathcal{M}$).
