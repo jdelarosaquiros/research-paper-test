@@ -19,9 +19,6 @@ SelfCertainty                    & 0.388$^{\dagger}$ & 0.545 & 0.522 & 0.470 & 0
 TokenSAR                         & 0.587$^{\dagger}$ & 0.572 & 0.491 & 0.482 & \underline{0.631} & 0.588 & --- & --- & --- \\
 MeanPointwiseMutualInformation   & 0.603$^{\dagger}$ & 0.548 & 0.486 & 0.533 & 0.529 & 0.551 & --- & --- & --- \\
 BoostedProbSequence              & 0.611$^{\dagger}$ & 0.612 & 0.545 & 0.512 & 0.603 & 0.582 & --- & --- & --- \\
-\midrule
-\multicolumn{10}{l}{\textit{Hybrid}} \\
-\cmidrule(l){1-10}
 CSL                              & 0.579$^{\dagger}$ & 0.561 & 0.473 & 0.483 & 0.600 & 0.569 & --- & --- & --- \\
 AttentionScore                   & 0.466$^{\dagger}$ & 0.661 & 0.604 & 0.608 & 0.538 & 0.545 & --- & --- & --- \\
 RAUQ                             & 0.614$^{\dagger}$ & 0.628 & 0.560 & 0.512 & 0.626 & 0.589 & --- & --- & --- \\
@@ -42,11 +39,11 @@ TPE                   & \underline{0.893}$^{\dagger}$ & \underline{0.789} & \und
 \end{tabular}%
 }
 \caption{\textcolor{red}{\textbf{Long-form hallucination detection --- sentence
-level.} Same models, datasets, and AUROC as Table~\ref{tab:main}.
+level.} AUROC per (LLM, dataset) cell on RAGTruth, FactScore, and LongFact.
 Sentence labels use AND-on-supported aggregation
 (Section~\ref{sec:results_aggregated}); method groupings follow
 Section~\ref{sec:baselines}. Best per column in \textbf{bold},
 second-best \underline{underlined}. $^\dagger$ marks
 Mistral-7B-Instruct-v0.1 cells (RAGTruth). ``---'' = not yet run.}}
-\label{tab:sentence}
+\label{tab:main}
 \end{table*}

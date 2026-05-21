@@ -63,7 +63,7 @@ versus transferable activation signal from the other task types.
 
 \paragraph{Token-level overlap resolution.}
 \label{ablation:overlap_rule}
-The token-level eval (Table~\ref{tab:main}) derives each generated
+The token-level eval (Table~\ref{tab:token_level}) derives each generated
 token's label from the per-claim span labels
 $(\ell_m, r_m, \tilde{y}_m)$. Spans are sorted by
 $(\ell_m\!\uparrow, r_m\!\downarrow)$ -- earlier start first, longer
@@ -96,6 +96,7 @@ avoiding one pooled representation for the whole response.
 
 \input{figs/fig_perf_by_length}
 \input{figs/fig_signal_propagation}
+\input{figs/tab1_main}
 \input{figs/tab5_window_ablation}
 \input{figs/tab6_stride_ablation}
 \input{figs/tab7_stage_ablation}

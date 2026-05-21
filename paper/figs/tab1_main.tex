@@ -19,9 +19,6 @@ SelfCertainty                    & 0.423$^{\dagger}$ & 0.482 & 0.490 & 0.442 & 0
 TokenSAR                         & 0.569$^{\dagger}$ & 0.524 & 0.506 & 0.531 & 0.512 & 0.512 & --- & --- & --- \\
 MeanPointwiseMutualInformation   & 0.600$^{\dagger}$ & 0.500 & 0.532 & 0.593 & 0.507 & 0.525 & --- & --- & --- \\
 BoostedProbSequence              & 0.571$^{\dagger}$ & 0.524 & 0.518 & 0.536 & 0.511 & 0.512 & --- & --- & --- \\
-\midrule
-\multicolumn{10}{l}{\textit{Hybrid}} \\
-\cmidrule(l){1-10}
 CSL                              & 0.567$^{\dagger}$ & 0.523 & 0.501 & 0.530 & 0.511 & 0.510 & --- & --- & --- \\
 AttentionScore                   & 0.479$^{\dagger}$ & 0.491 & 0.524 & 0.508 & 0.496 & 0.510 & --- & --- & --- \\
 RAUQ                             & 0.578$^{\dagger}$ & 0.524 & 0.522 & 0.541 & 0.513 & 0.515 & --- & --- & --- \\
@@ -44,13 +41,12 @@ TPE                   & \underline{0.863}$^{\dagger}$ & 0.668 & \underline{0.667
 \caption{\textcolor{red}{\textbf{Long-form hallucination detection --- token level.}
 AUROC per (LLM, dataset) cell on RAGTruth, FactScore, and LongFact.
 Method
-groupings (\emph{Confidence}, \emph{Hybrid}, \emph{Mechanistic},
-\emph{Ours}) follow
+groupings (\emph{Confidence}, \emph{Mechanistic}, \emph{Ours}) follow
 Section~\ref{sec:baselines}; the per-token gold-mask
 overlap-resolution rule is described in
 Appendix~\ref{ablation:overlap_rule}. Best score per column in
 \textbf{bold}, second-best \underline{underlined}. $^\dagger$ marks
 cells whose data comes from Mistral-7B-Instruct-v0.1 (RAGTruth).
 ``---'' = not yet run.}}
-\label{tab:main}
+\label{tab:token_level}
 \end{table*}

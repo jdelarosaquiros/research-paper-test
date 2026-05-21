@@ -3,38 +3,20 @@
 
 \input{figs/tab3_sentence}
 
-\subsection{TPE improves token-level hallucination
-localization}
-\label{sec:results_token}
-
-The headline contribution is per-token localization on long-form
-text. Table~\ref{tab:main} reports token-level AUROC on RAGTruth
-\citep{niu2024ragtruth}, FactScore \citep{min2023}, and LongFact
-\citep{wei2024} for two LLMs. On every populated cell, the
-TPE family beats both the Confidence baselines (which top out
-near 0.60) and the strongest mechanistic baseline (Act-ViT
-\citep{barshalom2025}, the pooled-activation sequence encoder we build
-on). On RAGTruth the gap is largest -- Encoder Only reaches
-$0.888^\dagger$ on Mis-7B-Inst and $0.846$ on LlaMa-13B-Inst,
-against $\leq 0.615$ for every non-Ours row. On FactScore /
-LongFact the gap narrows but the ranking is preserved.
-
-The two Ours variants split the column lead: Encoder Only
-wins token-level on Mis-7B-Inst (all three datasets) and on
-LlaMa-13B-Inst (FactScore, LongFact), while TPE wins
-the LlaMa-13B-Inst RAGTruth cell. The pattern answers
-(Q\textsubscript{1}): Confidence and Mechanistic baselines are
-near chance at the token level on these corpora; the supervised
-window encoder is what lets the score localize within a passage.
-
-\subsection{Gains persist at the sentence level}
+\subsection{TPE improves sentence-level hallucination localization}
 \label{sec:results_aggregated}
 
-Per-token scores aggregate upward without retraining.
-Table~\ref{tab:sentence} reports sentence-level verdicts under
-AND-on-supported aggregation (any unsupported claim in a sentence
-flips the sentence to hallucinated; score is the max per-token
-uncertainty in the span).
+The headline long-form result is sentence-level localization from
+token-window predictions. TPE still emits one score per token window,
+but Table~\ref{tab:main} reports sentence-level verdicts obtained by
+aggregating those scores upward without retraining. We use the
+sentence level as the main table because long-form labels come from
+claim and atomic-fact verification pipelines: overlapping atoms can
+assign noisy labels to individual tokens, while sentence aggregation
+preserves the localized prediction task and reduces boundary noise.
+Token-level results and the claim-span overlap rule are reported in
+Appendix Table~\ref{tab:token_level} and
+Appendix~\ref{ablation:overlap_rule}.
 
 At the sentence level the Ours rows dominate every populated cell
 except FactScore / LongFact for LlaMa-13B-Inst, where MeanTokenEntropy
