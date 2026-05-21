@@ -2,14 +2,21 @@
 \label{sec:model}
 
 Figure~\ref{fig:overview} illustrates the three-stage pipeline.
-Stage~1 trains a sequence encoder $E_\theta$ that maps the full
-hidden-state activations $A \in \mathbb{R}^{L \times T \times D}$ to
-a sequence-level logit. Stage~2 fine-tunes $E_\theta$ jointly with a
-Mamba-2 temporal head \citep{albertgu2024} on centered length-$W$
-token windows $\{A^{(t)}\}_{t=1}^{T}$; the head emits one logit
-$\hat{z}^{(t)}$ per window. Stage~3 freezes the encoder,
-initializes the head from Stage~2, and refines it on whole passages
-under per-claim auxiliary supervision.
+Stage~1 pretrains a sequence encoder $E_\theta$ on isolated labeled
+segments by mapping hidden-state activations
+$A \in \mathbb{R}^{L \times T \times D}$ to an embedding $e$ and
+sequence logit $z$, supervised by
+$\mathcal{L}_{1}=\mathrm{BCE}(\sigma(z), y)$. Stage~2 converts the
+same activation tensor into centered length-$W$ windows
+$A^{(1)},\ldots,A^{(T)}$, fine-tunes $E_\theta$ with a Mamba-2
+temporal head \citep{albertgu2024}, and trains per-window logits
+$\hat{z}^{(1)},\ldots,\hat{z}^{(T)}$ through a top-$k$ MIL sequence logit
+$\hat{z}$ with loss $\mathcal{L}_{2}$. Stage~3 freezes
+$E_\theta$, initializes the temporal head from Stage~2, and refines
+the head on whole passages using claim spans $(\ell_m,r_m)$ and
+auxiliary labels $\tilde{y}_m$ for $m=1,\ldots,M$: per-token logits
+are smoothed into $\bar{z}^{(t)}$, aggregated into per-claim logits
+$\hat{z}_m$, and trained with the auxiliary claim loss $\mathcal{L}_{3}$.
 
 \subsection{Problem setup and notation}
 \label{sec:notation}

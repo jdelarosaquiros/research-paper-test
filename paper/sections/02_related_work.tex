@@ -2,87 +2,54 @@
 
 \subsection{Uncertainty estimation for LLMs}
 
-Confidence-based methods derive uncertainty from token-level
-probabilities of a single generated sequence: sequence probability,
-predictive entropy, mean token entropy
-\citep{malinin2021uncertainty}, and SAR \citep{duan2024shifting},
-which reweights tokens by their relevance.
-\citet{schweighofer2025rethinking} show that the negative
-log-likelihood of the greedy output is a theoretically grounded
-uncertainty measure under the zero-one rule, matching multi-sample
-methods without sampling. A persistent weakness is length bias:
-even nominally length-normalized measures show statistically
-significant linear trends with output length
-\citep{vashurin2025line,santilli2025lengthbias}. Probing-based
-methods inspect hidden representations where truth and error signals
-may appear before they surface in output logits, decoupling
-uncertainty from decoder calibration.
-
-Consistency-based methods generate multiple samples and measure
-semantic agreement. Semantic entropy clusters samples by NLI and
-computes entropy over clusters \citep{kuhn2023semantic}; graph-based
-variants compute degree, eccentricity, or spectral features over
-pairwise similarity matrices \citep{lin2024generating,jiang2024}.
-\citet{nguyen2025snne} use nearest-neighbour entropy that holds up
-on long outputs. The bottleneck is sampling cost: 5 to 20
-generations per query. Recent work cuts this with importance-sampled
-or diversity-penalized proposals
-\citep{aichberger2025sdlg,park2025diversity} and beam-search
-estimators with variance guarantees \citep{fadeeva2026beams}. A
-complementary failure mode is confident incorrectness: when the LLM
-is wrong with high agreement, self-consistency mis-rates it as
-confident, so \citet{hamidieh2026crossmodel} fold in cross-model
-disagreement.
+Uncertainty estimation has been widely used for hallucination
+detection in LLMs. Confidence-based methods derive uncertainty from
+the predictive distribution of a single generation, using scores such
+as sequence probability, token entropy, negative log-likelihood, or
+relevance-weighted variants
+\citep{malinin2021uncertainty,duan2024shifting,schweighofer2025rethinking}.
+Other methods estimate uncertainty from multiple generations by
+measuring semantic agreement, self-consistency, or graph-based
+similarity among sampled answers
+\citep{kuhn2023semantic,lin2024generating,jiang2024,manakul2023,band2024}.
+These approaches can be effective, especially when semantic
+consistency is available, but they mainly operate on final outputs and
+often require repeated sampling, external entailment models, or
+LLM-based judging. As a result, they are costly for long-form
+generations and do not directly exploit the internal activation
+signals produced during generation.
 
 \subsection{Mechanistic hallucination detection}
 
-Hidden states encode signal about factuality
-\citep{marks2023,azaria2023,liu2024,ji2024} and many probes consume
-a single layer-token slice
-\citep{kadavath2022,snyder2024,zou2023,li2024}. ACT-ViT
-\citep{barshalom2025} extends this by treating the full layer-token
-activation map as a 2D image input to a Vision Transformer and pooling
-it down; this widens the receptive field but commits to one
-score per response, exposing the speed--accuracy tradeoff inherent
-to activation-map probes: either keep the pooled representation small and lose
-accuracy on long responses
-(Appendix Figure~\ref{fig:perf_by_length}), or scale it up and pay
-one forward per token when used streaming
-(Figure~\ref{fig:inference_time}). Fact-probe
-\citep{snyder2024,he2024} pushes detection to claim-level granularity
-but at the cost of one forward per claim. HaMI
-\citep{niu2025hami} pushes in the opposite direction, casting
-sequence-level detection as multiple-instance learning over raw
-token hidden states with an adaptive top-$k$ selector, and folds
-predictive uncertainty into the representation; it shares our top-$k$
-MIL machinery but operates on individual token states rather than the
-window-pooled activation slices we encode, so it inherits the
-length-sensitivity of per-token features that our windowed formulation
-is designed to absorb. A second axis of work probes attention
-for hallucination patterns
-\citep{li2025uqac,duan2024shifting,he2024}; the cross-axis signal it
-captures is complementary to the layer-token plane that we operate
-on. A third line of work compares hidden representations across
-contexts to expose epistemic uncertainty as feature gaps
-\citep{bakman2025featuregaps}.
-Figure~\ref{fig:signal_propagation} shows that the relevant
-activation signal extends across tokens on both sides of a
-hallucinated span, the structural fact that motivates our windowed
-formulation.
+Recent work shows that LLM hidden states contain signals about
+truthfulness and hallucination risk
+\citep{marks2023,azaria2023,liu2024,ji2024}. Many mechanistic
+detectors train probes on representations from selected layers or
+token positions
+\citep{kadavath2022,snyder2024,zou2023,li2024}. These methods are
+efficient, but their reliance on fixed layer-token slices can miss
+signals whose location changes across models, tasks, and generated
+responses. Activation-map methods such as ACT-ViT
+\citep{barshalom2025} broaden this view by treating the layer-token
+activation plane as a structured input, but they typically pool over
+the full response and produce a sequence-level score. This makes them
+less suited to long-form outputs, where supported and unsupported
+claims can appear in the same generation.
 
-\subsection{Uncertainty in long-form generation}
-
-Long responses interleave correct and uncertain content, which
-single-score detectors cannot localize. Decomposition is the standard
-remedy: at the claim level via claim extraction
-\citep{min2023,wei2024,zhao2024} or conformal claim-level prediction
-\citep{mohri2024}; at the sentence level by re-applying
-self-consistency per sentence \citep{manakul2023,band2024}; and at
-the token level via per-token probes \citep{he2024,su2024}. The
-trade-off is real: claim and sentence pipelines depend on an external
-extractor and one model call per unit, while token-level methods are
-the only ones compatible with real-time generation, though noisier
-when read in isolation. We make the token level usable in practice by
-sharing computation across a window of tokens rather than scoring each
-in isolation, and by training under weakly supervised temporal
-localization.
+Several methods move toward finer-grained detection. Fact-probe and
+related claim-level approaches score extracted claims rather than
+entire responses
+\citep{snyder2024,he2024}, while token-level methods aim to detect
+hallucination signals during generation
+\citep{he2024,su2024}. However, claim-level pipelines require claim
+extraction or repeated scoring, and isolated token scoring can miss
+evidence in the surrounding context. HaMI \citep{niu2025hami} is
+closest to our weak-supervision setting: it formulates hallucination
+detection as multiple-instance learning over token hidden states and
+adaptively selects informative tokens for sequence-level prediction.
+Our work shares the sparsity and top-$k$ MIL motivation, but changes
+the localization unit from individual token states to local
+layer-token activation windows. Our approach also uses temporal information gathered from previous windows. 
+This allows TPE to model evidence
+that appears before and during an unsupported span, and to
+produce token-level localization scores for long-form generations.

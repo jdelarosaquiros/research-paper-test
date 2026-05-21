@@ -19,7 +19,7 @@ adapters across model families.
 \paragraph{Limitations.} The auxiliary span labels we train on are
 noisy: claim-level verification pipelines mis-attribute hallucinated tokens to
 neighbouring supported tokens, and the relevant activation signal can
-fall outside the span (Figure~\ref{fig:signal_propagation}). The
+fall outside the span (Appendix Figure~\ref{fig:signal_propagation}). The
 Stage~3 BCE absorbs some of this noise but the per-claim numbers
 still trail the encoder-only Stage~3 variant on the window ablation,
 suggesting the temporal head over-fits to span boundaries when the

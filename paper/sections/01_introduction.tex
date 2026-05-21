@@ -3,19 +3,9 @@
 \input{figs/fig_tpe_example}
 
 \paragraph{Why this matters.}
-Despite improvements in reducing hallucinations, LLMs remain susceptible to
-localized factual errors, especially in long-form answers where fluent text can
-hide unsupported claims. These errors reduce reliability because the model may
-sound confident even when part of the response is not supported. A useful
-uncertainty detector should therefore identify where unreliable content appears,
-not only whether the full response is wrong. This distinction matters for
-retrieval-augmented answers, biographies, and long explanations, where a single
-unsupported span can be hidden inside otherwise correct text
-\citep{niu2024ragtruth,min2023,wei2024}. Existing detectors approach this
-problem through token-probability statistics, multiple-response consistency,
-external verification, or mechanistic analysis of internal activations, but they
-miss at least one of cost, granularity, and performance on long answers
-\citep{malinin2021uncertainty,kuhn2023semantic,manakul2023,azaria2023}.
+Recent progress in large language models has demonstrated impressive capabilities in generating long-form answers across retrieval-augmented generation, biographies, and explanatory tasks.
+However, their growing use also raises concerns about reliability, because fluent outputs can contain localized factual errors that are difficult to notice. A useful hallucination detector should identify where unreliable content appears, not just whether the full response is hallucinated. This distinction matters for retrieval-augmented answers, biographies, and long explanations, where a single unsupported span can be hidden inside otherwise correct text
+\citep{niu2024ragtruth,min2023,wei2024}.
 
 \paragraph{What current methods leave open.}
 Confidence-based methods estimate uncertainty from sequence probabilities,
@@ -54,23 +44,20 @@ paired with a temporal head that propagates window-level uncertainty evidence
 across the response \citep{bolya2025perceptionencoder,albertgu2024}. Concretely,
 we contribute:
 \begin{enumerate}
-    \item We recast mechanistic hallucination detection as weakly supervised
-    temporal localization over LLM hidden-state activations, enabling uncertainty
-    scores to be assigned to tokens or segments of a long-form response rather
-    than only to the full sequence.
+    \item We formulate mechanistic hallucination detection as weakly supervised
+    temporal localization over hidden-state activation windows, enabling predictions
+    as granular as token level from claim labels.
 
-    \item We propose TPE, a windowed uncertainty localization model that encodes
-    local layer-token activation windows with a Perception Encoder and propagates
-    uncertainty evidence with a temporal head.
+    \item We propose TPE, a windowed hallucination detection model that encodes local
+    layer-token activations with a Perception Encoder and propagates hallucination signals with
+    a temporal head. We train it with a three-stage weak-supervision framework that learns
+    hallucination activation patterns with claim labels, localizes responsible windows with
+    top-$k$ MIL, and refines boundary behavior across neighboring correct and
+    hallucinated claims.
 
-    \item We introduce a three-stage weakly supervised training framework. Stage~1
-    pretrains the encoder on labeled claims, Stage~2 uses top-$k$ MIL to localize
-    uncertainty signal to a few token windows inside each span, and Stage~3 trains
-    across full sequences to handle windows that mix correct and hallucinated
-    spans.
-
-    \item We demonstrate efficient and granular hallucination localization on
-    long-form benchmarks, including FactScore, LongFact, and RAGTruth, with
-    token-, claim-, and sentence-level evaluation. We also show that localized
-    scores outperform uncertainty quantification baselines on LM-Polygraph.
+    \item We demonstrate granular long-form hallucination localization on
+    biographical generation, open-ended factual QA, and retrieval-augmented QA
+    when using claim-level labels for training. 
+    We also show it outperforms other methods on short-form and long-form QA, machine translation, and math
+    even when using weaker sequence-level labels.
 \end{enumerate}

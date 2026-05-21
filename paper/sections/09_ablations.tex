@@ -81,7 +81,21 @@ starts later, where the earlier-start tiebreak is equivalent to a
 longer-span tiebreak in practice because the outer is necessarily
 $\geq$ as long.
 
+\paragraph{Full activation coverage and long-form scaling.}\label{app:full_activation_coverage}
+ACT-ViT shows that layer-token activation structure is predictive, but
+full-response pooling is the wrong inference unit for long-form
+localization. Figure~\ref{fig:perf_by_length} reports per-token AUROC
+on LongFact as the input prefix length $T$ grows: ACT-ViT with a short
+pooled token axis is fast but loses accuracy as more generated tokens
+are compressed into the same representation. Widening the pooled axis
+partially reduces this collapse at the cost of inference speed, and
+Figure~\ref{fig:inference_time} shows the runtime penalty when a
+full-response activation map is rescored at each token. TPE instead
+scores local token windows and models their temporal evolution,
+avoiding one pooled representation for the whole response.
+
 \input{figs/fig_perf_by_length}
+\input{figs/fig_signal_propagation}
 \input{figs/tab5_window_ablation}
 \input{figs/tab6_stride_ablation}
 \input{figs/tab7_stage_ablation}
